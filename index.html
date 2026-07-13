@@ -17,6 +17,38 @@
 
     <input type="file" id="fileInput" accept="image/*">
 
+    <div class="controls" aria-label="Periodic surface controls">
+        <label for="closedLimitInput">Closed limit</label>
+        <input type="range" id="closedLimitInput" min="1" max="100" value="20" step="1">
+        <input type="number" id="closedLimitNumber" min="1" max="100" value="20" step="1" aria-label="Closed limit value">
+        <span>%</span>
+
+        <label for="openLimitInput">Open limit</label>
+        <input type="range" id="openLimitInput" min="0" max="100" value="90" step="1">
+        <input type="number" id="openLimitNumber" min="0" max="100" value="90" step="1" aria-label="Open limit value">
+        <span>%</span>
+
+        <label for="currentPositionInput">Current position</label>
+        <input type="range" id="currentPositionInput" min="0" max="100" value="50" step="0.1">
+        <input type="number" id="currentPositionNumber" min="20" max="90" value="55" step="1" aria-label="Current position value">
+        <span>%</span>
+
+        <label for="amplitudeInput">Wave amplitude</label>
+        <input type="range" id="amplitudeInput" min="0" max="60" value="20" step="1">
+        <input type="number" id="amplitudeNumber" min="0" max="60" value="20" step="1" aria-label="Wave amplitude value">
+        <span>px</span>
+
+        <label for="carrierDistanceInput">Carrier distance</label>
+        <input type="range" id="carrierDistanceInput" min="20" max="300" value="100" step="1">
+        <input type="number" id="carrierDistanceNumber" min="20" max="300" value="100" step="1" aria-label="Carrier distance value">
+        <span>mm</span>
+
+        <label for="modelTransitionInput">Model transition</label>
+        <input type="range" id="modelTransitionInput" min="0" max="100" value="60" step="1">
+        <input type="number" id="modelTransitionNumber" min="0" max="100" value="60" step="1" aria-label="Model transition value">
+        <span>%</span>
+    </div>
+
     <canvas id="canvas"></canvas>
 
 </div>

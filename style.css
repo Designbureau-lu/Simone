@@ -8,6 +8,28 @@ body{
 
 }
 
+.controls{
+
+    display:grid;
+
+    grid-template-columns:max-content minmax(160px,320px) 72px max-content;
+
+    gap:10px 14px;
+
+    align-items:center;
+
+    margin-top:24px;
+
+}
+
+.controls input[type="number"]{
+
+    font-variant-numeric:tabular-nums;
+
+    width:64px;
+
+}
+
 canvas{
 
     margin-top:30px;

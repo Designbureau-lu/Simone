@@ -1,34 +1,53 @@
 /**
  * Application layer: coordinates the domain pipeline and owns no pixel logic.
  *
- * Artwork -> immutable columns -> geometry -> visibility -> renderer
+ * Artwork -> immutable columns -> regime -> surface geometry -> shading -> renderer
  */
 export class SimoneApplication {
-    constructor({ artworkLoader, geometry, visibility, renderer }) {
+    constructor({ artworkLoader, parameters, regimeResolver, surfaces, shading, renderer }) {
         this.artworkLoader = artworkLoader;
-        this.geometry = geometry;
-        this.visibility = visibility;
+        this.parameters = parameters;
+        this.regimeResolver = regimeResolver;
+        this.surfaces = surfaces;
+        this.shading = shading;
         this.renderer = renderer;
+        this.artwork = null;
     }
 
     async importArtwork(file) {
-        const artwork = await this.artworkLoader(file);
-        this.render(artwork);
+        this.artwork = await this.artworkLoader(file);
+        this.render();
     }
 
-    render(artwork) {
-        this.renderer.beginFrame(artwork);
+    updateSurface(parameters) {
+        this.parameters.configure(parameters);
 
-        for (let sourceX = 0; sourceX < artwork.width; sourceX += 1) {
-            const column = artwork.columnAt(sourceX);
-            const placement = this.geometry.mapColumn(column);
+        if (this.artwork) {
+            this.render();
+        }
+    }
 
-            if (!this.visibility.isVisible(column, placement)) {
-                continue;
-            }
+    render() {
+        if (!this.artwork) {
+            return;
+        }
 
-            const appearance = this.visibility.appearanceFor(column, placement);
-            this.renderer.drawColumn(column, placement, appearance);
+        const parameters = this.parameters.resolve();
+        const regime = this.regimeResolver.resolve(parameters);
+        const surface = this.surfaces[regime];
+
+        this.renderer.beginFrame(surface.frameFor(this.artwork, parameters));
+
+        for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
+            const column = this.artwork.columnAt(sourceX);
+            const placement = surface.mapColumn(column, parameters);
+            const opacity = this.shading.factorFor(placement, parameters);
+
+            this.renderer.drawColumn(
+                column,
+                { x: placement.targetX, y: placement.targetY },
+                { opacity }
+            );
         }
 
         this.renderer.endFrame();

@@ -30,13 +30,20 @@ export class CanvasColumnRenderer {
 
     drawColumn(column, placement, appearance) {
         this.#context.save();
-        this.#context.globalAlpha = appearance.opacity;
         this.#context.drawImage(
             column.source,
             column.sourceX,
             column.sourceY,
             column.width,
             column.height,
+            placement.x,
+            placement.y,
+            column.width,
+            column.height
+        );
+        this.#context.globalCompositeOperation = "source-atop";
+        this.#context.fillStyle = `rgba(0, 0, 0, ${1 - appearance.opacity})`;
+        this.#context.fillRect(
             placement.x,
             placement.y,
             column.width,
