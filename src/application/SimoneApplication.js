@@ -46,6 +46,7 @@ export class SimoneApplication {
                 ? surface.mapColumn(this.artwork.columnAt(sourceX + 1), parameters)
                 : null;
             const destinationWidth = nextPlacement
+                && nextPlacement.branch === placement.branch
                 ? nextPlacement.targetX - placement.targetX
                 : lastDestinationWidth;
             const brightness = this.shading.factorFor(placement, parameters);
@@ -61,7 +62,11 @@ export class SimoneApplication {
                     y: placement.targetY,
                     width: destinationWidth
                 },
-                { brightness, alpha: placement.alpha }
+                {
+                    brightness,
+                    alpha: placement.alpha,
+                    branch: placement.branch
+                }
             );
         }
 

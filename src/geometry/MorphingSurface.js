@@ -76,21 +76,23 @@ function resolvePeriod(parameters) {
         projectedWidth,
         frontArc,
         rearArc,
-        rearAlpha: 1 - progress,
+        rearAlpha: progress < 1 ? 1 : 0,
         horizontalOffset: foldMaterialLength / (2 * Math.PI),
         depthExtent: foldMaterialLength / Math.PI
     });
 }
 
 function balanceProgressFor(parameters) {
-    if (parameters.modelTransition <= parameters.closedLimit) {
-        return parameters.currentPosition >= parameters.modelTransition ? 1 : 0;
+    const modelTransition = 1 - parameters.modelTransition;
+
+    if (modelTransition >= parameters.maximumVisibleFactor) {
+        return parameters.visibleFactor <= modelTransition ? 1 : 0;
     }
 
     const progress = (
-        parameters.currentPosition - parameters.closedLimit
+        parameters.maximumVisibleFactor - parameters.visibleFactor
     ) / (
-        parameters.modelTransition - parameters.closedLimit
+        parameters.maximumVisibleFactor - modelTransition
     );
 
     return clamp(progress, 0, 1);
@@ -98,18 +100,21 @@ function balanceProgressFor(parameters) {
 
 function resolveArc(materialLength, chordLength) {
     const chordRatio = clamp(chordLength / materialLength, 0, 1);
-    const angle = solveCentralAngle(chordRatio);
+    const physicalAngle = solveCentralAngle(chordRatio);
 
-    if (angle === 0) {
+    if (physicalAngle === 0) {
         return Object.freeze({
             materialLength,
             chordLength,
-            angle,
+            angle: 0,
             radius: Infinity
         });
     }
 
-    const radius = materialLength / angle;
+    const radius = materialLength / physicalAngle;
+    const angle = physicalAngle <= Math.PI
+        ? physicalAngle
+        : 2 * Math.PI - physicalAngle;
 
     return Object.freeze({
         materialLength,
@@ -158,7 +163,7 @@ function placeOnArc(distanceAlongFold, orientation, arc) {
 
     if (arc.angle === 0) {
         return Object.freeze({
-            x: distanceAlongFold,
+            x: arc.chordLength * distanceAlongFold / arc.materialLength,
             y: 0,
             slope: 0
         });
