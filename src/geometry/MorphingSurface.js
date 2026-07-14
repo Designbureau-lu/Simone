@@ -1,77 +1,202 @@
 import { OpeningResponsiveSurface } from "./OpeningResponsiveSurface.js";
 
-/**
- * Experimental continuous family of periodic profiles.
- *
- * profileShape zero reproduces SineSurface exactly. Increasing it applies a
- * smooth power transformation that broadens one face and tightens the valley.
- * This remains experimental geometry, not a physical fold model.
- */
+/** Constant-length circular-arc geometry for repeating folds. */
 export class MorphingSurface extends OpeningResponsiveSurface {
     frameFor(artwork, parameters) {
-        const amplitude = this.amplitudeFor(parameters);
+        const period = resolvePeriod(parameters);
+        this.period = period;
 
         return Object.freeze({
             width: artwork.width,
-            height: artwork.height + 2 * amplitude
+            height: artwork.height + 2 * period.depthExtent
         });
     }
 
     mapColumn(column, parameters) {
-        const amplitude = this.amplitudeFor(parameters);
+        const period = this.period ?? resolvePeriod(parameters);
         const sourceX = column.sourceX;
-        const targetX = sourceX / parameters.gathering;
-        const phase = (2 * Math.PI * sourceX) / parameters.carrierDistance;
+        const periodIndex = Math.floor(sourceX / period.artworkPeriodLength);
+        const distanceAlongPeriod = sourceX
+            - periodIndex * period.artworkPeriodLength;
+        const isFront = period.rearArtworkLength === 0
+            || distanceAlongPeriod < period.frontArtworkLength;
+        const arc = isFront ? period.frontArc : period.rearArc;
+        const artworkLength = isFront
+            ? period.frontArtworkLength
+            : period.rearArtworkLength;
+        const orientation = isFront ? -1 : 1;
+        const distanceAlongFold = arc.materialLength
+            * (isFront
+                ? distanceAlongPeriod
+                : distanceAlongPeriod - period.frontArtworkLength)
+            / artworkLength;
+        const placement = placeOnArc(distanceAlongFold, orientation, arc);
+        const foldOffset = isFront ? 0 : period.frontArc.chordLength;
+        const targetX = period.horizontalOffset
+            + periodIndex * period.projectedWidth
+            + foldOffset
+            + placement.x;
+        const targetY = period.depthExtent + placement.y;
+        const branch = isFront ? "front" : "rear";
+        const alpha = isFront ? 1 : period.rearAlpha;
 
-        if (parameters.profileShape === 0) {
-            return mapSineColumn(sourceX, targetX, phase, amplitude, parameters);
-        }
-
-        return mapMorphedColumn(sourceX, targetX, phase, amplitude, parameters);
+        return createPlacement(
+            sourceX,
+            targetX,
+            targetY,
+            placement.slope,
+            branch,
+            alpha,
+            arc.chordLength
+        );
     }
 }
 
-/** Preserves the original equations and evaluation order at profileShape zero. */
-function mapSineColumn(sourceX, targetX, phase, amplitude, parameters) {
-    const targetY = amplitude + amplitude * Math.sin(phase);
-    const localSlope = amplitude
-        * (2 * Math.PI / parameters.projectedCarrierSpacing)
-        * Math.cos(phase);
-
-    return createPlacement(sourceX, targetX, targetY, localSlope);
-}
-
-function mapMorphedColumn(sourceX, targetX, phase, amplitude, parameters) {
-    const profile = calculateMorphingProfile(phase, parameters.profileShape);
-    const targetY = 2 * amplitude * profile.value;
-    const localSlope = 2
-        * amplitude
-        * profile.phaseDerivative
-        * (2 * Math.PI / parameters.projectedCarrierSpacing);
-
-    return createPlacement(sourceX, targetX, targetY, localSlope);
-}
-
-/** Returns a normalized profile and its analytic derivative by phase. */
-export function calculateMorphingProfile(phase, profileShape) {
-    const normalizedSine = (1 + Math.sin(phase)) / 2;
-    const exponent = 1 + 3 * profileShape;
-    const inverseFace = 1 - normalizedSine;
+function resolvePeriod(parameters) {
+    const foldMaterialLength = parameters.carrierDistance;
+    const projectedWidth = parameters.projectedCarrierSpacing;
+    const progress = balanceProgressFor(parameters);
+    const frontBalance = 0.5 + 0.5 * progress;
+    const rearBalance = 0.5 - 0.5 * progress;
+    const frontMaterialLength = foldMaterialLength * frontBalance;
+    const rearMaterialLength = foldMaterialLength * rearBalance;
+    const frontArc = resolveArc(
+        frontMaterialLength,
+        projectedWidth * frontBalance
+    );
+    const rearArc = rearBalance === 0
+        ? resolveHiddenArc(0)
+        : resolveArc(rearMaterialLength, projectedWidth * rearBalance);
 
     return Object.freeze({
-        value: 1 - inverseFace ** exponent,
-        phaseDerivative: exponent
-            * inverseFace ** (exponent - 1)
-            * Math.cos(phase)
-            / 2
+        foldMaterialLength,
+        artworkPeriodLength: foldMaterialLength,
+        frontArtworkLength: foldMaterialLength * frontBalance,
+        rearArtworkLength: foldMaterialLength * rearBalance,
+        projectedWidth,
+        frontArc,
+        rearArc,
+        rearAlpha: 1 - progress,
+        horizontalOffset: foldMaterialLength / (2 * Math.PI),
+        depthExtent: foldMaterialLength / Math.PI
     });
 }
 
-export function createPlacement(sourceX, targetX, targetY, localSlope) {
+function balanceProgressFor(parameters) {
+    if (parameters.modelTransition <= parameters.closedLimit) {
+        return parameters.currentPosition >= parameters.modelTransition ? 1 : 0;
+    }
+
+    const progress = (
+        parameters.currentPosition - parameters.closedLimit
+    ) / (
+        parameters.modelTransition - parameters.closedLimit
+    );
+
+    return clamp(progress, 0, 1);
+}
+
+function resolveArc(materialLength, chordLength) {
+    const chordRatio = clamp(chordLength / materialLength, 0, 1);
+    const angle = solveCentralAngle(chordRatio);
+
+    if (angle === 0) {
+        return Object.freeze({
+            materialLength,
+            chordLength,
+            angle,
+            radius: Infinity
+        });
+    }
+
+    const radius = materialLength / angle;
+
+    return Object.freeze({
+        materialLength,
+        chordLength,
+        angle,
+        radius
+    });
+}
+
+function resolveHiddenArc(materialLength) {
+    return Object.freeze({
+        materialLength,
+        chordLength: 0,
+        angle: 0,
+        radius: Infinity,
+        hidden: true
+    });
+}
+
+function solveCentralAngle(chordRatio) {
+    if (chordRatio >= 1) {
+        return 0;
+    }
+
+    let lower = 0;
+    let upper = 2 * Math.PI;
+
+    for (let iteration = 0; iteration < 60; iteration += 1) {
+        const middle = (lower + upper) / 2;
+        const middleRatio = 2 * Math.sin(middle / 2) / middle;
+
+        if (middleRatio > chordRatio) {
+            lower = middle;
+        } else {
+            upper = middle;
+        }
+    }
+
+    return (lower + upper) / 2;
+}
+
+function placeOnArc(distanceAlongFold, orientation, arc) {
+    if (arc.hidden) {
+        return Object.freeze({ x: 0, y: 0, slope: 0 });
+    }
+
+    if (arc.angle === 0) {
+        return Object.freeze({
+            x: distanceAlongFold,
+            y: 0,
+            slope: 0
+        });
+    }
+
+    const halfAngle = arc.angle / 2;
+    const angle = -halfAngle
+        + arc.angle * distanceAlongFold / arc.materialLength;
+    const sine = Math.sin(angle);
+    const cosine = Math.cos(angle);
+
+    return Object.freeze({
+        x: arc.radius * (sine + Math.sin(halfAngle)),
+        y: orientation * arc.radius * (cosine - Math.cos(halfAngle)),
+        slope: -orientation * sine / cosine
+    });
+}
+
+export function createPlacement(
+    sourceX,
+    targetX,
+    targetY,
+    localSlope,
+    branch,
+    alpha,
+    allocatedWidth
+) {
     return Object.freeze({
         sourceX,
         targetX,
         targetY,
-        localSlope
+        localSlope,
+        branch,
+        alpha,
+        allocatedWidth
     });
+}
+
+function clamp(value, minimum, maximum) {
+    return Math.min(Math.max(value, minimum), maximum);
 }

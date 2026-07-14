@@ -1,22 +1,19 @@
 /**
- * Owns physical curtain parameters and SIMONE approximation parameters.
- *
- * The physical operating position is bounded by closed and open limits. Model
- * transition is explicitly separate and controls only the approximation.
+ * Owns user-facing visibility parameters and resolves physical geometry values.
  */
 export class SurfaceParameters {
     constructor({
-        closedLimit = 0.2,
-        openLimit = 0.9,
-        currentPosition = 0.55,
+        minimumVisibleFactor = 0.2,
+        maximumVisibleFactor = 0.9,
+        visibleFactor = 0.55,
         amplitude = 20,
         carrierDistance = 100,
         modelTransition = 0.6
     } = {}) {
         this.configure({
-            closedLimit,
-            openLimit,
-            currentPosition,
+            minimumVisibleFactor,
+            maximumVisibleFactor,
+            visibleFactor,
             amplitude,
             carrierDistance,
             modelTransition
@@ -24,25 +21,29 @@ export class SurfaceParameters {
     }
 
     configure({
-        closedLimit = this.closedLimit,
-        openLimit = this.openLimit,
-        currentPosition = this.currentPosition,
+        minimumVisibleFactor = this.minimumVisibleFactor,
+        maximumVisibleFactor = this.maximumVisibleFactor,
+        visibleFactor = this.visibleFactor,
         amplitude = this.amplitude,
         carrierDistance = this.carrierDistance,
         modelTransition = this.modelTransition
     }) {
         validateParameters({
-            closedLimit,
-            openLimit,
-            currentPosition,
+            minimumVisibleFactor,
+            maximumVisibleFactor,
+            visibleFactor,
             amplitude,
             carrierDistance,
             modelTransition
         });
 
-        this.closedLimit = closedLimit;
-        this.openLimit = openLimit;
-        this.currentPosition = clamp(currentPosition, closedLimit, openLimit);
+        this.minimumVisibleFactor = minimumVisibleFactor;
+        this.maximumVisibleFactor = maximumVisibleFactor;
+        this.visibleFactor = clamp(
+            visibleFactor,
+            minimumVisibleFactor,
+            maximumVisibleFactor
+        );
         this.amplitude = amplitude;
         this.carrierDistance = carrierDistance;
         this.modelTransition = modelTransition;
@@ -50,33 +51,40 @@ export class SurfaceParameters {
 
     /** Returns the effective parameters consumed by geometry and shading. */
     resolve() {
+        const currentPosition = 1 - this.visibleFactor;
+        const closedLimit = 1 - this.maximumVisibleFactor;
+        const openLimit = 1 - this.minimumVisibleFactor;
+        const modelTransition = 1 - this.modelTransition;
         const gatheringProgress = normalizeOperatingPosition(
-            this.currentPosition,
-            this.closedLimit,
-            this.openLimit
+            currentPosition,
+            closedLimit,
+            openLimit
         );
-        const gathering = resolveGeometryGathering(this.currentPosition);
+        const gathering = resolveGeometryGathering(currentPosition);
         const projectedCarrierSpacing = resolveProjectedCarrierSpacing(
             this.carrierDistance,
-            this.currentPosition
+            currentPosition
         );
 
         return Object.freeze({
-            closedLimit: this.closedLimit,
-            openLimit: this.openLimit,
-            currentPosition: this.currentPosition,
+            minimumVisibleFactor: this.minimumVisibleFactor,
+            maximumVisibleFactor: this.maximumVisibleFactor,
+            visibleFactor: this.visibleFactor,
+            closedLimit,
+            openLimit,
+            currentPosition,
             gathering,
             amplitude: this.amplitude,
             carrierDistance: this.carrierDistance,
             projectedCarrierSpacing,
-            modelTransition: this.modelTransition,
+            modelTransition,
             gatheringProgress,
-            transitionStart: this.modelTransition,
-            transitionEnd: this.modelTransition,
-            profileShape: resolveProfileShape(gatheringProgress, this.modelTransition),
+            transitionStart: modelTransition,
+            transitionEnd: modelTransition,
+            profileShape: resolveProfileShape(gatheringProgress, modelTransition),
             contactedNarrowing: resolveContactedNarrowing(
                 gatheringProgress,
-                this.modelTransition
+                modelTransition
             )
         });
     }
@@ -84,18 +92,28 @@ export class SurfaceParameters {
 }
 
 function validateParameters(parameters) {
-    const { closedLimit, openLimit, currentPosition } = parameters;
+    const {
+        minimumVisibleFactor,
+        maximumVisibleFactor,
+        visibleFactor
+    } = parameters;
 
-    if (!Number.isFinite(closedLimit) || closedLimit <= 0 || closedLimit > 1) {
-        throw new RangeError("Closed limit must be greater than 0 and at most 1.");
+    if (!Number.isFinite(minimumVisibleFactor)
+        || minimumVisibleFactor < 0
+        || minimumVisibleFactor > 1) {
+        throw new RangeError("Minimum Visible Factor must be between 0 and 1.");
     }
 
-    if (!Number.isFinite(openLimit) || openLimit < closedLimit || openLimit > 1) {
-        throw new RangeError("Open limit must be between closed limit and 1.");
+    if (!Number.isFinite(maximumVisibleFactor)
+        || maximumVisibleFactor < minimumVisibleFactor
+        || maximumVisibleFactor > 1) {
+        throw new RangeError(
+            "Maximum Visible Factor must be between the minimum factor and 1."
+        );
     }
 
-    if (!Number.isFinite(currentPosition)) {
-        throw new RangeError("Current position must be finite.");
+    if (!Number.isFinite(visibleFactor)) {
+        throw new RangeError("Visible Factor must be finite.");
     }
 
     if (!Number.isFinite(parameters.amplitude) || parameters.amplitude < 0) {
@@ -129,7 +147,8 @@ function resolveGeometryGathering(currentPosition) {
 /** Projects fixed fully-open carrier spacing into the current curtain width. */
 function resolveProjectedCarrierSpacing(carrierDistance, currentPosition) {
     const millimetresPerPixel = 1;
-    const projectedMillimetres = carrierDistance * currentPosition;
+    const openingFactor = 1 - currentPosition;
+    const projectedMillimetres = carrierDistance * openingFactor;
 
     return projectedMillimetres / millimetresPerPixel;
 }

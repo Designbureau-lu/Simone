@@ -29,7 +29,12 @@ export class CanvasColumnRenderer {
     }
 
     drawColumn(column, placement, appearance) {
+        if (appearance.alpha <= 0) {
+            return;
+        }
+
         this.#context.save();
+        this.#context.globalAlpha = appearance.alpha;
         this.#context.drawImage(
             column.source,
             column.sourceX,
@@ -38,15 +43,16 @@ export class CanvasColumnRenderer {
             column.height,
             placement.x,
             placement.y,
-            column.width,
+            placement.width,
             column.height
         );
+        this.#context.globalAlpha = 1;
         this.#context.globalCompositeOperation = "source-atop";
-        this.#context.fillStyle = `rgba(0, 0, 0, ${1 - appearance.opacity})`;
+        this.#context.fillStyle = `rgba(0, 0, 0, ${1 - appearance.brightness})`;
         this.#context.fillRect(
             placement.x,
             placement.y,
-            column.width,
+            placement.width,
             column.height
         );
         this.#context.restore();

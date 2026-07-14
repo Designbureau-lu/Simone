@@ -51,9 +51,9 @@ export function startSimone() {
 
 function getSurfaceControls() {
     const controls = {
-        closedLimit: getControlPair("closedLimit"),
-        openLimit: getControlPair("openLimit"),
-        currentPosition: getControlPair("currentPosition"),
+        minimumVisibleFactor: getControlPair("minimumVisibleFactor"),
+        maximumVisibleFactor: getControlPair("maximumVisibleFactor"),
+        visibleFactor: getControlPair("visibleFactor"),
         amplitude: getControlPair("amplitude"),
         carrierDistance: getControlPair("carrierDistance"),
         modelTransition: getControlPair("modelTransition")
@@ -80,68 +80,76 @@ function getControlPair(name) {
 function bindSurfaceControls(controls, application) {
     const updateApplication = () => {
         application.updateSurface({
-            closedLimit: Number(controls.closedLimit.range.value) / 100,
-            openLimit: Number(controls.openLimit.range.value) / 100,
-            currentPosition: Number(controls.currentPosition.number.value) / 100,
+            minimumVisibleFactor:
+                Number(controls.minimumVisibleFactor.range.value) / 100,
+            maximumVisibleFactor:
+                Number(controls.maximumVisibleFactor.range.value) / 100,
+            visibleFactor: Number(controls.visibleFactor.number.value) / 100,
             amplitude: Number(controls.amplitude.range.value),
             carrierDistance: Number(controls.carrierDistance.range.value),
             modelTransition: Number(controls.modelTransition.range.value) / 100
         });
     };
 
-    bindControlPair(controls.closedLimit, () => {
-        constrainPositionControls(controls, "closed");
+    bindControlPair(controls.minimumVisibleFactor, () => {
+        constrainVisibleFactorControls(controls, "minimum");
         updateApplication();
     });
-    bindControlPair(controls.openLimit, () => {
-        constrainPositionControls(controls, "open");
+    bindControlPair(controls.maximumVisibleFactor, () => {
+        constrainVisibleFactorControls(controls, "maximum");
         updateApplication();
     });
-    bindCurrentPositionControl(controls, updateApplication);
+    bindVisibleFactorControl(controls, updateApplication);
     bindControlPair(controls.amplitude, updateApplication);
     bindControlPair(controls.carrierDistance, updateApplication);
     bindControlPair(controls.modelTransition, updateApplication);
 
-    constrainPositionControls(controls);
+    constrainVisibleFactorControls(controls);
     updateApplication();
 }
 
-function constrainPositionControls(controls, changedBoundary) {
-    let closed = Number(controls.closedLimit.range.value);
-    let open = Number(controls.openLimit.range.value);
+function constrainVisibleFactorControls(controls, changedBoundary) {
+    let minimum = Number(controls.minimumVisibleFactor.range.value);
+    let maximum = Number(controls.maximumVisibleFactor.range.value);
 
-    if (closed > open && changedBoundary === "closed") {
-        open = closed;
-        setControlPairValue(controls.openLimit, open);
-    } else if (open < closed && changedBoundary === "open") {
-        closed = open;
-        setControlPairValue(controls.closedLimit, closed);
+    if (minimum > maximum && changedBoundary === "minimum") {
+        maximum = minimum;
+        setControlPairValue(controls.maximumVisibleFactor, maximum);
+    } else if (maximum < minimum && changedBoundary === "maximum") {
+        minimum = maximum;
+        setControlPairValue(controls.minimumVisibleFactor, minimum);
     }
 
-    controls.currentPosition.number.min = String(closed);
-    controls.currentPosition.number.max = String(open);
+    controls.visibleFactor.number.min = String(minimum);
+    controls.visibleFactor.number.max = String(maximum);
 
-    const current = clamp(Number(controls.currentPosition.number.value), closed, open);
-    setCurrentPositionFromPhysical(controls, current);
+    const visibleFactor = clamp(
+        Number(controls.visibleFactor.number.value),
+        minimum,
+        maximum
+    );
+    setVisibleFactor(controls, visibleFactor);
 }
 
-function bindCurrentPositionControl(controls, onUpdate) {
-    const pair = controls.currentPosition;
+function bindVisibleFactorControl(controls, onUpdate) {
+    const pair = controls.visibleFactor;
 
     pair.range.addEventListener("input", () => {
-        const closed = Number(controls.closedLimit.range.value);
-        const open = Number(controls.openLimit.range.value);
+        const minimum = Number(controls.minimumVisibleFactor.range.value);
+        const maximum = Number(controls.maximumVisibleFactor.range.value);
         const progress = Number(pair.range.value) / 100;
-        pair.number.value = formatPosition(closed + progress * (open - closed));
+        pair.number.value = formatPosition(
+            minimum + progress * (maximum - minimum)
+        );
         onUpdate();
     });
 
     const updateFromNumber = () => {
-        const closed = Number(controls.closedLimit.range.value);
-        const open = Number(controls.openLimit.range.value);
-        setCurrentPositionFromPhysical(
+        const minimum = Number(controls.minimumVisibleFactor.range.value);
+        const maximum = Number(controls.maximumVisibleFactor.range.value);
+        setVisibleFactor(
             controls,
-            clamp(Number(pair.number.value), closed, open)
+            clamp(Number(pair.number.value), minimum, maximum)
         );
         onUpdate();
     };
@@ -150,14 +158,14 @@ function bindCurrentPositionControl(controls, onUpdate) {
     pair.number.addEventListener("change", updateFromNumber);
 }
 
-function setCurrentPositionFromPhysical(controls, physicalPosition) {
-    const closed = Number(controls.closedLimit.range.value);
-    const open = Number(controls.openLimit.range.value);
-    const range = open - closed;
-    const progress = range === 0 ? 0 : (physicalPosition - closed) / range;
+function setVisibleFactor(controls, visibleFactor) {
+    const minimum = Number(controls.minimumVisibleFactor.range.value);
+    const maximum = Number(controls.maximumVisibleFactor.range.value);
+    const range = maximum - minimum;
+    const progress = range === 0 ? 0 : (visibleFactor - minimum) / range;
 
-    controls.currentPosition.range.value = String(progress * 100);
-    controls.currentPosition.number.value = formatPosition(physicalPosition);
+    controls.visibleFactor.range.value = String(progress * 100);
+    controls.visibleFactor.number.value = formatPosition(visibleFactor);
 }
 
 function bindControlPair(pair, onUpdate) {

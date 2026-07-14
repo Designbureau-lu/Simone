@@ -37,16 +37,31 @@ export class SimoneApplication {
         const surface = this.surfaces[regime];
 
         this.renderer.beginFrame(surface.frameFor(this.artwork, parameters));
+        let lastDestinationWidth = 1;
 
         for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
             const column = this.artwork.columnAt(sourceX);
             const placement = surface.mapColumn(column, parameters);
-            const opacity = this.shading.factorFor(placement, parameters);
+            const nextPlacement = sourceX + 1 < this.artwork.width
+                ? surface.mapColumn(this.artwork.columnAt(sourceX + 1), parameters)
+                : null;
+            const destinationWidth = nextPlacement
+                ? nextPlacement.targetX - placement.targetX
+                : lastDestinationWidth;
+            const brightness = this.shading.factorFor(placement, parameters);
+
+            if (destinationWidth !== 0) {
+                lastDestinationWidth = destinationWidth;
+            }
 
             this.renderer.drawColumn(
                 column,
-                { x: placement.targetX, y: placement.targetY },
-                { opacity }
+                {
+                    x: placement.targetX,
+                    y: placement.targetY,
+                    width: destinationWidth
+                },
+                { brightness, alpha: placement.alpha }
             );
         }
 
