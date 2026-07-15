@@ -2,6 +2,8 @@
  * Geometry placement contract returned by `mapColumn()`:
  *
  * - `sourceX`: geometry-owned source-column coordinate; used for diagnostics.
+ * - `periodIndex`: geometry-owned CurtainField Period identity; used by the
+ *   application to select local resolved parameters for shading.
  * - `targetX`: geometry-owned horizontal destination coordinate; the
  *   application compares adjacent values to derive rasterized column width.
  * - `targetY`: geometry-owned vertical destination coordinate; consumed by
@@ -20,8 +22,9 @@
  * own its `foldProgress`; shading owns `brightness` and the frame-level
  * Rear/crest/valley appearance settings. The application
  * forwards geometry's `alpha`, `branch`, and `localSlope` alongside shading's
- * `brightness`; it derives renderer `x`, `y`, and `width` from adjacent geometry
- * placements. The renderer assumes placements arrive in immutable
+ * local `brightness` and `foldProgress`; it derives renderer `x`, `y`, and
+ * `width` from adjacent geometry placements. The renderer assumes placements
+ * arrive in immutable
  * artwork-column order. It identifies fold boundaries from branch changes and
  * from the documented Front/Rear slope-direction reset.
  *

@@ -76,6 +76,7 @@ export class CircularFoldSurface extends OpeningResponsiveSurface {
 
         return createPlacement(
             sourceX,
+            periodIndex,
             targetX,
             targetY,
             placement.slope,
@@ -202,6 +203,7 @@ function placeOnArc(distanceAlongFold, orientation, arc) {
 
 export function createPlacement(
     sourceX,
+    periodIndex,
     targetX,
     targetY,
     localSlope,
@@ -211,6 +213,7 @@ export function createPlacement(
 ) {
     return Object.freeze({
         sourceX,
+        periodIndex,
         targetX,
         targetY,
         localSlope,

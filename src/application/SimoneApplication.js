@@ -47,6 +47,33 @@ export class SimoneApplication {
         }
     }
 
+    beginLocalInteraction(targetX) {
+        if (!this.artwork) {
+            return null;
+        }
+
+        const fieldX = Math.max(
+            0,
+            targetX - this.parameters.carrierDistance / (2 * Math.PI)
+        );
+
+        return this.curtainField.beginLocalInteraction(fieldX);
+    }
+
+    updateLocalInteraction(interaction, horizontalDisplacement) {
+        const visibleFactor = this.curtainField.applyLocalDisplacement(
+            interaction,
+            horizontalDisplacement,
+            this.parameters.carrierDistance,
+            this.parameters.minimumVisibleFactor,
+            this.parameters.maximumVisibleFactor
+        );
+
+        this.render();
+
+        return visibleFactor;
+    }
+
     render() {
         if (!this.artwork) {
             return;
@@ -55,7 +82,7 @@ export class SimoneApplication {
         const parameters = this.curtainField.resolve(this.parameters);
         const phase = this.phaseResolver.resolve(parameters);
         const surface = this.surfaces[phase];
-        const appearance = this.shading.appearanceFor(parameters);
+        const appearance = this.shading.appearanceFor();
 
         this.renderer.beginFrame(
             surface.frameFor(this.artwork, this.curtainField),
@@ -76,7 +103,13 @@ export class SimoneApplication {
                 && nextPlacement.branch === placement.branch
                 ? nextPlacement.targetX - placement.targetX
                 : lastDestinationWidth;
-            const brightness = this.shading.factorFor(placement, parameters);
+            const localParameters = this.curtainField.resolvedParametersAt(
+                placement.periodIndex
+            );
+            const brightness = this.shading.factorFor(
+                placement,
+                localParameters
+            );
 
             if (destinationWidth !== 0) {
                 lastDestinationWidth = destinationWidth;
@@ -93,7 +126,8 @@ export class SimoneApplication {
                     brightness,
                     alpha: placement.alpha,
                     branch: placement.branch,
-                    localSlope: placement.localSlope
+                    localSlope: placement.localSlope,
+                    foldProgress: localParameters.foldProgress
                 }
             );
         }

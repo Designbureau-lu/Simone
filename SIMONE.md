@@ -49,8 +49,9 @@ the canonical interaction coordinate:
   range.
 
 Resolved values include projected carrier spacing and the authoritative
-`foldProgress` used by both geometry and shading. Slider and drag interaction
-currently assign the same Visible Factor to every Period.
+`foldProgress` used by both geometry and shading. Slider interaction assigns one
+Visible Factor to every Period; direct dragging redistributes local Period
+values.
 
 ### Geometry
 
@@ -157,9 +158,10 @@ values, without crossing branch boundaries.
 
 ### Shading responsibilities
 
-Shading owns appearance values and tuning constants. Rear darkening follows the
-shared pre-transition progress. Crest and valley settings describe stable,
-lightweight visual cues; they do not alter geometry or source artwork.
+Shading owns appearance values and tuning constants. Rear darkening and valley
+shadow modulation follow each Period's local pre-transition progress. Crest and
+valley settings describe stable, lightweight visual cues; they do not alter
+geometry or source artwork.
 
 ### Renderer responsibilities
 

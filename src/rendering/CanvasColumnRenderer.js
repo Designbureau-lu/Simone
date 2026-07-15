@@ -78,7 +78,8 @@ export class CanvasColumnRenderer {
             destinationWidth,
             column.height,
             appearance.branch,
-            appearance.localSlope
+            appearance.localSlope,
+            appearance.foldProgress
         );
 
         if (appearance.branch === "rear") {
@@ -172,7 +173,7 @@ export class CanvasColumnRenderer {
         addGradientStops(
             gradient,
             settings,
-            this.#appearance.foldProgress
+            region.foldProgress
         );
         this.#context.fillStyle = gradient;
         this.#context.fillRect(
@@ -189,7 +190,8 @@ export class CanvasColumnRenderer {
         width,
         height,
         branch,
-        localSlope
+        localSlope,
+        foldProgress
     ) {
         if (this.#startsNewFold(branch, localSlope)) {
             this.#finishFoldRegion();
@@ -210,7 +212,8 @@ export class CanvasColumnRenderer {
                 crestX: center,
                 crestSlope: Math.abs(localSlope),
                 crestSampleCount: 1,
-                previousSlope: localSlope
+                previousSlope: localSlope,
+                foldProgress
             };
             return;
         }

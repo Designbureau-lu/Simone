@@ -53,8 +53,9 @@ Canvas
   Front and Rear folds.
 - **Placement objects** are immutable geometry results. The application derives
   raster width from adjacent placements without changing their meaning.
-- **`SurfaceShading`** supplies branch brightness and frame-level appearance
-  settings. It does not alter geometry or artwork.
+- **`SurfaceShading`** supplies local branch brightness from each Period's
+  resolved parameters and global appearance tuning. It does not alter geometry
+  or artwork.
 - **`CanvasColumnRenderer`** draws source columns and applies lightweight,
   batched appearance cues.
 - **Canvas** is the final browser presentation surface.
@@ -223,6 +224,7 @@ immutable artwork column.
 | Field | Producer | Consumer | Meaning |
 | --- | --- | --- | --- |
 | `sourceX` | Geometry | Diagnostics and geometry-aware consumers | Original horizontal source-column coordinate. |
+| `periodIndex` | Geometry | Application | Identity used to retrieve the Period's local resolved shading parameters. |
 | `targetX` | Geometry | Application and renderer | Horizontal destination coordinate in the output frame. |
 | `targetY` | Geometry | Renderer | Vertical destination coordinate in the output frame. |
 | `localSlope` | Geometry | Renderer; available to shading | Analytical slope at the mapped point. The renderer uses slope continuity to locate fold regions and crests. |
@@ -265,8 +267,9 @@ It does not draw.
 
 ### Shading
 
-Shading owns visual tuning and derives appearance values from resolved state and
-geometry metadata. It does not move columns or inspect artwork pixels.
+Shading owns global visual tuning and derives local modulation from each
+Period's resolved state and geometry metadata. It does not move columns or
+inspect artwork pixels.
 
 ### Renderer
 

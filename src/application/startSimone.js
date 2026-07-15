@@ -35,8 +35,8 @@ export function startSimone() {
         renderer: new CanvasColumnRenderer(canvas)
     });
 
-    const updateApplication = bindSurfaceControls(controls, application);
-    bindCurtainDragging(canvas, controls, updateApplication);
+    bindSurfaceControls(controls, application);
+    bindCurtainDragging(canvas, controls, application);
 
     fileInput.addEventListener("change", async (event) => {
         const file = event.target.files?.[0];
@@ -115,7 +115,7 @@ function bindSurfaceControls(controls, application) {
     return updateApplication;
 }
 
-function bindCurtainDragging(canvas, controls, onUpdate) {
+function bindCurtainDragging(canvas, controls, application) {
     let drag = null;
 
     canvas.addEventListener("pointerdown", (event) => {
@@ -123,16 +123,25 @@ function bindCurtainDragging(canvas, controls, onUpdate) {
             return;
         }
 
-        const width = canvas.getBoundingClientRect().width;
+        const bounds = canvas.getBoundingClientRect();
+        const width = bounds.width;
         if (width <= 0) {
+            return;
+        }
+
+        const canvasScale = canvas.width / width;
+        const targetX = (event.clientX - bounds.left) * canvasScale;
+        const interaction = application.beginLocalInteraction(targetX);
+
+        if (!interaction) {
             return;
         }
 
         drag = {
             pointerId: event.pointerId,
             startX: event.clientX,
-            startVisibleFactor: Number(controls.visibleFactor.number.value),
-            width
+            canvasScale,
+            interaction
         };
 
         canvas.setPointerCapture(event.pointerId);
@@ -145,23 +154,20 @@ function bindCurtainDragging(canvas, controls, onUpdate) {
             return;
         }
 
-        const minimum = Number(controls.minimumVisibleFactor.range.value);
-        const maximum = Number(controls.maximumVisibleFactor.range.value);
-        const range = maximum - minimum;
-        const horizontalProgress = (event.clientX - drag.startX) / drag.width;
-        const visibleFactor = clamp(
-            drag.startVisibleFactor + horizontalProgress * range,
-            minimum,
-            maximum
+        const horizontalDisplacement = (
+            event.clientX - drag.startX
+        ) * drag.canvasScale;
+        const visibleFactor = application.updateLocalInteraction(
+            drag.interaction,
+            horizontalDisplacement
         );
-        const formattedValue = Number(formatPosition(visibleFactor));
+        const formattedValue = Number(formatPosition(visibleFactor * 100));
 
         if (formattedValue === Number(controls.visibleFactor.number.value)) {
             return;
         }
 
         setVisibleFactor(controls, formattedValue);
-        onUpdate();
     });
 
     const finishDragging = (event) => {

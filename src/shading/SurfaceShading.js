@@ -62,11 +62,8 @@ export class SurfaceShading {
             * surface.foldProgress;
     }
 
-    appearanceFor(surface) {
-        return Object.freeze({
-            ...this.appearance,
-            foldProgress: surface.foldProgress
-        });
+    appearanceFor() {
+        return this.appearance;
     }
 }
 
