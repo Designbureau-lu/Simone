@@ -1,7 +1,7 @@
 import { OpeningResponsiveSurface } from "./OpeningResponsiveSurface.js";
 
 /** Constant-length circular-arc geometry for repeating folds. */
-export class MorphingSurface extends OpeningResponsiveSurface {
+export class CircularFoldSurface extends OpeningResponsiveSurface {
     frameFor(artwork, parameters) {
         const period = resolvePeriod(parameters);
         this.period = period;
@@ -55,7 +55,7 @@ export class MorphingSurface extends OpeningResponsiveSurface {
 function resolvePeriod(parameters) {
     const foldMaterialLength = parameters.carrierDistance;
     const projectedWidth = parameters.projectedCarrierSpacing;
-    const progress = balanceProgressFor(parameters);
+    const progress = parameters.foldProgress;
     const frontBalance = 0.5 + 0.5 * progress;
     const rearBalance = 0.5 - 0.5 * progress;
     const frontMaterialLength = foldMaterialLength * frontBalance;
@@ -80,22 +80,6 @@ function resolvePeriod(parameters) {
         horizontalOffset: foldMaterialLength / (2 * Math.PI),
         depthExtent: foldMaterialLength / Math.PI
     });
-}
-
-function balanceProgressFor(parameters) {
-    const modelTransition = 1 - parameters.modelTransition;
-
-    if (modelTransition >= parameters.maximumVisibleFactor) {
-        return parameters.visibleFactor <= modelTransition ? 1 : 0;
-    }
-
-    const progress = (
-        parameters.maximumVisibleFactor - parameters.visibleFactor
-    ) / (
-        parameters.maximumVisibleFactor - modelTransition
-    );
-
-    return clamp(progress, 0, 1);
 }
 
 function resolveArc(materialLength, chordLength) {

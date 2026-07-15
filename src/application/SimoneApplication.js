@@ -1,13 +1,13 @@
 /**
  * Application layer: coordinates the domain pipeline and owns no pixel logic.
  *
- * Artwork -> immutable columns -> regime -> surface geometry -> shading -> renderer
+ * Artwork -> immutable columns -> phase -> surface geometry -> shading -> renderer
  */
 export class SimoneApplication {
-    constructor({ artworkLoader, parameters, regimeResolver, surfaces, shading, renderer }) {
+    constructor({ artworkLoader, parameters, phaseResolver, surfaces, shading, renderer }) {
         this.artworkLoader = artworkLoader;
         this.parameters = parameters;
-        this.regimeResolver = regimeResolver;
+        this.phaseResolver = phaseResolver;
         this.surfaces = surfaces;
         this.shading = shading;
         this.renderer = renderer;
@@ -33,10 +33,14 @@ export class SimoneApplication {
         }
 
         const parameters = this.parameters.resolve();
-        const regime = this.regimeResolver.resolve(parameters);
-        const surface = this.surfaces[regime];
+        const phase = this.phaseResolver.resolve(parameters);
+        const surface = this.surfaces[phase];
+        const appearance = this.shading.appearanceFor(parameters);
 
-        this.renderer.beginFrame(surface.frameFor(this.artwork, parameters));
+        this.renderer.beginFrame(
+            surface.frameFor(this.artwork, parameters),
+            appearance
+        );
         let lastDestinationWidth = 1;
 
         for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
@@ -65,7 +69,8 @@ export class SimoneApplication {
                 {
                     brightness,
                     alpha: placement.alpha,
-                    branch: placement.branch
+                    branch: placement.branch,
+                    localSlope: placement.localSlope
                 }
             );
         }

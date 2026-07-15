@@ -65,6 +65,11 @@ export class SurfaceParameters {
             this.carrierDistance,
             currentPosition
         );
+        const foldProgress = resolveFoldProgress(
+            this.visibleFactor,
+            this.maximumVisibleFactor,
+            this.modelTransition
+        );
 
         return Object.freeze({
             minimumVisibleFactor: this.minimumVisibleFactor,
@@ -77,6 +82,7 @@ export class SurfaceParameters {
             amplitude: this.amplitude,
             carrierDistance: this.carrierDistance,
             projectedCarrierSpacing,
+            foldProgress,
             modelTransition,
             gatheringProgress,
             transitionStart: modelTransition,
@@ -89,6 +95,23 @@ export class SurfaceParameters {
         });
     }
 
+}
+
+function resolveFoldProgress(
+    visibleFactor,
+    maximumVisibleFactor,
+    modelTransition
+) {
+    if (modelTransition >= maximumVisibleFactor) {
+        return visibleFactor <= modelTransition ? 1 : 0;
+    }
+
+    return clamp(
+        (maximumVisibleFactor - visibleFactor)
+            / (maximumVisibleFactor - modelTransition),
+        0,
+        1
+    );
 }
 
 function validateParameters(parameters) {

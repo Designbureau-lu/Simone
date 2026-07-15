@@ -1,4 +1,39 @@
-/** Supplies a stable, branch-dependent depth cue. */
+const DEFAULT_APPEARANCE = Object.freeze({
+    rearDarkening: Object.freeze({
+        color: Object.freeze([0, 0, 0]),
+        strength: 0.15
+    }),
+    crestHighlight: Object.freeze({
+        color: Object.freeze([255, 255, 255]),
+        strength: 0.1,
+        widthFactor: 1.6,
+        minimumWidth: 30,
+        maximumWidth: 300,
+        stops: freezeStops([
+            [0, 0],
+            [0.12, 0.06],
+            [0.25, 0.28],
+            [0.38, 0.68],
+            [0.5, 1],
+            [0.62, 0.68],
+            [0.75, 0.28],
+            [0.88, 0.06],
+            [1, 0]
+        ])
+    }),
+    valleyShadow: Object.freeze({
+        color: Object.freeze([0, 0, 0]),
+        strength: 0.06,
+        stops: freezeStops([
+            [0, 1],
+            [0.22, 0],
+            [0.78, 0],
+            [1, 1]
+        ])
+    })
+});
+
+/** Owns all appearance tuning and supplies stable fold depth cues. */
 export class SurfaceShading {
     constructor({ rearBrightness = 0.85 } = {}) {
         if (!Number.isFinite(rearBrightness)
@@ -8,6 +43,13 @@ export class SurfaceShading {
         }
 
         this.rearBrightness = rearBrightness;
+        this.appearance = Object.freeze({
+            ...DEFAULT_APPEARANCE,
+            rearDarkening: Object.freeze({
+                ...DEFAULT_APPEARANCE.rearDarkening,
+                strength: 1 - rearBrightness
+            })
+        });
         Object.freeze(this);
     }
 
@@ -16,28 +58,21 @@ export class SurfaceShading {
             return 1;
         }
 
-        const progress = rearDarkeningProgressFor(surface);
-        const fullDarkness = 1 - this.rearBrightness;
+        return 1 - this.appearance.rearDarkening.strength
+            * surface.foldProgress;
+    }
 
-        return 1 - fullDarkness * progress;
+    appearanceFor(surface) {
+        return Object.freeze({
+            ...this.appearance,
+            foldProgress: surface.foldProgress
+        });
     }
 }
 
-function rearDarkeningProgressFor(surface) {
-    const modelTransition = 1 - surface.modelTransition;
-
-    if (modelTransition >= surface.maximumVisibleFactor) {
-        return surface.visibleFactor <= modelTransition ? 1 : 0;
-    }
-
-    return clamp(
-        (surface.maximumVisibleFactor - surface.visibleFactor)
-            / (surface.maximumVisibleFactor - modelTransition),
-        0,
-        1
-    );
-}
-
-function clamp(value, minimum, maximum) {
-    return Math.min(Math.max(value, minimum), maximum);
+function freezeStops(stops) {
+    return Object.freeze(stops.map(([offset, intensity]) => Object.freeze({
+        offset,
+        intensity
+    })));
 }

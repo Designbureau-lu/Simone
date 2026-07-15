@@ -1,7 +1,9 @@
 import { loadArtwork } from "../artwork/loadArtwork.js";
-import { ContactedFoldSurface } from "../geometry/ContactedFoldSurface.js";
-import { MorphingSurface } from "../geometry/MorphingSurface.js";
-import { RegimeResolver, SurfaceRegime } from "../geometry/RegimeResolver.js";
+import { CircularFoldSurface } from "../geometry/CircularFoldSurface.js";
+import {
+    OperatingPhase,
+    OperatingPhaseResolver
+} from "../geometry/OperatingPhaseResolver.js";
 import { CanvasColumnRenderer } from "../rendering/CanvasColumnRenderer.js";
 import { SurfaceShading } from "../shading/SurfaceShading.js";
 import { SurfaceParameters } from "../surface/SurfaceParameters.js";
@@ -17,15 +19,15 @@ export function startSimone() {
         throw new Error("SIMONE could not find its required interface elements.");
     }
 
-    const morphingSurface = new MorphingSurface();
+    const circularFoldSurface = new CircularFoldSurface();
     const application = new SimoneApplication({
         artworkLoader: loadArtwork,
         parameters: new SurfaceParameters(),
-        regimeResolver: new RegimeResolver(),
+        phaseResolver: new OperatingPhaseResolver(),
         surfaces: Object.freeze({
-            [SurfaceRegime.SEPARATED_FOLD]: morphingSurface,
-            [SurfaceRegime.CLOSURE_REGIME]: morphingSurface,
-            [SurfaceRegime.CONTACTED_FOLD]: new ContactedFoldSurface()
+            [OperatingPhase.PRE_TRANSITION]: circularFoldSurface,
+            [OperatingPhase.TRANSITION]: circularFoldSurface,
+            [OperatingPhase.POST_TRANSITION]: circularFoldSurface
         }),
         shading: new SurfaceShading(),
         renderer: new CanvasColumnRenderer(canvas)

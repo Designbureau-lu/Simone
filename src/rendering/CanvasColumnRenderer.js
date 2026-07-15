@@ -9,6 +9,9 @@ export class CanvasColumnRenderer {
     #context;
     #rearRegions = [];
     #activeRearRegion = null;
+    #foldRegions = [];
+    #activeFoldRegion = null;
+    #appearance;
 
     constructor(canvas) {
         if (!(canvas instanceof HTMLCanvasElement)) {
@@ -24,13 +27,16 @@ export class CanvasColumnRenderer {
         this.#context = context;
     }
 
-    beginFrame({ width, height }) {
+    beginFrame({ width, height }, appearance) {
         this.#canvas.width = width;
         this.#canvas.height = height;
+        this.#appearance = appearance;
         this.#context.imageSmoothingEnabled = false;
         this.#context.clearRect(0, 0, width, height);
         this.#rearRegions = [];
         this.#activeRearRegion = null;
+        this.#foldRegions = [];
+        this.#activeFoldRegion = null;
     }
 
     drawColumn(column, placement, appearance) {
@@ -66,6 +72,15 @@ export class CanvasColumnRenderer {
         );
         this.#context.restore();
 
+        this.#extendFoldRegion(
+            startX,
+            placement.y,
+            destinationWidth,
+            column.height,
+            appearance.branch,
+            appearance.localSlope
+        );
+
         if (appearance.branch === "rear") {
             this.#extendRearRegion(
                 startX,
@@ -79,25 +94,168 @@ export class CanvasColumnRenderer {
 
     endFrame() {
         this.#finishRearRegion();
+        this.#finishFoldRegion();
 
-        if (this.#rearRegions.length === 0) {
+        if (this.#rearRegions.length > 0) {
+            this.#context.save();
+            this.#context.globalCompositeOperation = "source-atop";
+
+            for (const region of this.#rearRegions) {
+                this.#context.fillStyle = colorWithOpacity(
+                    this.#appearance.rearDarkening.color,
+                    region.darkness
+                );
+                this.#context.fillRect(
+                    region.left,
+                    region.top,
+                    region.right - region.left,
+                    region.bottom - region.top
+                );
+            }
+
+            this.#context.restore();
+        }
+
+        this.#drawFoldCues();
+    }
+
+    #drawFoldCues() {
+        if (this.#foldRegions.length === 0) {
             return;
         }
 
         this.#context.save();
         this.#context.globalCompositeOperation = "source-atop";
 
-        for (const region of this.#rearRegions) {
-            this.#context.fillStyle = `rgba(0, 0, 0, ${region.darkness})`;
-            this.#context.fillRect(
-                region.left,
-                region.top,
-                region.right - region.left,
-                region.bottom - region.top
-            );
+        for (const region of this.#foldRegions) {
+            this.#drawValleyShadow(region);
+            this.#drawCrestHighlight(region);
         }
 
         this.#context.restore();
+    }
+
+    #drawCrestHighlight(region) {
+        const settings = this.#appearance.crestHighlight;
+        const foldWidth = region.right - region.left;
+        const width = Math.max(
+            settings.minimumWidth,
+            Math.min(settings.maximumWidth, foldWidth * settings.widthFactor)
+        );
+        const left = region.crestX - width / 2;
+        const gradient = this.#context.createLinearGradient(
+            left,
+            0,
+            left + width,
+            0
+        );
+
+        addGradientStops(gradient, settings);
+        this.#context.fillStyle = gradient;
+        this.#context.fillRect(
+            region.left,
+            region.top,
+            foldWidth,
+            region.bottom - region.top
+        );
+    }
+
+    #drawValleyShadow(region) {
+        const settings = this.#appearance.valleyShadow;
+        const gradient = this.#context.createLinearGradient(
+            region.left,
+            0,
+            region.right,
+            0
+        );
+
+        addGradientStops(
+            gradient,
+            settings,
+            this.#appearance.foldProgress
+        );
+        this.#context.fillStyle = gradient;
+        this.#context.fillRect(
+            region.left,
+            region.top,
+            region.right - region.left,
+            region.bottom - region.top
+        );
+    }
+
+    #extendFoldRegion(
+        x,
+        y,
+        width,
+        height,
+        branch,
+        localSlope
+    ) {
+        if (this.#startsNewFold(branch, localSlope)) {
+            this.#finishFoldRegion();
+        }
+
+        const left = Math.min(x, x + width);
+        const right = Math.max(x, x + width);
+        const center = (left + right) / 2;
+        const bottom = y + height;
+
+        if (!this.#activeFoldRegion) {
+            this.#activeFoldRegion = {
+                branch,
+                left,
+                right,
+                top: y,
+                bottom,
+                crestX: center,
+                crestSlope: Math.abs(localSlope),
+                crestSampleCount: 1,
+                previousSlope: localSlope
+            };
+            return;
+        }
+
+        const region = this.#activeFoldRegion;
+        region.left = Math.min(region.left, left);
+        region.right = Math.max(region.right, right);
+        region.top = Math.min(region.top, y);
+        region.bottom = Math.max(region.bottom, bottom);
+        region.previousSlope = localSlope;
+
+        const absoluteSlope = Math.abs(localSlope);
+
+        if (absoluteSlope < region.crestSlope - Number.EPSILON) {
+            region.crestX = center;
+            region.crestSlope = absoluteSlope;
+            region.crestSampleCount = 1;
+        } else if (Math.abs(absoluteSlope - region.crestSlope)
+            <= Number.EPSILON) {
+            region.crestX = (
+                region.crestX * region.crestSampleCount + center
+            ) / (region.crestSampleCount + 1);
+            region.crestSampleCount += 1;
+        }
+    }
+
+    #startsNewFold(branch, localSlope) {
+        const region = this.#activeFoldRegion;
+
+        if (!region || branch !== region.branch) {
+            return Boolean(region);
+        }
+
+        return branch === "front"
+            ? region.previousSlope > 0 && localSlope <= 0
+            : region.previousSlope < 0 && localSlope >= 0;
+    }
+
+    #finishFoldRegion() {
+        if (!this.#activeFoldRegion) {
+            return;
+        }
+
+        this.#foldRegions.push(this.#activeFoldRegion);
+        this.#activeFoldRegion = null;
     }
 
     #extendRearRegion(x, y, width, height, brightness) {
@@ -132,4 +290,19 @@ export class CanvasColumnRenderer {
         this.#rearRegions.push(this.#activeRearRegion);
         this.#activeRearRegion = null;
     }
+}
+
+function addGradientStops(gradient, settings, strengthFactor = 1) {
+    for (const stop of settings.stops) {
+        const opacity = settings.strength * stop.intensity * strengthFactor;
+        gradient.addColorStop(
+            stop.offset,
+            colorWithOpacity(settings.color, opacity)
+        );
+    }
+}
+
+function colorWithOpacity(color, opacity) {
+    const [red, green, blue] = color;
+    return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }
