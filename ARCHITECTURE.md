@@ -130,7 +130,8 @@ Canvas
 **Responsibilities**
 
 - Rasterize exact source columns at resolved destinations.
-- Preserve branch boundaries while deriving destination column widths.
+- Draw destination widths that the application derives without crossing branch
+  boundaries.
 - Collect visible fold regions.
 - Apply configured Rear darkening, crest highlights, and valley shadows with
   batched Canvas 2D operations.
