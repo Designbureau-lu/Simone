@@ -32,9 +32,6 @@ Placement objects
 SurfaceShading
              |
              v
-Viewport
-             |
-             v
 CanvasColumnRenderer
              |
              v
@@ -59,9 +56,6 @@ Canvas
 - **`SurfaceShading`** supplies local branch brightness from each Period's
   resolved parameters and global appearance tuning. It does not alter geometry
   or artwork.
-- **`Viewport`** owns the visible horizontal interval in continuous curtain
-  presentation coordinates. The application culls non-intersecting columns and
-  translates placements into Viewport-local coordinates.
 - **`CanvasColumnRenderer`** draws source columns and applies lightweight,
   batched appearance cues.
 - **Canvas** is the final browser presentation surface.
@@ -95,22 +89,19 @@ Canvas
 
 **Responsibilities**
 
-- Decode an ordered array of production-segment image files.
-- Assemble segments horizontally into one continuous immutable artwork.
-- Own the resulting continuous source image.
+- Decode imported image files.
+- Own the immutable source image.
 - Expose exact one-pixel-wide vertical source columns.
 
 **Public contract**
 
-- `loadArtwork(files)` resolves one `ImmutableArtwork`.
-- `ImmutableArtwork.columnAt(sourceX)` returns an immutable source-column
-  reference in the continuous coordinate space.
+- `loadArtwork(file)` resolves an `Artwork`.
+- `Artwork.columnAt(sourceX)` returns an immutable source-column reference.
 
 **Must not know**
 
 - Surface geometry.
-- Production-segment identity after assembly.
-- Visibility phases.
+- visibility phases;
 - shading or canvas presentation.
 
 ### `geometry/`
@@ -223,27 +214,6 @@ connected by the composition root.
 - How surface placements are calculated.
 - How a renderer realizes visibility.
 
-### `viewport/`
-
-**Responsibilities**
-
-- Own horizontal offset in the continuous curtain presentation space.
-- Own the visible size measured from the browser-defined `curtain-window`.
-- Constrain its window to the presented curtain extent.
-
-**Public contract**
-
-- `Viewport.setPosition(position, contentWidth)` updates horizontal offset.
-- `Viewport.setSize(width, height)` updates the fixed presentation rectangle.
-- `Viewport.constrainTo(contentWidth)` keeps the window inside the presented
-  curtain extent.
-
-**Must not know**
-
-- Production segments.
-- Periods, folds, or geometry.
-- Shading, rendering, or interaction behavior.
-
 ---
 
 ## Placement Contract
@@ -305,15 +275,6 @@ inspect artwork pixels.
 
 The renderer draws exact source pixels at supplied destinations. It may group
 placements for batched visual cues, but it does not solve or modify geometry.
-
-### Viewport
-
-The Viewport observes continuous curtain presentation coordinates without
-changing curtain state. Browser layout owns the `curtain-window` rectangle; the
-canvas fills it, and changes to canvas backing dimensions cannot alter its
-displayed size. The application applies the Viewport selection after geometry
-placement and before rendering. Manual Viewport Position is independent of
-Visible Factor.
 
 ### Application
 
@@ -385,7 +346,7 @@ The following are possible architectural directions, not implementation plans:
 - Direct manipulation of the folded surface.
 - Velocity, inertia, and damping as state evolution independent of rendering.
 - Idle breathing represented as a bounded temporal state contribution.
-- Automatic or interaction-led Viewport following.
+- Horizontal browsing position independent of Visible Factor.
 - Optional alternate visibility or physically predictive models behind stable
   geometry and rendering contracts.
 
