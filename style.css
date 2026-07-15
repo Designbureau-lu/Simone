@@ -38,4 +38,14 @@ canvas{
 
     max-width:100%;
 
+    cursor:grab;
+
+    touch-action:none;
+
+}
+
+canvas.is-dragging{
+
+    cursor:grabbing;
+
 }

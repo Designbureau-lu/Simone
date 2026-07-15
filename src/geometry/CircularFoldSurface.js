@@ -2,22 +2,56 @@ import { OpeningResponsiveSurface } from "./OpeningResponsiveSurface.js";
 
 /** Constant-length circular-arc geometry for repeating folds. */
 export class CircularFoldSurface extends OpeningResponsiveSurface {
-    frameFor(artwork, parameters) {
-        const period = resolvePeriod(parameters);
-        this.period = period;
+    frameFor(artwork, curtainField) {
+        const uniform = curtainField.hasUniformVisibleFactor();
+        const geometryByParameters = new Map();
+        let cumulativeOffset = 0;
+
+        this.periods = Object.freeze(curtainField.periods.map(
+            (fieldPeriod, index) => {
+                const parameters = curtainField.resolvedParametersAt(
+                    fieldPeriod.index
+                );
+
+                if (!geometryByParameters.has(parameters)) {
+                    geometryByParameters.set(
+                        parameters,
+                        resolvePeriod(parameters)
+                    );
+                }
+
+                const period = geometryByParameters.get(parameters);
+                const projectedOffset = uniform
+                    ? index * period.projectedWidth
+                    : cumulativeOffset;
+
+                cumulativeOffset += period.projectedWidth;
+
+                return Object.freeze({
+                    ...period,
+                    projectedOffset
+                });
+            }
+        ));
+
+        const depthExtent = Math.max(
+            ...this.periods.map((period) => period.depthExtent)
+        );
 
         return Object.freeze({
             width: artwork.width,
-            height: artwork.height + 2 * period.depthExtent
+            height: artwork.height + 2 * depthExtent
         });
     }
 
-    mapColumn(column, parameters) {
-        const period = this.period ?? resolvePeriod(parameters);
+    mapColumn(column, curtainField) {
+        void curtainField;
         const sourceX = column.sourceX;
-        const periodIndex = Math.floor(sourceX / period.artworkPeriodLength);
+        const artworkPeriodLength = this.periods[0].artworkPeriodLength;
+        const periodIndex = Math.floor(sourceX / artworkPeriodLength);
+        const period = this.periods[periodIndex];
         const distanceAlongPeriod = sourceX
-            - periodIndex * period.artworkPeriodLength;
+            - periodIndex * artworkPeriodLength;
         const isFront = period.rearArtworkLength === 0
             || distanceAlongPeriod < period.frontArtworkLength;
         const arc = isFront ? period.frontArc : period.rearArc;
@@ -33,7 +67,7 @@ export class CircularFoldSurface extends OpeningResponsiveSurface {
         const placement = placeOnArc(distanceAlongFold, orientation, arc);
         const foldOffset = isFront ? 0 : period.frontArc.chordLength;
         const targetX = period.horizontalOffset
-            + periodIndex * period.projectedWidth
+            + period.projectedOffset
             + foldOffset
             + placement.x;
         const targetY = period.depthExtent + placement.y;

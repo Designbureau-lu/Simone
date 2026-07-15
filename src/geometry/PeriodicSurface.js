@@ -16,8 +16,8 @@
  * - `allocatedWidth`: geometry-owned projected chord width for the selected
  *   branch; reserved for geometry-aware consumers and diagnostics.
  *
- * Shading never mutates placement. Resolved surface parameters own the shared
- * `foldProgress`; shading owns `brightness` and the frame-level
+ * Shading never mutates placement. Each Period's resolved surface parameters
+ * own its `foldProgress`; shading owns `brightness` and the frame-level
  * Rear/crest/valley appearance settings. The application
  * forwards geometry's `alpha`, `branch`, and `localSlope` alongside shading's
  * `brightness`; it derives renderer `x`, `y`, and `width` from adjacent geometry
@@ -40,15 +40,15 @@ export class PeriodicSurface {
         }
     }
 
-    frameFor(artwork, parameters) {
+    frameFor(artwork, curtainField) {
         void artwork;
-        void parameters;
+        void curtainField;
         throw new Error("PeriodicSurface.frameFor() must be implemented.");
     }
 
-    mapColumn(column, parameters) {
+    mapColumn(column, curtainField) {
         void column;
-        void parameters;
+        void curtainField;
         throw new Error("PeriodicSurface.mapColumn() must be implemented.");
     }
 }

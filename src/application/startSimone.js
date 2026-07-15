@@ -6,6 +6,7 @@ import {
 } from "../geometry/OperatingPhaseResolver.js";
 import { CanvasColumnRenderer } from "../rendering/CanvasColumnRenderer.js";
 import { SurfaceShading } from "../shading/SurfaceShading.js";
+import { CurtainField } from "../surface/CurtainField.js";
 import { SurfaceParameters } from "../surface/SurfaceParameters.js";
 import { SimoneApplication } from "./SimoneApplication.js";
 
@@ -23,6 +24,7 @@ export function startSimone() {
     const application = new SimoneApplication({
         artworkLoader: loadArtwork,
         parameters: new SurfaceParameters(),
+        curtainField: new CurtainField(),
         phaseResolver: new OperatingPhaseResolver(),
         surfaces: Object.freeze({
             [OperatingPhase.PRE_TRANSITION]: circularFoldSurface,
@@ -33,7 +35,8 @@ export function startSimone() {
         renderer: new CanvasColumnRenderer(canvas)
     });
 
-    bindSurfaceControls(controls, application);
+    const updateApplication = bindSurfaceControls(controls, application);
+    bindCurtainDragging(canvas, controls, updateApplication);
 
     fileInput.addEventListener("change", async (event) => {
         const file = event.target.files?.[0];
@@ -108,6 +111,74 @@ function bindSurfaceControls(controls, application) {
 
     constrainVisibleFactorControls(controls);
     updateApplication();
+
+    return updateApplication;
+}
+
+function bindCurtainDragging(canvas, controls, onUpdate) {
+    let drag = null;
+
+    canvas.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0) {
+            return;
+        }
+
+        const width = canvas.getBoundingClientRect().width;
+        if (width <= 0) {
+            return;
+        }
+
+        drag = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startVisibleFactor: Number(controls.visibleFactor.number.value),
+            width
+        };
+
+        canvas.setPointerCapture(event.pointerId);
+        canvas.classList.add("is-dragging");
+        event.preventDefault();
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+        if (!drag || event.pointerId !== drag.pointerId) {
+            return;
+        }
+
+        const minimum = Number(controls.minimumVisibleFactor.range.value);
+        const maximum = Number(controls.maximumVisibleFactor.range.value);
+        const range = maximum - minimum;
+        const horizontalProgress = (event.clientX - drag.startX) / drag.width;
+        const visibleFactor = clamp(
+            drag.startVisibleFactor + horizontalProgress * range,
+            minimum,
+            maximum
+        );
+        const formattedValue = Number(formatPosition(visibleFactor));
+
+        if (formattedValue === Number(controls.visibleFactor.number.value)) {
+            return;
+        }
+
+        setVisibleFactor(controls, formattedValue);
+        onUpdate();
+    });
+
+    const finishDragging = (event) => {
+        if (!drag || event.pointerId !== drag.pointerId) {
+            return;
+        }
+
+        if (canvas.hasPointerCapture(event.pointerId)) {
+            canvas.releasePointerCapture(event.pointerId);
+        }
+
+        drag = null;
+        canvas.classList.remove("is-dragging");
+    };
+
+    canvas.addEventListener("pointerup", finishDragging);
+    canvas.addEventListener("pointercancel", finishDragging);
 }
 
 function constrainVisibleFactorControls(controls, changedBoundary) {

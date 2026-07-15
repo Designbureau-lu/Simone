@@ -39,7 +39,9 @@ lifecycle management.
 ### Parameters
 
 `SurfaceParameters` validates user-facing configuration and resolves the values
-consumed for one frame. Visible Factor is the canonical interaction coordinate:
+consumed for one frame. `CurtainField` owns one mutable `Period` for every
+geometric period; each Period owns its local Visible Factor. Visible Factor is
+the canonical interaction coordinate:
 
 - 0% means completely hidden.
 - 100% means completely visible.
@@ -47,7 +49,8 @@ consumed for one frame. Visible Factor is the canonical interaction coordinate:
   range.
 
 Resolved values include projected carrier spacing and the authoritative
-`foldProgress` used by both geometry and shading.
+`foldProgress` used by both geometry and shading. Slider and drag interaction
+currently assign the same Visible Factor to every Period.
 
 ### Geometry
 
@@ -85,7 +88,8 @@ adapter: it creates the modules, binds controls, and handles artwork import.
 
 ```text
 UI configuration
-    -> SurfaceParameters.resolve()
+    + CurtainField runtime input
+    -> per-Period SurfaceParameters.resolve()
     -> OperatingPhaseResolver
     -> CircularFoldSurface frame and placements
     -> SurfaceShading appearance
@@ -97,16 +101,18 @@ UI configuration
 
 For each render:
 
-1. User configuration is validated and resolved by `SurfaceParameters`.
-2. Visible Factor determines projected carrier spacing.
-3. `foldProgress` determines Front/Rear allocation on the pre-transition
+1. User configuration is validated by `SurfaceParameters`.
+2. `CurtainField` supplies the Visible Factor owned by each Period.
+3. `SurfaceParameters` resolves frame parameters for those Period values.
+4. Visible Factor determines projected carrier spacing.
+5. `foldProgress` determines Front/Rear allocation on the pre-transition
    timeline.
-4. `OperatingPhaseResolver` identifies the current operating phase.
-5. `CircularFoldSurface.frameFor()` resolves the current period and frame
+6. `OperatingPhaseResolver` identifies the current operating phase.
+7. `CircularFoldSurface.frameFor()` resolves the current periods and frame
    bounds.
-6. Every immutable artwork column is assigned to the Front or Rear branch and
+8. Every immutable artwork column is assigned to the Front or Rear branch and
    mapped onto its circular arc.
-7. The resulting placements are passed through shading to the renderer.
+9. The resulting placements are passed through shading to the renderer.
 
 ### Front and Rear branches
 
@@ -202,8 +208,8 @@ fallbacks or unresolved defects.
 - Interaction is currently control- and slider-based.
 - Visible Factor and horizontal artwork browsing are not independent runtime
   coordinates yet.
-- Configuration and current interaction position currently share
-  `SurfaceParameters`; there is no separate temporal surface-state model.
+- Every Period now owns local Visible Factor state, but current interaction
+  still updates all Periods uniformly.
 
 These limitations describe the current product boundary and should not be read
 as bugs.

@@ -5,7 +5,6 @@ export class SurfaceParameters {
     constructor({
         minimumVisibleFactor = 0.2,
         maximumVisibleFactor = 0.9,
-        visibleFactor = 0.55,
         amplitude = 20,
         carrierDistance = 100,
         modelTransition = 0.6
@@ -13,7 +12,6 @@ export class SurfaceParameters {
         this.configure({
             minimumVisibleFactor,
             maximumVisibleFactor,
-            visibleFactor,
             amplitude,
             carrierDistance,
             modelTransition
@@ -23,7 +21,6 @@ export class SurfaceParameters {
     configure({
         minimumVisibleFactor = this.minimumVisibleFactor,
         maximumVisibleFactor = this.maximumVisibleFactor,
-        visibleFactor = this.visibleFactor,
         amplitude = this.amplitude,
         carrierDistance = this.carrierDistance,
         modelTransition = this.modelTransition
@@ -31,7 +28,6 @@ export class SurfaceParameters {
         validateParameters({
             minimumVisibleFactor,
             maximumVisibleFactor,
-            visibleFactor,
             amplitude,
             carrierDistance,
             modelTransition
@@ -39,19 +35,23 @@ export class SurfaceParameters {
 
         this.minimumVisibleFactor = minimumVisibleFactor;
         this.maximumVisibleFactor = maximumVisibleFactor;
-        this.visibleFactor = clamp(
-            visibleFactor,
-            minimumVisibleFactor,
-            maximumVisibleFactor
-        );
         this.amplitude = amplitude;
         this.carrierDistance = carrierDistance;
         this.modelTransition = modelTransition;
     }
 
     /** Returns the effective parameters consumed by geometry and shading. */
-    resolve() {
-        const currentPosition = 1 - this.visibleFactor;
+    resolve(visibleFactor) {
+        if (!Number.isFinite(visibleFactor)) {
+            throw new RangeError("Visible Factor must be finite.");
+        }
+
+        const constrainedVisibleFactor = clamp(
+            visibleFactor,
+            this.minimumVisibleFactor,
+            this.maximumVisibleFactor
+        );
+        const currentPosition = 1 - constrainedVisibleFactor;
         const closedLimit = 1 - this.maximumVisibleFactor;
         const openLimit = 1 - this.minimumVisibleFactor;
         const modelTransition = 1 - this.modelTransition;
@@ -66,7 +66,7 @@ export class SurfaceParameters {
             currentPosition
         );
         const foldProgress = resolveFoldProgress(
-            this.visibleFactor,
+            constrainedVisibleFactor,
             this.maximumVisibleFactor,
             this.modelTransition
         );
@@ -74,7 +74,7 @@ export class SurfaceParameters {
         return Object.freeze({
             minimumVisibleFactor: this.minimumVisibleFactor,
             maximumVisibleFactor: this.maximumVisibleFactor,
-            visibleFactor: this.visibleFactor,
+            visibleFactor: constrainedVisibleFactor,
             closedLimit,
             openLimit,
             currentPosition,
@@ -115,11 +115,7 @@ function resolveFoldProgress(
 }
 
 function validateParameters(parameters) {
-    const {
-        minimumVisibleFactor,
-        maximumVisibleFactor,
-        visibleFactor
-    } = parameters;
+    const { minimumVisibleFactor, maximumVisibleFactor } = parameters;
 
     if (!Number.isFinite(minimumVisibleFactor)
         || minimumVisibleFactor < 0
@@ -133,10 +129,6 @@ function validateParameters(parameters) {
         throw new RangeError(
             "Maximum Visible Factor must be between the minimum factor and 1."
         );
-    }
-
-    if (!Number.isFinite(visibleFactor)) {
-        throw new RangeError("Visible Factor must be finite.");
     }
 
     if (!Number.isFinite(parameters.amplitude) || parameters.amplitude < 0) {

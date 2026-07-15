@@ -38,12 +38,12 @@ CanvasColumnRenderer
 Canvas
 ```
 
-- **Configuration and runtime input** originate in the browser controls. Visible
-  Factor is currently configured through the same parameter object as stable
-  installation values.
-- **Resolved frame parameters** are produced by `SurfaceParameters.resolve()`.
-  They contain validated geometry inputs and the authoritative `foldProgress`
-  shared by geometry and shading.
+- **Configuration and runtime input** originate in the browser controls.
+  `SurfaceParameters` owns stable configuration; `CurtainField` owns one
+  mutable `Period` per geometric period, and each Period owns Visible Factor.
+- **Resolved frame parameters** are produced for each Period by
+  `SurfaceParameters.resolve(visibleFactor)`. They contain validated geometry
+  inputs and the authoritative `foldProgress` shared by geometry and shading.
 - **`OperatingPhaseResolver`** classifies the frame as pre-transition,
   transition, or post-transition. It selects an operating phase, not a curve
   family.
@@ -175,11 +175,16 @@ Canvas
 - Constrain Visible Factor to its permitted range.
 - Convert user-facing values into resolved frame parameters.
 - Compute the single authoritative `foldProgress`.
+- Own per-Period runtime Visible Factor through `CurtainField` and `Period`.
 
 **Public contract**
 
 - `SurfaceParameters.configure(values)` updates accepted inputs.
-- `SurfaceParameters.resolve()` returns an immutable frame-parameter snapshot.
+- `SurfaceParameters.resolve(visibleFactor)` returns an immutable parameter
+  snapshot for one Period value.
+- `CurtainField.setVisibleFactorForAll(value)` performs the current uniform
+  interaction update.
+- `CurtainField.resolve(parameters)` resolves its Period collection for a frame.
 
 **Must not know**
 
@@ -247,10 +252,10 @@ the surface boundary.
 
 ### Runtime state (future)
 
-Temporal values such as velocity, drag state, breathing phase, and horizontal
-browsing position do not yet have a dedicated domain object. A future runtime
-state should remain distinct from stable configuration and derived frame
-parameters.
+`CurtainField` now owns local Visible Factor state. Temporal values such as
+velocity, drag state, breathing phase, and horizontal browsing position remain
+future concerns and should stay distinct from stable configuration and derived
+frame parameters.
 
 ### Geometry
 
