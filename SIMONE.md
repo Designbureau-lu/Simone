@@ -32,9 +32,10 @@ a general cloth simulator.
 
 ### Artwork
 
-`Artwork` owns the decoded source image and exposes immutable one-pixel-wide
-vertical columns. `loadArtwork` isolates browser file decoding and object-URL
-lifecycle management.
+`loadArtwork` decodes an ordered array of production segments and assembles them
+horizontally. `ImmutableArtwork` exposes the result as one continuous source
+coordinate space of immutable one-pixel-wide vertical columns. Production
+boundaries are not represented downstream.
 
 ### Parameters
 
@@ -79,6 +80,15 @@ destinations. It performs no curve solving. Fold appearance is added after the
 artwork with a small number of batched Canvas 2D compositing operations and
 gradients.
 
+### Viewport
+
+`Viewport` owns a horizontal offset and visible size in the continuous curtain
+presentation space. Browser layout defines that size through `curtain-window`,
+and the renderer reports the resulting drawable canvas dimensions. The Viewport
+knows nothing about production segments, Periods, folds, geometry, shading, or
+interaction. The application uses it to submit only intersecting artwork columns
+to the existing renderer.
+
 ### Application
 
 `SimoneApplication` coordinates the pipeline. It owns no geometry equations and
@@ -94,6 +104,7 @@ UI configuration
     -> OperatingPhaseResolver
     -> CircularFoldSurface frame and placements
     -> SurfaceShading appearance
+    -> Viewport selection and translation
     -> CanvasColumnRenderer
     -> canvas image
 ```
@@ -208,8 +219,8 @@ fallbacks or unresolved defects.
 - There is no physical lighting or surface-normal illumination model.
 - Perspective and viewer position are not represented.
 - Interaction is currently control- and slider-based.
-- Visible Factor and horizontal artwork browsing are not independent runtime
-  coordinates yet.
+- Horizontal browsing is currently evaluated through a manual Viewport Position
+  slider; there is no automatic following behavior.
 - Every Period now owns local Visible Factor state, but current interaction
   still updates all Periods uniformly.
 
@@ -223,7 +234,7 @@ The following are research possibilities, not planned commitments:
 - direct manipulation by grabbing and dragging the folded surface;
 - inertial movement and damping;
 - subtle idle or breathing motion;
-- an independent horizontal browsing position for the artwork;
+- natural Viewport following for direct interaction;
 - a dedicated mutable `SurfaceState` separated from installation configuration;
 - perspective informed by viewer height and distance;
 - optional visibility or occlusion models;

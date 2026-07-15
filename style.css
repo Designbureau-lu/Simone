@@ -30,13 +30,27 @@ body{
 
 }
 
-canvas{
+.curtain-window{
 
     margin-top:30px;
 
+    width:100%;
+
+    aspect-ratio:8 / 1;
+
+}
+
+.curtain-window canvas{
+
     border:1px solid #cccccc;
 
-    max-width:100%;
+    box-sizing:border-box;
+
+    display:block;
+
+    width:100%;
+
+    height:100%;
 
     cursor:grab;
 
@@ -44,7 +58,7 @@ canvas{
 
 }
 
-canvas.is-dragging{
+.curtain-window canvas.is-dragging{
 
     cursor:grabbing;
 

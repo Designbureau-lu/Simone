@@ -27,6 +27,30 @@ export class CanvasColumnRenderer {
         this.#context = context;
     }
 
+    drawableSize() {
+        return Object.freeze({
+            width: Math.max(1, Math.round(this.#canvas.clientWidth)),
+            height: Math.max(1, Math.round(this.#canvas.clientHeight))
+        });
+    }
+
+    displayMetrics() {
+        const canvasBounds = this.#canvas.getBoundingClientRect();
+        const windowBounds = this.#canvas.parentElement
+            ?.getBoundingClientRect();
+
+        return Object.freeze({
+            browserWidth: window.innerWidth,
+            browserHeight: window.innerHeight,
+            curtainWindowWidth: windowBounds?.width ?? 0,
+            curtainWindowHeight: windowBounds?.height ?? 0,
+            canvasCssWidth: canvasBounds.width,
+            canvasCssHeight: canvasBounds.height,
+            canvasBackingWidth: this.#canvas.width,
+            canvasBackingHeight: this.#canvas.height
+        });
+    }
+
     beginFrame({ width, height }, appearance) {
         this.#canvas.width = width;
         this.#canvas.height = height;
@@ -68,7 +92,7 @@ export class CanvasColumnRenderer {
             startX,
             placement.y,
             destinationWidth,
-            column.height
+            placement.height
         );
         this.#context.restore();
 
@@ -76,7 +100,7 @@ export class CanvasColumnRenderer {
             startX,
             placement.y,
             destinationWidth,
-            column.height,
+            placement.height,
             appearance.branch,
             appearance.localSlope,
             appearance.foldProgress
@@ -87,7 +111,7 @@ export class CanvasColumnRenderer {
                 startX,
                 placement.y,
                 destinationWidth,
-                column.height,
+                placement.height,
                 appearance.brightness
             );
         }
