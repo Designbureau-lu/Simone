@@ -8,6 +8,7 @@ export class SimoneApplication {
         artworkLoader,
         parameters,
         curtainField,
+        viewport,
         phaseResolver,
         surfaces,
         shading,
@@ -16,15 +17,18 @@ export class SimoneApplication {
         this.artworkLoader = artworkLoader;
         this.parameters = parameters;
         this.curtainField = curtainField;
+        this.viewport = viewport;
         this.phaseResolver = phaseResolver;
         this.surfaces = surfaces;
         this.shading = shading;
         this.renderer = renderer;
         this.artwork = null;
+        this.projectedWindowEstablished = false;
     }
 
-    async importArtwork(file) {
-        this.artwork = await this.artworkLoader(file);
+    async importArtwork(files) {
+        this.artwork = await this.artworkLoader(files);
+        this.projectedWindowEstablished = false;
         this.#configureCurtainField();
         this.render();
     }
@@ -47,14 +51,24 @@ export class SimoneApplication {
         }
     }
 
+    updateViewportPosition(position) {
+        if (!this.artwork) {
+            return;
+        }
+
+        this.viewport.setPosition(position);
+        this.render();
+    }
+
     beginLocalInteraction(targetX) {
         if (!this.artwork) {
             return null;
         }
 
+        const projectedX = this.viewport.toProjectedX(targetX);
         const fieldX = Math.max(
             0,
-            targetX - this.parameters.carrierDistance / (2 * Math.PI)
+            projectedX - this.parameters.carrierDistance / (2 * Math.PI)
         );
 
         return this.curtainField.beginLocalInteraction(fieldX);
@@ -84,25 +98,46 @@ export class SimoneApplication {
         const surface = this.surfaces[phase];
         const appearance = this.shading.appearanceFor();
 
-        this.renderer.beginFrame(
-            surface.frameFor(this.artwork, this.curtainField),
-            appearance
+        const contentFrame = surface.frameFor(
+            this.artwork,
+            this.curtainField
         );
-        let lastDestinationWidth = 1;
+        const projectedColumns = this.#projectGeometry(surface);
+        this.viewport.presentationExtent = contentFrame.width;
+        const contentBounds = boundsFor(
+            projectedColumns,
+            0,
+            projectedColumns.length
+        );
 
-        for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
+        if (!this.projectedWindowEstablished) {
+            this.viewport.setProjectedWindow(
+                contentBounds.start,
+                INITIAL_PROJECTED_EXTENT
+            );
+            this.projectedWindowEstablished = true;
+        }
+
+        this.viewport.setProjectedContentRange(
+            contentBounds.start,
+            contentBounds.end
+        );
+
+        this.renderer.beginFrame(contentFrame, appearance);
+        const artworkRange = this.viewport.sourceRangeFor(projectedColumns);
+
+        for (
+            let sourceX = artworkRange.start;
+            sourceX < artworkRange.end;
+            sourceX += 1
+        ) {
             const column = this.artwork.columnAt(sourceX);
-            const placement = surface.mapColumn(column, this.curtainField);
-            const nextPlacement = sourceX + 1 < this.artwork.width
-                ? surface.mapColumn(
-                    this.artwork.columnAt(sourceX + 1),
-                    this.curtainField
-                )
-                : null;
-            const destinationWidth = nextPlacement
-                && nextPlacement.branch === placement.branch
-                ? nextPlacement.targetX - placement.targetX
-                : lastDestinationWidth;
+            const projectedColumn = projectedColumns[sourceX];
+            const placement = projectedColumn.placement;
+            const destinationWidth = this.viewport.presentationWidthBetween(
+                placement.targetX,
+                placement.targetX + projectedColumn.width
+            );
             const localParameters = this.curtainField.resolvedParametersAt(
                 placement.periodIndex
             );
@@ -111,14 +146,10 @@ export class SimoneApplication {
                 localParameters
             );
 
-            if (destinationWidth !== 0) {
-                lastDestinationWidth = destinationWidth;
-            }
-
             this.renderer.drawColumn(
                 column,
                 {
-                    x: placement.targetX,
+                    x: this.viewport.toPresentationX(placement.targetX),
                     y: placement.targetY,
                     width: destinationWidth
                 },
@@ -135,10 +166,69 @@ export class SimoneApplication {
         this.renderer.endFrame();
     }
 
+    #projectGeometry(surface) {
+        const placements = new Array(this.artwork.width);
+
+        for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
+            const column = this.artwork.columnAt(sourceX);
+            placements[sourceX] = surface.mapColumn(
+                column,
+                this.curtainField
+            );
+        }
+
+        const projectedColumns = new Array(placements.length);
+        let lastWidth = 1;
+
+        for (let sourceX = 0; sourceX < placements.length; sourceX += 1) {
+            const placement = placements[sourceX];
+            const nextPlacement = placements[sourceX + 1];
+            const width = nextPlacement
+                && nextPlacement.branch === placement.branch
+                ? nextPlacement.targetX - placement.targetX
+                : lastWidth;
+
+            if (width !== 0) {
+                lastWidth = width;
+            }
+
+            projectedColumns[sourceX] = Object.freeze({ placement, width });
+        }
+
+        return projectedColumns;
+    }
+
     #configureCurtainField() {
         this.curtainField.configureFor(
             this.artwork.width,
             this.parameters.carrierDistance
         );
     }
+}
+
+const INITIAL_PROJECTED_EXTENT = 5000;
+
+function boundsFor(projectedColumns, start, end) {
+    let minimum = Infinity;
+    let maximum = -Infinity;
+
+    for (let sourceX = start; sourceX < end; sourceX += 1) {
+        const { placement, width } = projectedColumns[sourceX];
+        minimum = Math.min(
+            minimum,
+            placement.targetX,
+            placement.targetX + width
+        );
+        maximum = Math.max(
+            maximum,
+            placement.targetX,
+            placement.targetX + width
+        );
+    }
+
+    if (!Number.isFinite(minimum) || !Number.isFinite(maximum)) {
+        throw new RangeError("Projected geometry has no visible bounds.");
+    }
+
+    return Object.freeze({ start: minimum, end: maximum });
 }

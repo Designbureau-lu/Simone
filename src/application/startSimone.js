@@ -8,15 +8,23 @@ import { CanvasColumnRenderer } from "../rendering/CanvasColumnRenderer.js";
 import { SurfaceShading } from "../shading/SurfaceShading.js";
 import { CurtainField } from "../surface/CurtainField.js";
 import { SurfaceParameters } from "../surface/SurfaceParameters.js";
+import { Viewport } from "../viewport/Viewport.js";
 import { SimoneApplication } from "./SimoneApplication.js";
 
 /** Composition root for the existing surface architecture. */
 export function startSimone() {
     const fileInput = document.getElementById("fileInput");
     const canvas = document.getElementById("canvas");
+    const viewportPosition = document.getElementById("viewportPositionInput");
+    const viewportPositionValue = document.getElementById(
+        "viewportPositionValue"
+    );
     const controls = getSurfaceControls();
 
-    if (!(fileInput instanceof HTMLInputElement) || !(canvas instanceof HTMLCanvasElement)) {
+    if (!(fileInput instanceof HTMLInputElement)
+        || !(canvas instanceof HTMLCanvasElement)
+        || !(viewportPosition instanceof HTMLInputElement)
+        || !(viewportPositionValue instanceof HTMLOutputElement)) {
         throw new Error("SIMONE could not find its required interface elements.");
     }
 
@@ -25,6 +33,10 @@ export function startSimone() {
         artworkLoader: loadArtwork,
         parameters: new SurfaceParameters(),
         curtainField: new CurtainField(),
+        viewport: new Viewport({
+            projectedOffset: 0,
+            projectedExtent: 0
+        }),
         phaseResolver: new OperatingPhaseResolver(),
         surfaces: Object.freeze({
             [OperatingPhase.PRE_TRANSITION]: circularFoldSurface,
@@ -37,21 +49,36 @@ export function startSimone() {
 
     bindSurfaceControls(controls, application);
     bindCurtainDragging(canvas, controls, application);
+    bindViewportControl(
+        viewportPosition,
+        viewportPositionValue,
+        application
+    );
 
     fileInput.addEventListener("change", async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) {
+        const files = Array.from(event.target.files ?? []);
+        if (files.length === 0) {
             return;
         }
 
         try {
-            await application.importArtwork(file);
+            await application.importArtwork(files);
         } catch (error) {
             console.error("SIMONE could not import the artwork.", error);
         }
     });
 
     return application;
+}
+
+function bindViewportControl(input, output, application) {
+    const update = () => {
+        const position = Number(input.value);
+        output.value = `${formatPosition(position)}%`;
+        application.updateViewportPosition(position / 100);
+    };
+
+    input.addEventListener("input", update);
 }
 
 function getSurfaceControls() {

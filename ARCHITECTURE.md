@@ -89,14 +89,15 @@ Canvas
 
 **Responsibilities**
 
-- Decode imported image files.
-- Own the immutable source image.
+- Decode ordered production-segment image files.
+- Assemble and own one continuous immutable source image.
 - Expose exact one-pixel-wide vertical source columns.
 
 **Public contract**
 
-- `loadArtwork(file)` resolves an `Artwork`.
-- `Artwork.columnAt(sourceX)` returns an immutable source-column reference.
+- `loadArtwork(files)` resolves one `ImmutableArtwork`.
+- `ImmutableArtwork.columnAt(sourceX)` returns an immutable source-column
+  reference.
 
 **Must not know**
 

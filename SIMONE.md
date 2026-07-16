@@ -32,9 +32,9 @@ a general cloth simulator.
 
 ### Artwork
 
-`Artwork` owns the decoded source image and exposes immutable one-pixel-wide
-vertical columns. `loadArtwork` isolates browser file decoding and object-URL
-lifecycle management.
+`ImmutableArtwork` owns one continuous decoded source and exposes immutable
+one-pixel-wide vertical columns. `loadArtwork` decodes ordered production
+segments, assembles them horizontally, and keeps their boundaries private.
 
 ### Parameters
 
