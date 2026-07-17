@@ -4,6 +4,9 @@ Updated: 2026-07-17
 
 ## Today's work
 
+- Started a temporary Model C proof of concept on the
+  `model-c-viewport-canvas-poc` branch. It retains virtual curtain geometry and
+  Viewport selection while rendering into a CSS-size × DPR backing store.
 - Continued refining the projected Viewport integration and its reset and
   initialization behaviour.
 - Added work-in-progress frame instrumentation and a developer performance

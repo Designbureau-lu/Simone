@@ -4,16 +4,21 @@ import {
     OperatingPhase,
     OperatingPhaseResolver
 } from "../geometry/OperatingPhaseResolver.js";
-import { CanvasColumnRenderer } from "../rendering/CanvasColumnRenderer.js";
 import {
-    currentBrowserName,
-    PerformanceOverview
+    ModelCCanvasColumnRenderer
+} from "../prototypes/model-c/ModelCCanvasColumnRenderer.js";
+import {
+    currentBrowserName
 } from "../performance/PerformanceOverview.js";
+import { ModelCApplication } from "../prototypes/model-c/ModelCApplication.js";
+import {
+    ModelCPerformanceOverview
+} from "../prototypes/model-c/ModelCPerformanceOverview.js";
+import { ViewingSurface } from "../prototypes/model-c/ViewingSurface.js";
 import { SurfaceShading } from "../shading/SurfaceShading.js";
 import { CurtainField } from "../surface/CurtainField.js";
 import { SurfaceParameters } from "../surface/SurfaceParameters.js";
 import { Viewport } from "../viewport/Viewport.js";
-import { SimoneApplication } from "./SimoneApplication.js";
 
 /** Composition root for the existing surface architecture. */
 export function startSimone() {
@@ -37,7 +42,7 @@ export function startSimone() {
     }
 
     const circularFoldSurface = new CircularFoldSurface();
-    const application = new SimoneApplication({
+    const application = new ModelCApplication({
         artworkLoader: loadArtwork,
         parameters: new SurfaceParameters(),
         curtainField: new CurtainField(),
@@ -52,8 +57,9 @@ export function startSimone() {
             [OperatingPhase.POST_TRANSITION]: circularFoldSurface
         }),
         shading: new SurfaceShading(),
-        renderer: new CanvasColumnRenderer(canvas),
-        performanceOverview: new PerformanceOverview(
+        renderer: new ModelCCanvasColumnRenderer(canvas),
+        viewingSurface: new ViewingSurface(canvas),
+        performanceOverview: new ModelCPerformanceOverview(
             performanceOverviewElement,
             currentBrowserName()
         )
@@ -66,6 +72,7 @@ export function startSimone() {
         viewportPositionValue,
         application
     );
+    window.addEventListener("resize", () => application.render());
 
     fileInput.addEventListener("change", async (event) => {
         const files = Array.from(event.target.files ?? []);
@@ -176,7 +183,9 @@ function bindCurtainDragging(canvas, controls, application) {
         drag = {
             pointerId: event.pointerId,
             startX: event.clientX,
-            canvasScale,
+            displacementScale: application.interactionDisplacementScale(
+                width
+            ),
             interaction
         };
 
@@ -192,7 +201,7 @@ function bindCurtainDragging(canvas, controls, application) {
 
         const horizontalDisplacement = (
             event.clientX - drag.startX
-        ) * drag.canvasScale;
+        ) * drag.displacementScale;
         const visibleFactor = application.updateLocalInteraction(
             drag.interaction,
             horizontalDisplacement
