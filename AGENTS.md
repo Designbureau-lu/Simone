@@ -70,6 +70,22 @@ Prefer readability over cleverness.
 
 Do not redesign the user interface unless requested.
 
+## Codex workflow
+
+Use one Codex thread per coherent feature or investigation.
+
+Keep threads short. Do not carry a single conversation across unrelated work
+or for an entire week.
+
+At the start of a new thread, read:
+
+- `AGENTS.md`
+- `CURRENT_STATE.md`
+- the relevant sections of `ARCHITECTURE.md`
+
+Update `CURRENT_STATE.md` when a significant task changes the implementation
+status, current investigation, or next step.
+
 ## Physical model
 
 SIMONE models a real physical wave installation.
