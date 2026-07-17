@@ -12,7 +12,8 @@ export class SimoneApplication {
         phaseResolver,
         surfaces,
         shading,
-        renderer
+        renderer,
+        performanceOverview = null
     }) {
         this.artworkLoader = artworkLoader;
         this.parameters = parameters;
@@ -22,13 +23,16 @@ export class SimoneApplication {
         this.surfaces = surfaces;
         this.shading = shading;
         this.renderer = renderer;
+        this.performanceOverview = performanceOverview;
         this.artwork = null;
-        this.projectedWindowEstablished = false;
+        this.imageCount = 0;
+        this.sceneVisibleFactor = curtainField.visibleFactor;
     }
 
     async importArtwork(files) {
         this.artwork = await this.artworkLoader(files);
-        this.projectedWindowEstablished = false;
+        this.imageCount = files.length;
+        this.viewport.setProjectedWindow(0, 0);
         this.#configureCurtainField();
         this.render();
     }
@@ -44,6 +48,7 @@ export class SimoneApplication {
             visibleFactor
         ).visibleFactor;
         this.curtainField.setVisibleFactorForAll(constrainedVisibleFactor);
+        this.sceneVisibleFactor = constrainedVisibleFactor;
 
         if (this.artwork) {
             this.#configureCurtainField();
@@ -83,6 +88,7 @@ export class SimoneApplication {
             this.parameters.maximumVisibleFactor
         );
 
+        this.sceneVisibleFactor = visibleFactor;
         this.render();
 
         return visibleFactor;
@@ -93,7 +99,12 @@ export class SimoneApplication {
             return;
         }
 
+        const frameStartedAt = performance.now();
+        const curtainFieldStartedAt = performance.now();
         const parameters = this.curtainField.resolve(this.parameters);
+        const curtainFieldTime = performance.now() - curtainFieldStartedAt;
+
+        const geometryStartedAt = performance.now();
         const phase = this.phaseResolver.resolve(parameters);
         const surface = this.surfaces[phase];
         const appearance = this.shading.appearanceFor();
@@ -110,21 +121,24 @@ export class SimoneApplication {
             projectedColumns.length
         );
 
-        if (!this.projectedWindowEstablished) {
+        if (this.viewport.projectedExtent === 0) {
             this.viewport.setProjectedWindow(
                 contentBounds.start,
                 INITIAL_PROJECTED_EXTENT
             );
-            this.projectedWindowEstablished = true;
         }
 
         this.viewport.setProjectedContentRange(
             contentBounds.start,
             contentBounds.end
         );
+        const geometryTime = performance.now() - geometryStartedAt;
 
+        const renderingStartedAt = performance.now();
         this.renderer.beginFrame(contentFrame, appearance);
+        const viewportStartedAt = performance.now();
         const artworkRange = this.viewport.sourceRangeFor(projectedColumns);
+        const viewportTime = performance.now() - viewportStartedAt;
 
         for (
             let sourceX = artworkRange.start;
@@ -163,7 +177,30 @@ export class SimoneApplication {
             );
         }
 
-        this.renderer.endFrame();
+        const renderingTime = performance.now() - renderingStartedAt
+            - viewportTime;
+
+        const overlayStartedAt = performance.now();
+        const rendererMetrics = this.renderer.endFrame();
+        const overlayTime = performance.now() - overlayStartedAt;
+        const totalTime = performance.now() - frameStartedAt;
+
+        this.performanceOverview?.update({
+            totalTime,
+            curtainFieldTime,
+            geometryTime,
+            viewportTime,
+            renderingTime,
+            overlayTime,
+            totalColumns: this.artwork.width,
+            visibleColumns: artworkRange.end - artworkRange.start,
+            periodCount: this.curtainField.periods.length,
+            projectedExtent: this.viewport.projectedExtent,
+            imageCount: this.imageCount,
+            visibleFactor: this.sceneVisibleFactor,
+            carrierDistance: this.parameters.carrierDistance,
+            ...rendererMetrics
+        });
     }
 
     #projectGeometry(surface) {

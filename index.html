@@ -10,6 +10,12 @@
 
 <body>
 
+<aside id="performanceOverview" class="performance-overview" aria-label="Performance overview">
+    <pre data-performance-output>PERFORMANCE
+Load artwork to begin measuring.</pre>
+    <button type="button" data-reset-worst>Reset Worst</button>
+</aside>
+
 <div class="container">
 
     <h1>SIMONE</h1>
@@ -38,11 +44,6 @@
         <input type="range" id="visibleFactorInput" min="0" max="100" value="50" step="0.1">
         <input type="number" id="visibleFactorNumber" min="20" max="90" value="55" step="1" aria-label="Visible Factor value">
         <span>%</span>
-
-        <label for="amplitudeInput">Wave amplitude</label>
-        <input type="range" id="amplitudeInput" min="0" max="60" value="20" step="1">
-        <input type="number" id="amplitudeNumber" min="0" max="60" value="20" step="1" aria-label="Wave amplitude value">
-        <span>px</span>
 
         <label for="carrierDistanceInput">Carrier distance</label>
         <input type="range" id="carrierDistanceInput" min="20" max="300" value="100" step="1">

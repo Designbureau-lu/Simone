@@ -12,6 +12,8 @@ export class CanvasColumnRenderer {
     #foldRegions = [];
     #activeFoldRegion = null;
     #appearance;
+    #drawImageCalls = 0;
+    #backingStoreResized = false;
 
     constructor(canvas) {
         if (!(canvas instanceof HTMLCanvasElement)) {
@@ -28,9 +30,12 @@ export class CanvasColumnRenderer {
     }
 
     beginFrame({ width, height }, appearance) {
+        this.#backingStoreResized = this.#canvas.width !== width
+            || this.#canvas.height !== height;
         this.#canvas.width = width;
         this.#canvas.height = height;
         this.#appearance = appearance;
+        this.#drawImageCalls = 0;
         this.#context.imageSmoothingEnabled = false;
         this.#context.clearRect(0, 0, width, height);
         this.#rearRegions = [];
@@ -70,6 +75,7 @@ export class CanvasColumnRenderer {
             destinationWidth,
             column.height
         );
+        this.#drawImageCalls += 1;
         this.#context.restore();
 
         this.#extendFoldRegion(
@@ -118,6 +124,13 @@ export class CanvasColumnRenderer {
         }
 
         this.#drawFoldCues();
+
+        return Object.freeze({
+            canvasWidth: this.#canvas.width,
+            canvasHeight: this.#canvas.height,
+            drawImageCalls: this.#drawImageCalls,
+            backingStoreResized: this.#backingStoreResized
+        });
     }
 
     #drawFoldCues() {

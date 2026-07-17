@@ -5,14 +5,12 @@ export class SurfaceParameters {
     constructor({
         minimumVisibleFactor = 0.2,
         maximumVisibleFactor = 0.9,
-        amplitude = 20,
         carrierDistance = 100,
         modelTransition = 0.6
     } = {}) {
         this.configure({
             minimumVisibleFactor,
             maximumVisibleFactor,
-            amplitude,
             carrierDistance,
             modelTransition
         });
@@ -21,21 +19,18 @@ export class SurfaceParameters {
     configure({
         minimumVisibleFactor = this.minimumVisibleFactor,
         maximumVisibleFactor = this.maximumVisibleFactor,
-        amplitude = this.amplitude,
         carrierDistance = this.carrierDistance,
         modelTransition = this.modelTransition
     }) {
         validateParameters({
             minimumVisibleFactor,
             maximumVisibleFactor,
-            amplitude,
             carrierDistance,
             modelTransition
         });
 
         this.minimumVisibleFactor = minimumVisibleFactor;
         this.maximumVisibleFactor = maximumVisibleFactor;
-        this.amplitude = amplitude;
         this.carrierDistance = carrierDistance;
         this.modelTransition = modelTransition;
     }
@@ -79,7 +74,6 @@ export class SurfaceParameters {
             openLimit,
             currentPosition,
             gathering,
-            amplitude: this.amplitude,
             carrierDistance: this.carrierDistance,
             projectedCarrierSpacing,
             foldProgress,
@@ -129,10 +123,6 @@ function validateParameters(parameters) {
         throw new RangeError(
             "Maximum Visible Factor must be between the minimum factor and 1."
         );
-    }
-
-    if (!Number.isFinite(parameters.amplitude) || parameters.amplitude < 0) {
-        throw new RangeError("Wave amplitude must be a non-negative finite number.");
     }
 
     if (!Number.isFinite(parameters.carrierDistance) || parameters.carrierDistance <= 0) {

@@ -5,6 +5,10 @@ import {
     OperatingPhaseResolver
 } from "../geometry/OperatingPhaseResolver.js";
 import { CanvasColumnRenderer } from "../rendering/CanvasColumnRenderer.js";
+import {
+    currentBrowserName,
+    PerformanceOverview
+} from "../performance/PerformanceOverview.js";
 import { SurfaceShading } from "../shading/SurfaceShading.js";
 import { CurtainField } from "../surface/CurtainField.js";
 import { SurfaceParameters } from "../surface/SurfaceParameters.js";
@@ -19,12 +23,16 @@ export function startSimone() {
     const viewportPositionValue = document.getElementById(
         "viewportPositionValue"
     );
+    const performanceOverviewElement = document.getElementById(
+        "performanceOverview"
+    );
     const controls = getSurfaceControls();
 
     if (!(fileInput instanceof HTMLInputElement)
         || !(canvas instanceof HTMLCanvasElement)
         || !(viewportPosition instanceof HTMLInputElement)
-        || !(viewportPositionValue instanceof HTMLOutputElement)) {
+        || !(viewportPositionValue instanceof HTMLOutputElement)
+        || !(performanceOverviewElement instanceof HTMLElement)) {
         throw new Error("SIMONE could not find its required interface elements.");
     }
 
@@ -44,7 +52,11 @@ export function startSimone() {
             [OperatingPhase.POST_TRANSITION]: circularFoldSurface
         }),
         shading: new SurfaceShading(),
-        renderer: new CanvasColumnRenderer(canvas)
+        renderer: new CanvasColumnRenderer(canvas),
+        performanceOverview: new PerformanceOverview(
+            performanceOverviewElement,
+            currentBrowserName()
+        )
     });
 
     bindSurfaceControls(controls, application);
@@ -86,7 +98,6 @@ function getSurfaceControls() {
         minimumVisibleFactor: getControlPair("minimumVisibleFactor"),
         maximumVisibleFactor: getControlPair("maximumVisibleFactor"),
         visibleFactor: getControlPair("visibleFactor"),
-        amplitude: getControlPair("amplitude"),
         carrierDistance: getControlPair("carrierDistance"),
         modelTransition: getControlPair("modelTransition")
     };
@@ -117,7 +128,6 @@ function bindSurfaceControls(controls, application) {
             maximumVisibleFactor:
                 Number(controls.maximumVisibleFactor.range.value) / 100,
             visibleFactor: Number(controls.visibleFactor.number.value) / 100,
-            amplitude: Number(controls.amplitude.range.value),
             carrierDistance: Number(controls.carrierDistance.range.value),
             modelTransition: Number(controls.modelTransition.range.value) / 100
         });
@@ -132,7 +142,6 @@ function bindSurfaceControls(controls, application) {
         updateApplication();
     });
     bindVisibleFactorControl(controls, updateApplication);
-    bindControlPair(controls.amplitude, updateApplication);
     bindControlPair(controls.carrierDistance, updateApplication);
     bindControlPair(controls.modelTransition, updateApplication);
 

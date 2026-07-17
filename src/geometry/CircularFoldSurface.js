@@ -1,7 +1,7 @@
-import { OpeningResponsiveSurface } from "./OpeningResponsiveSurface.js";
+import { PeriodicSurface } from "./PeriodicSurface.js";
 
 /** Constant-length circular-arc geometry for repeating folds. */
-export class CircularFoldSurface extends OpeningResponsiveSurface {
+export class CircularFoldSurface extends PeriodicSurface {
     frameFor(artwork, curtainField) {
         const uniform = curtainField.hasUniformVisibleFactor();
         const geometryByParameters = new Map();
