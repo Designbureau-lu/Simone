@@ -2,6 +2,16 @@
 
 Updated: 2026-07-17
 
+## Today's work
+
+- Continued refining the projected Viewport integration and its reset and
+  initialization behaviour.
+- Added work-in-progress frame instrumentation and a developer performance
+  overview for separating geometry, Viewport, rendering, and overlay costs.
+- Recorded controlled cross-browser experiments in `PERFORMANCE.md`.
+- Established feature-scoped Codex threads and repository documentation as the
+  durable project-memory workflow.
+
 ## Stable foundation
 
 - The project separates physical geometry from rendering.
@@ -46,3 +56,41 @@ step is a separate controlled Chrome experiment, followed by an optimization
 decision based on measurements rather than browser assumptions.
 
 See `PERFORMANCE.md` for the recorded experimental evidence.
+
+## Next recommended engineering tasks
+
+1. Run a controlled Chrome experiment that varies one rendering factor at a
+   time and isolates its dominant multi-image cost.
+2. Verify the Viewport reset and initialization changes with artwork imports,
+   changes of projected position, and content wider than the visible window.
+3. Review the current worktree as one coherent implementation, then commit the
+   Viewport refinements and performance instrumentation separately where
+   practical.
+4. Select a renderer optimization only after the browser measurements identify
+   the relevant bottleneck; preserve immutable artwork columns and the
+   geometry/rendering boundary.
+5. Establish repeatable benchmark scenes and record browser, hardware, canvas
+   dimensions, image count, visible columns, and timings in `PERFORMANCE.md`.
+
+## Codex workflow transition
+
+Normal development is moving from API-key authentication to ChatGPT Plus
+authentication. API access may remain available as a controlled fallback for
+exceptional high-volume work or capabilities outside the normal interactive
+workflow.
+
+The initial development period produced approximately:
+
+- 1 persistent Codex thread
+- 170 user turns
+- 78.32 million input tokens
+- 73.74 million cached input tokens, or 94.2% of input
+- 4.57 million new, non-cached input tokens
+- 344,000 output tokens
+- $100 in API cost over five days
+
+The engineering lesson is that long-lived conversations are expensive because
+each turn repeatedly processes accumulated context, even when most of that
+context is cached. Future work must use one Codex thread per coherent feature
+or investigation. `AGENTS.md`, `CURRENT_STATE.md`, and the relevant sections of
+`ARCHITECTURE.md` serve as the project's long-term memory between threads.

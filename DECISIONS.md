@@ -15,3 +15,15 @@ without relying on conversation history.
 Reason: long-running threads repeatedly process large accumulated contexts and
 make project state harder to hand off. Repository documentation is the durable
 source of project memory.
+
+## 2026-07-17 — ChatGPT Plus for normal development
+
+Use ChatGPT Plus authentication for normal interactive Codex development
+instead of API-key authentication. Keep API access only as a controlled
+fallback for exceptional high-volume work or capabilities not covered by the
+normal Plus workflow.
+
+Reason: the initial five-day development period cost approximately $100 through
+the API. Most processed input belonged to one long-lived, repeatedly cached
+thread. Feature-scoped threads and repository-based handoffs provide better
+cost control without changing SIMONE's engineering principles.
