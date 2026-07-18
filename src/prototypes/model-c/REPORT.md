@@ -32,9 +32,10 @@ The production `CanvasColumnRenderer` is unchanged. Model C is composed from
 
 CurtainField, geometry, Viewport selection, local interaction, and Viewport
 position remain unchanged. Pointer positions use the viewing canvas for inverse
-Viewport mapping. Drag displacement deliberately retains the production
-artwork-width conversion, preserving current direction and sensitivity. No
-wall constraint or new horizontal limit is introduced.
+Viewport mapping. Drag displacement is converted from the canvas content box
+into the visible projected extent, so pointer motion and virtual fold motion
+share one coordinate scale. No wall constraint or new horizontal limit is
+introduced.
 
 ## Instrumentation
 
@@ -55,14 +56,16 @@ budget; it is not a compositor trace.
 
 ## Visual equivalence risks
 
-- Production rounds column edges in the artwork-width backing store and then
-  lets CSS scale the result. Model C transforms first and rounds in the smaller
-  viewing backing store. Narrow columns can therefore collapse or distribute
-  differently by one destination pixel.
+- An experiment that rounded horizontal edges in artwork-width virtual space
+  before scaling was reverted: it prevented narrow viewing-space columns from
+  collapsing, increased draw calls from approximately 3,366 to 7,488, and
+  raised rendering time from approximately 55 ms to 240 ms. Model C again
+  rounds in viewing space to preserve the original prototype performance.
 - CSS downscaling of the production canvas and direct DPR rendering can select
   different raster samples or antialiasing paths.
-- `getBoundingClientRect()` includes the canvas border because the existing CSS
-  uses `border-box`; this can introduce a small presentation-scale difference.
+- Model C now derives its backing store from `clientWidth` and `clientHeight`,
+  excluding the existing border from the drawable viewport. Visual validation
+  must confirm that this matches production's effective content-box height.
 - Fractional DPR and browser resizing can change backing dimensions by one
   pixel through rounding.
 - Fold and Rear regions use the same selected columns and appearance logic, but

@@ -167,13 +167,15 @@ function bindCurtainDragging(canvas, controls, application) {
         }
 
         const bounds = canvas.getBoundingClientRect();
-        const width = bounds.width;
+        const width = canvas.clientWidth;
         if (width <= 0) {
             return;
         }
 
         const canvasScale = canvas.width / width;
-        const targetX = (event.clientX - bounds.left) * canvasScale;
+        const targetX = (
+            event.clientX - bounds.left - canvas.clientLeft
+        ) * canvasScale;
         const interaction = application.beginLocalInteraction(targetX);
 
         if (!interaction) {

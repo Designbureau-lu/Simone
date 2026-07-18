@@ -8,7 +8,9 @@ export class ModelCApplication extends SimoneApplication {
     }
 
     interactionDisplacementScale(displayWidth) {
-        return this.artwork ? this.artwork.width / displayWidth : 1;
+        return this.viewport.projectedExtent > 0
+            ? this.viewport.projectedExtent / displayWidth
+            : 1;
     }
 
     setDestinationMode(mode) {

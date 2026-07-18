@@ -29,10 +29,9 @@ export class ViewingSurface {
             });
         }
 
-        const bounds = this.#canvas.getBoundingClientRect();
         const pixelRatio = window.devicePixelRatio || 1;
-        const width = Math.max(1, Math.round(bounds.width * pixelRatio));
-        const height = Math.max(1, Math.round(bounds.height * pixelRatio));
+        const width = backingExtent(this.#canvas.clientWidth, pixelRatio);
+        const height = backingExtent(this.#canvas.clientHeight, pixelRatio);
 
         return Object.freeze({
             frame: Object.freeze({ width, height }),
@@ -53,4 +52,8 @@ export class ViewingSurface {
             })
         });
     }
+}
+
+function backingExtent(cssExtent, pixelRatio) {
+    return Math.max(1, Math.round(cssExtent * pixelRatio));
 }
