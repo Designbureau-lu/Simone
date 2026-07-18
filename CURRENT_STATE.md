@@ -1,12 +1,13 @@
 # SIMONE Current State
 
-Updated: 2026-07-17
+Updated: 2026-07-18
 
 ## Today's work
 
-- Started a temporary Model C proof of concept on the
-  `model-c-viewport-canvas-poc` branch. It retains virtual curtain geometry and
-  Viewport selection while rendering into a CSS-size × DPR backing store.
+- Evaluated the temporary Model C proof of concept on the
+  `model-c-viewport-canvas-poc` branch. Model C is architecturally viable: it
+  retains virtual curtain geometry and Viewport selection while rendering into
+  a CSS-size × DPR backing store.
 - Continued refining the projected Viewport integration and its reset and
   initialization behaviour.
 - Added work-in-progress frame instrumentation and a developer performance
@@ -54,26 +55,45 @@ Controlled experiments currently establish:
 - Chrome remains slow in both width variants; its dominant cost is not yet
   isolated.
 
-No renderer optimization has been selected from these observations. The next
-step is a separate controlled Chrome experiment, followed by an optimization
-decision based on measurements rather than browser assumptions.
+These earlier experiments led to the Model C architectural proof of concept.
+Further bottleneck isolation and renderer optimization are deferred while the
+project establishes Model C equivalence with production.
 
 See `PERFORMANCE.md` for the recorded experimental evidence.
 
+## Model C proof-of-concept outcome
+
+Model C demonstrated that SIMONE can render the unrestricted virtual curtain
+into a viewport-sized destination canvas without changing the production
+renderer. Unlimited curtain interaction and dynamic curtain width were
+preserved.
+
+In the worst-case Firefox scene, measured performance improved from
+approximately 1050 ms per frame with the artwork-width destination canvas to
+approximately 100 ms per frame with the viewport-sized destination canvas.
+This establishes the architecture as viable and the destination canvas size as
+a material part of the worst-case rendering cost.
+
+The prototype is not yet equivalent to production. Remaining differences are:
+
+- drag mapping is incorrect;
+- the Viewport height does not match production;
+- rendered artwork has reduced crispness;
+- the crest highlight has a fade bug.
+
+The project is now in the **equivalence phase**. Future work focuses on matching
+production behaviour and visible output, not on further performance
+optimization.
+
 ## Next recommended engineering tasks
 
-1. Run a controlled Chrome experiment that varies one rendering factor at a
-   time and isolates its dominant multi-image cost.
-2. Verify the Viewport reset and initialization changes with artwork imports,
-   changes of projected position, and content wider than the visible window.
-3. Review the current worktree as one coherent implementation, then commit the
-   Viewport refinements and performance instrumentation separately where
-   practical.
-4. Select a renderer optimization only after the browser measurements identify
-   the relevant bottleneck; preserve immutable artwork columns and the
-   geometry/rendering boundary.
-5. Establish repeatable benchmark scenes and record browser, hardware, canvas
-   dimensions, image count, visible columns, and timings in `PERFORMANCE.md`.
+1. Correct Model C drag mapping while preserving unlimited left/right curtain
+   interaction.
+2. Match the production Viewport height and vertical mapping.
+3. Restore production-equivalent artwork crispness.
+4. Correct the crest-highlight fade without changing geometry or artwork.
+5. Validate visual and interaction equivalence across representative artwork
+   widths and curtain states before considering production integration.
 
 ## Codex workflow transition
 
