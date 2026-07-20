@@ -26,7 +26,7 @@ export class SimoneApplication {
         this.performanceOverview = performanceOverview;
         this.artwork = null;
         this.imageCount = 0;
-        this.sceneVisibleFactor = curtainField.visibleFactor;
+        this.sceneVisibleFactor = curtainField.resetCurtainState;
     }
 
     async importArtwork(files) {
@@ -39,16 +39,18 @@ export class SimoneApplication {
 
     updateSurface(values) {
         const {
-            visibleFactor = this.curtainField.visibleFactor,
+            resetCurtainState = this.curtainField.resetCurtainState,
             ...configuration
         } = values;
 
         this.parameters.configure(configuration);
-        const constrainedVisibleFactor = this.parameters.resolve(
-            visibleFactor
+        const constrainedResetCurtainState = this.parameters.resolve(
+            resetCurtainState
         ).visibleFactor;
-        this.curtainField.setVisibleFactorForAll(constrainedVisibleFactor);
-        this.sceneVisibleFactor = constrainedVisibleFactor;
+        this.curtainField.setResetCurtainState(
+            constrainedResetCurtainState
+        );
+        this.sceneVisibleFactor = constrainedResetCurtainState;
 
         if (this.artwork) {
             this.#configureCurtainField();

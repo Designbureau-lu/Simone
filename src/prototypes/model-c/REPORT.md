@@ -37,6 +37,13 @@ into the visible projected extent, so pointer motion and virtual fold motion
 share one coordinate scale. No wall constraint or new horizontal limit is
 introduced.
 
+The production displacement conversion is
+`clientDelta * canvas.width / CSSWidth`. Inverse Viewport mapping then
+multiplies that viewing-surface displacement by
+`projectedExtent / canvas.width`. Model C uses the reduced equivalent,
+`clientDelta * projectedExtent / contentBoxWidth`. The backing-store width,
+including any DPR rounding, cancels exactly.
+
 ## Instrumentation
 
 The Model C performance panel keeps a rolling 120-frame sample and reports

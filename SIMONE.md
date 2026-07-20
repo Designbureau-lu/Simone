@@ -40,8 +40,8 @@ segments, assembles them horizontally, and keeps their boundaries private.
 
 `SurfaceParameters` validates user-facing configuration and resolves the values
 consumed for one frame. `CurtainField` owns one mutable `Period` for every
-geometric period; each Period owns its local Visible Factor. Visible Factor is
-the canonical interaction coordinate:
+geometric period; each Period owns its local Visible Factor. Per-Period Visible
+Factor is the canonical interaction coordinate:
 
 - 0% means completely hidden.
 - 100% means completely visible.
@@ -49,8 +49,9 @@ the canonical interaction coordinate:
   range.
 
 Resolved values include projected carrier spacing and the authoritative
-`foldProgress` used by both geometry and shading. Slider interaction assigns one
-Visible Factor to every Period; direct dragging redistributes local Period
+`foldProgress` used by both geometry and shading. Reset Curtain State defines
+the reference Visible Factor assigned to every Period when the field is
+initially created or restored; direct dragging redistributes local Period
 values.
 
 ### Geometry
@@ -207,11 +208,11 @@ fallbacks or unresolved defects.
 - There is no self-occlusion, depth buffer, or carrier-contact model.
 - There is no physical lighting or surface-normal illumination model.
 - Perspective and viewer position are not represented.
-- Interaction is currently control- and slider-based.
+- Interaction supports direct local curtain dragging.
 - Visible Factor and horizontal artwork browsing are not independent runtime
   coordinates yet.
-- Every Period now owns local Visible Factor state, but current interaction
-  still updates all Periods uniformly.
+- Every Period owns local Visible Factor state, and direct interaction
+  redistributes changes across neighboring Periods.
 
 These limitations describe the current product boundary and should not be read
 as bugs.
@@ -239,7 +240,9 @@ Current terminology is deliberately descriptive:
 - `CircularFoldSurface`: the active circular-arc folded-surface implementation.
 - `OperatingPhaseResolver`: classifies pre-transition, transition, and
   post-transition operation.
-- `Visible Factor`: canonical measure of visible artwork.
+- `Visible Factor`: per-Period measure of visible artwork.
+- `Reset Curtain State`: reference Visible Factor assigned when the curtain is
+  initially created or restored.
 - `Minimum Visible Factor` / `Maximum Visible Factor`: permitted visibility
   limits.
 - `Front` / `Rear`: viewer-relative fold branches.

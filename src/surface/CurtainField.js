@@ -1,11 +1,10 @@
-const LOCAL_INFLUENCE_RADIUS = 20;
-const LOCAL_FALLOFF_SCALE = 8;
+// A linear influence ramp affects the nearest CONCERNED_NEIGHBORS neighboring periods.
+const CONCERNED_NEIGHBORS = 50;
 const GRABBED_PERIOD_PARTICIPATION = 0.08;
 
 /** Mutable local state for one geometric curtain period. */
 export class Period {
-    constructor(index, visibleFactor) {
-        this.index = index;
+    constructor(visibleFactor) {
         this.setVisibleFactor(visibleFactor);
     }
 
@@ -19,21 +18,20 @@ export class Period {
 export class CurtainField {
     #periods = Object.freeze([]);
     #resolvedParameters = Object.freeze([]);
-    #defaultVisibleFactor;
+    #resetCurtainState;
     #periodLength = null;
 
-    constructor({ visibleFactor = 0.55 } = {}) {
-        this.#defaultVisibleFactor = visibleFactor;
-        validateVisibleFactor(visibleFactor);
+    constructor({ resetCurtainState = 0.55 } = {}) {
+        this.#resetCurtainState = resetCurtainState;
+        validateVisibleFactor(resetCurtainState);
     }
 
     get periods() {
         return this.#periods;
     }
 
-    get visibleFactor() {
-        return this.#periods[0]?.visibleFactor
-            ?? this.#defaultVisibleFactor;
+    get resetCurtainState() {
+        return this.#resetCurtainState;
     }
 
     configureFor(artworkWidth, periodLength) {
@@ -49,17 +47,17 @@ export class CurtainField {
         this.#periodLength = periodLength;
         this.#periods = Object.freeze(Array.from(
             { length: periodCount },
-            (_, index) => new Period(index, this.#defaultVisibleFactor)
+            () => new Period(this.#resetCurtainState)
         ));
         this.#resolvedParameters = Object.freeze([]);
     }
 
-    setVisibleFactorForAll(visibleFactor) {
-        validateVisibleFactor(visibleFactor);
-        this.#defaultVisibleFactor = visibleFactor;
+    setResetCurtainState(resetCurtainState) {
+        validateVisibleFactor(resetCurtainState);
+        this.#resetCurtainState = resetCurtainState;
 
         for (const period of this.#periods) {
-            period.setVisibleFactor(visibleFactor);
+            period.setVisibleFactor(resetCurtainState);
         }
     }
 
@@ -119,11 +117,11 @@ export class CurtainField {
             : rightRedistribution / interaction.rightInfluence;
         const start = Math.max(
             0,
-            interaction.periodIndex - LOCAL_INFLUENCE_RADIUS
+            interaction.periodIndex - CONCERNED_NEIGHBORS
         );
         const end = Math.min(
             this.#periods.length - 1,
-            interaction.periodIndex + LOCAL_INFLUENCE_RADIUS
+            interaction.periodIndex + CONCERNED_NEIGHBORS
         );
 
         for (let index = start; index <= end; index += 1) {
@@ -163,7 +161,7 @@ export class CurtainField {
         ));
 
         return this.#resolvedParameters[0]
-            ?? resolvedFor(this.#defaultVisibleFactor);
+            ?? resolvedFor(this.#resetCurtainState);
     }
 
     resolvedParametersAt(index) {
@@ -237,7 +235,7 @@ function influenceTotalFor(periodIndex, direction, periodCount) {
 
     for (
         let distance = 1;
-        distance <= LOCAL_INFLUENCE_RADIUS;
+        distance <= CONCERNED_NEIGHBORS;
         distance += 1
     ) {
         const neighborIndex = periodIndex + direction * distance;
@@ -253,9 +251,7 @@ function influenceTotalFor(periodIndex, direction, periodCount) {
 }
 
 function influenceForDistance(distance) {
-    return Math.exp(
-        -(distance ** 2) / (2 * LOCAL_FALLOFF_SCALE ** 2)
-    );
+    return 1 - distance / (CONCERNED_NEIGHBORS + 1);
 }
 
 function redistributionForNeighbor(offset, leftScale, rightScale) {

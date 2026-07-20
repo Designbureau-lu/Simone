@@ -8,9 +8,9 @@ export class CircularFoldSurface extends PeriodicSurface {
         let cumulativeOffset = 0;
 
         this.periods = Object.freeze(curtainField.periods.map(
-            (fieldPeriod, index) => {
+            (_, index) => {
                 const parameters = curtainField.resolvedParametersAt(
-                    fieldPeriod.index
+                    index
                 );
 
                 if (!geometryByParameters.has(parameters)) {

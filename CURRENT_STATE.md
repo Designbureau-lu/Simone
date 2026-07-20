@@ -4,6 +4,11 @@ Updated: 2026-07-18
 
 ## Today's work
 
+- Removed redundant `Period.index` identity and renamed the uniform reference
+  configuration to `resetCurtainState` without changing interaction behavior.
+- Established a linear influence ramp affecting the nearest
+  `CONCERNED_NEIGHBORS` neighboring periods; the current implementation uses
+  50 neighbors as its single influence parameter.
 - Evaluated the temporary Model C proof of concept on the
   `model-c-viewport-canvas-poc` branch. Model C is architecturally viable: it
   retains virtual curtain geometry and Viewport selection while rendering into
@@ -74,9 +79,15 @@ approximately 100 ms per frame with the viewport-sized destination canvas.
 This establishes the architecture as viable and the destination canvas size as
 a material part of the worst-case rendering cost.
 
+The Model C drag coordinate mapping has now been verified. Browser pointer
+displacement is measured against the canvas content box and converted directly
+to the visible projected extent. This is algebraically identical to the
+production canvas-coordinate conversion followed by inverse Viewport mapping;
+the intermediate canvas backing-store extent cancels. No runtime correction
+was required after the existing content-box and drag-mapping fixes.
+
 The prototype is not yet equivalent to production. Remaining differences are:
 
-- drag mapping is incorrect;
 - the Viewport height does not match production;
 - rendered artwork has reduced crispness;
 - the crest highlight has a fade bug.
@@ -87,12 +98,10 @@ optimization.
 
 ## Next recommended engineering tasks
 
-1. Correct Model C drag mapping while preserving unlimited left/right curtain
-   interaction.
-2. Match the production Viewport height and vertical mapping.
-3. Restore production-equivalent artwork crispness.
-4. Correct the crest-highlight fade without changing geometry or artwork.
-5. Validate visual and interaction equivalence across representative artwork
+1. Match the production Viewport height and vertical mapping.
+2. Restore production-equivalent artwork crispness.
+3. Correct the crest-highlight fade without changing geometry or artwork.
+4. Validate visual and interaction equivalence across representative artwork
    widths and curtain states before considering production integration.
 
 ## Codex workflow transition

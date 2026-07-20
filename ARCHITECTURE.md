@@ -184,8 +184,8 @@ Canvas
 - `SurfaceParameters.configure(values)` updates accepted inputs.
 - `SurfaceParameters.resolve(visibleFactor)` returns an immutable parameter
   snapshot for one Period value.
-- `CurtainField.setVisibleFactorForAll(value)` performs the current uniform
-  interaction update.
+- `CurtainField.setResetCurtainState(value)` records and applies the reference
+  curtain state.
 - `CurtainField.resolve(parameters)` resolves its Period collection for a frame.
 
 **Must not know**
@@ -362,7 +362,9 @@ state separate from immutable artwork and installation configuration.
 - **`OperatingPhaseResolver`**: classifies pre-transition, transition, and
   post-transition operation.
 - **`PeriodicSurface`**: geometry contract implemented by surface models.
-- **Visible Factor**: canonical user-facing measure of artwork visibility.
+- **Visible Factor**: per-Period measure of artwork visibility.
+- **Reset Curtain State**: reference Visible Factor assigned when the curtain
+  is initially created or restored.
 - **Front branch**: viewer-facing fold.
 - **Rear branch**: opposing fold behind the Front branch.
 - **Model Transition**: point at which Rear allocation and visibility reach

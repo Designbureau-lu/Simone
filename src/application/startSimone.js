@@ -66,7 +66,7 @@ export function startSimone() {
     });
 
     bindSurfaceControls(controls, application);
-    bindCurtainDragging(canvas, controls, application);
+    bindCurtainDragging(canvas, application);
     bindViewportControl(
         viewportPosition,
         viewportPositionValue,
@@ -104,7 +104,7 @@ function getSurfaceControls() {
     const controls = {
         minimumVisibleFactor: getControlPair("minimumVisibleFactor"),
         maximumVisibleFactor: getControlPair("maximumVisibleFactor"),
-        visibleFactor: getControlPair("visibleFactor"),
+        resetCurtainState: getControlPair("resetCurtainState"),
         carrierDistance: getControlPair("carrierDistance"),
         modelTransition: getControlPair("modelTransition")
     };
@@ -134,7 +134,8 @@ function bindSurfaceControls(controls, application) {
                 Number(controls.minimumVisibleFactor.range.value) / 100,
             maximumVisibleFactor:
                 Number(controls.maximumVisibleFactor.range.value) / 100,
-            visibleFactor: Number(controls.visibleFactor.number.value) / 100,
+            resetCurtainState:
+                Number(controls.resetCurtainState.number.value) / 100,
             carrierDistance: Number(controls.carrierDistance.range.value),
             modelTransition: Number(controls.modelTransition.range.value) / 100
         });
@@ -148,7 +149,7 @@ function bindSurfaceControls(controls, application) {
         constrainVisibleFactorControls(controls, "maximum");
         updateApplication();
     });
-    bindVisibleFactorControl(controls, updateApplication);
+    bindResetCurtainStateControl(controls, updateApplication);
     bindControlPair(controls.carrierDistance, updateApplication);
     bindControlPair(controls.modelTransition, updateApplication);
 
@@ -158,7 +159,7 @@ function bindSurfaceControls(controls, application) {
     return updateApplication;
 }
 
-function bindCurtainDragging(canvas, controls, application) {
+function bindCurtainDragging(canvas, application) {
     let drag = null;
 
     canvas.addEventListener("pointerdown", (event) => {
@@ -204,17 +205,10 @@ function bindCurtainDragging(canvas, controls, application) {
         const horizontalDisplacement = (
             event.clientX - drag.startX
         ) * drag.displacementScale;
-        const visibleFactor = application.updateLocalInteraction(
+        application.updateLocalInteraction(
             drag.interaction,
             horizontalDisplacement
         );
-        const formattedValue = Number(formatPosition(visibleFactor * 100));
-
-        if (formattedValue === Number(controls.visibleFactor.number.value)) {
-            return;
-        }
-
-        setVisibleFactor(controls, formattedValue);
     });
 
     const finishDragging = (event) => {
@@ -246,19 +240,19 @@ function constrainVisibleFactorControls(controls, changedBoundary) {
         setControlPairValue(controls.minimumVisibleFactor, minimum);
     }
 
-    controls.visibleFactor.number.min = String(minimum);
-    controls.visibleFactor.number.max = String(maximum);
+    controls.resetCurtainState.number.min = String(minimum);
+    controls.resetCurtainState.number.max = String(maximum);
 
-    const visibleFactor = clamp(
-        Number(controls.visibleFactor.number.value),
+    const resetCurtainState = clamp(
+        Number(controls.resetCurtainState.number.value),
         minimum,
         maximum
     );
-    setVisibleFactor(controls, visibleFactor);
+    setResetCurtainState(controls, resetCurtainState);
 }
 
-function bindVisibleFactorControl(controls, onUpdate) {
-    const pair = controls.visibleFactor;
+function bindResetCurtainStateControl(controls, onUpdate) {
+    const pair = controls.resetCurtainState;
 
     pair.range.addEventListener("input", () => {
         const minimum = Number(controls.minimumVisibleFactor.range.value);
@@ -273,7 +267,7 @@ function bindVisibleFactorControl(controls, onUpdate) {
     const updateFromNumber = () => {
         const minimum = Number(controls.minimumVisibleFactor.range.value);
         const maximum = Number(controls.maximumVisibleFactor.range.value);
-        setVisibleFactor(
+        setResetCurtainState(
             controls,
             clamp(Number(pair.number.value), minimum, maximum)
         );
@@ -284,14 +278,18 @@ function bindVisibleFactorControl(controls, onUpdate) {
     pair.number.addEventListener("change", updateFromNumber);
 }
 
-function setVisibleFactor(controls, visibleFactor) {
+function setResetCurtainState(controls, resetCurtainState) {
     const minimum = Number(controls.minimumVisibleFactor.range.value);
     const maximum = Number(controls.maximumVisibleFactor.range.value);
     const range = maximum - minimum;
-    const progress = range === 0 ? 0 : (visibleFactor - minimum) / range;
+    const progress = range === 0
+        ? 0
+        : (resetCurtainState - minimum) / range;
 
-    controls.visibleFactor.range.value = String(progress * 100);
-    controls.visibleFactor.number.value = formatPosition(visibleFactor);
+    controls.resetCurtainState.range.value = String(progress * 100);
+    controls.resetCurtainState.number.value = formatPosition(
+        resetCurtainState
+    );
 }
 
 function bindControlPair(pair, onUpdate) {
