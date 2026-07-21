@@ -130,7 +130,9 @@ export class ModelCCanvasColumnRenderer {
         this.#context.globalCompositeOperation = "source-atop";
         for (const region of this.#foldRegions) {
             this.#drawValleyShadow(region);
-            this.#drawCrestHighlight(region);
+            if (region.branch === "front") {
+                this.#drawCrestHighlight(region);
+            }
         }
         this.#context.restore();
     }
@@ -138,18 +140,24 @@ export class ModelCCanvasColumnRenderer {
     #drawCrestHighlight(region) {
         const settings = this.#appearance.crestHighlight;
         const foldWidth = region.right - region.left;
-        const width = Math.max(
-            settings.minimumWidth,
-            Math.min(settings.maximumWidth, foldWidth * settings.widthFactor)
-        );
-        const left = region.crestX - width / 2;
+        const width = foldWidth / 2;
+        const left = region.ridgeX - width / 2;
         const gradient = this.#context.createLinearGradient(
             left,
             0,
             left + width,
             0
         );
-        addGradientStops(gradient, settings);
+        // Local geometry onset: suppresses flat/near-flat folds and saturates
+        // early; the lifecycle, not slope, owns the full interaction envelope.
+        const geometricMultiplier = Math.min(
+            1,
+            region.maximumAbsoluteSlope
+        );
+        // Local fold existence × global lifecycle emphasis.
+        const crestMultiplier = geometricMultiplier
+            * settings.lifecycleMultiplier;
+        addRidgeGradientStops(gradient, settings, crestMultiplier);
         this.#context.fillStyle = gradient;
         this.#context.fillRect(
             region.left,
@@ -201,9 +209,10 @@ export class ModelCCanvasColumnRenderer {
                 right,
                 top: y,
                 bottom,
-                crestX: center,
-                crestSlope: Math.abs(localSlope),
-                crestSampleCount: 1,
+                ridgeX: center,
+                ridgeSlope: Math.abs(localSlope),
+                ridgeSampleCount: 1,
+                maximumAbsoluteSlope: Math.abs(localSlope),
                 previousSlope: localSlope,
                 foldProgress
             };
@@ -217,16 +226,20 @@ export class ModelCCanvasColumnRenderer {
         region.bottom = Math.max(region.bottom, bottom);
         region.previousSlope = localSlope;
         const absoluteSlope = Math.abs(localSlope);
-        if (absoluteSlope < region.crestSlope - Number.EPSILON) {
-            region.crestX = center;
-            region.crestSlope = absoluteSlope;
-            region.crestSampleCount = 1;
-        } else if (Math.abs(absoluteSlope - region.crestSlope)
+        region.maximumAbsoluteSlope = Math.max(
+            region.maximumAbsoluteSlope,
+            absoluteSlope
+        );
+        if (absoluteSlope < region.ridgeSlope - Number.EPSILON) {
+            region.ridgeX = center;
+            region.ridgeSlope = absoluteSlope;
+            region.ridgeSampleCount = 1;
+        } else if (Math.abs(absoluteSlope - region.ridgeSlope)
             <= Number.EPSILON) {
-            region.crestX = (
-                region.crestX * region.crestSampleCount + center
-            ) / (region.crestSampleCount + 1);
-            region.crestSampleCount += 1;
+            region.ridgeX = (
+                region.ridgeX * region.ridgeSampleCount + center
+            ) / (region.ridgeSampleCount + 1);
+            region.ridgeSampleCount += 1;
         }
     }
 
@@ -292,4 +305,16 @@ function addGradientStops(gradient, settings, strengthFactor = 1) {
 function colorWithOpacity(color, opacity) {
     const [red, green, blue] = color;
     return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+}
+
+function addRidgeGradientStops(gradient, settings, crestMultiplier) {
+    for (const [offset, intensity] of [[0, 0], [0.5, 1], [1, 0]]) {
+        gradient.addColorStop(
+            offset,
+            colorWithOpacity(
+                settings.color,
+                settings.strength * intensity * crestMultiplier
+            )
+        );
+    }
 }

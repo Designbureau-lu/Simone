@@ -161,8 +161,34 @@ values, without crossing branch boundaries.
 
 Shading owns appearance values and tuning constants. Rear darkening and valley
 shadow modulation follow each Period's local pre-transition progress. Crest and
-valley settings describe stable, lightweight visual cues; they do not alter
-geometry or source artwork.
+valley settings describe stable, lightweight visual cues. The renderer locates
+the ridge from the rendered sample nearest zero slope and draws a narrow crest
+on the geometry's outward/front branch only. Its local strength follows maximum
+absolute rendered slope. Shading supplies a normalized linear lifecycle
+envelope—zero at flat, one at the model transition, and zero at maximum
+compression—which multiplies, rather than replaces, geometric strength.
+Rear/down folds retain valley shading without white crest light. Rendering does
+not interpret interaction state or alter geometry or source artwork.
+
+### Crest-light model
+
+Front-fold geometry determines crest eligibility, ridge position, and gradient
+dimensions. The gradient is centred on the geometric ridge and spans 50% of
+the front fold width. Local slope supplies a near-flat onset safeguard; it
+reaches full strength early and does not control the complete interaction envelope.
+Lifecycle timing supplies the main intensity envelope, peaking at the model
+transition and suppressing the light at both the flat and maximum-compression
+endpoints.
+
+Final crest intensity is:
+
+```text
+geometry × lifecycle × maximum centre alpha
+```
+
+The current maximum centre alpha is `0.25`. The crest is a white `source-atop`
+gradient that does not analyse the underlying artwork, so its perceived
+visibility varies with artwork luminance.
 
 ### Renderer responsibilities
 
@@ -172,8 +198,8 @@ The renderer:
 - preserves branch boundaries during rasterization;
 - groups visible columns into fold regions;
 - applies Rear darkening;
-- applies one crest-highlight gradient and one valley-shadow gradient per
-  visible fold using `source-atop`.
+- applies one crest-highlight gradient per visible front fold and one
+  valley-shadow gradient per visible fold using `source-atop`.
 
 Geometry does not render. The renderer does not solve geometry or modify the
 surface model.

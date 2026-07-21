@@ -5,7 +5,7 @@ const DEFAULT_APPEARANCE = Object.freeze({
     }),
     crestHighlight: Object.freeze({
         color: Object.freeze([255, 255, 255]),
-        strength: 0.1,
+        strength: 0.25,
         widthFactor: 1.6,
         minimumWidth: 30,
         maximumWidth: 300,
@@ -62,9 +62,57 @@ export class SurfaceShading {
             * surface.foldProgress;
     }
 
-    appearanceFor() {
-        return this.appearance;
+    appearanceFor({
+        visibleFactor,
+        minimumVisibleFactor,
+        maximumVisibleFactor,
+        modelTransition
+    }) {
+        const lifecycleMultiplier = crestLifecycleMultiplier({
+            visibleFactor,
+            minimumVisibleFactor,
+            maximumVisibleFactor,
+            modelTransition
+        });
+
+        return Object.freeze({
+            ...this.appearance,
+            crestHighlight: Object.freeze({
+                ...this.appearance.crestHighlight,
+                lifecycleMultiplier
+            })
+        });
     }
+}
+
+// Global appearance policy: rise linearly from flat to the model transition,
+// then fall linearly to maximum compression. This is the crest's main visible
+// evolution; the renderer receives only the resulting normalized value.
+function crestLifecycleMultiplier({
+    visibleFactor,
+    minimumVisibleFactor,
+    maximumVisibleFactor,
+    modelTransition
+}) {
+    if (visibleFactor >= modelTransition) {
+        return linearProgress(
+            maximumVisibleFactor - visibleFactor,
+            maximumVisibleFactor - modelTransition
+        );
+    }
+
+    return linearProgress(
+        visibleFactor - minimumVisibleFactor,
+        modelTransition - minimumVisibleFactor
+    );
+}
+
+function linearProgress(position, extent) {
+    if (extent <= 0) {
+        return position <= 0 ? 0 : 1;
+    }
+
+    return Math.min(Math.max(position / extent, 0), 1);
 }
 
 function freezeStops(stops) {

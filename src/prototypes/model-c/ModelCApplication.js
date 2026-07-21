@@ -30,7 +30,12 @@ export class ModelCApplication extends SimoneApplication {
         const geometryStartedAt = performance.now();
         const phase = this.phaseResolver.resolve(parameters);
         const surface = this.surfaces[phase];
-        const appearance = this.shading.appearanceFor();
+        const appearance = this.shading.appearanceFor({
+            visibleFactor: this.sceneVisibleFactor,
+            minimumVisibleFactor: this.parameters.minimumVisibleFactor,
+            maximumVisibleFactor: this.parameters.maximumVisibleFactor,
+            modelTransition: this.parameters.modelTransition
+        });
         const virtualFrame = surface.frameFor(
             this.artwork,
             this.curtainField

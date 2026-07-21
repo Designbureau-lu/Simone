@@ -4,6 +4,12 @@ Updated: 2026-07-18
 
 ## Today's work
 
+- Rebuilt crest lighting as an isolated renderer feature in production and
+  Model C. Geometry identifies outward/front regions and the rendered sample
+  nearest zero slope, and maximum absolute rendered slope supplies local ridge
+  strength. Shading supplies a global linear lifecycle envelope; final crest
+  intensity is the product of geometric strength and lifecycle. Rear/down folds
+  retain only their valley shading.
 - Removed redundant `Period.index` identity and renamed the uniform reference
   configuration to `resetCurtainState` without changing interaction behavior.
 - Established a linear influence ramp affecting the nearest
@@ -90,7 +96,6 @@ The prototype is not yet equivalent to production. Remaining differences are:
 
 - the Viewport height does not match production;
 - rendered artwork has reduced crispness;
-- the crest highlight has a fade bug.
 
 The project is now in the **equivalence phase**. Future work focuses on matching
 production behaviour and visible output, not on further performance
@@ -100,8 +105,7 @@ optimization.
 
 1. Match the production Viewport height and vertical mapping.
 2. Restore production-equivalent artwork crispness.
-3. Correct the crest-highlight fade without changing geometry or artwork.
-4. Validate visual and interaction equivalence across representative artwork
+3. Validate visual and interaction equivalence across representative artwork
    widths and curtain states before considering production integration.
 
 ## Codex workflow transition
