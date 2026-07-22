@@ -27,6 +27,7 @@ export class SimoneApplication {
         this.artwork = null;
         this.imageCount = 0;
         this.sceneVisibleFactor = curtainField.resetCurtainState;
+        this.horizontalReframeFrame = null;
     }
 
     async importArtwork(files) {
@@ -63,8 +64,63 @@ export class SimoneApplication {
             return;
         }
 
+        this.cancelHorizontalReframe();
         this.viewport.setPosition(position);
         this.render();
+    }
+
+    reframeHorizontal(direction, onFrame = null) {
+        if (!this.artwork || (direction !== -1 && direction !== 1)) {
+            return false;
+        }
+
+        this.cancelHorizontalReframe();
+        const startOffset = this.viewport.projectedOffset;
+        const targetOffset = this.viewport.projectedOffsetAfterShift(
+            direction * this.viewport.projectedExtent
+                * HORIZONTAL_REFRAME_DISTANCE_FACTOR
+        );
+        const displacement = targetOffset - startOffset;
+
+        if (displacement === 0) {
+            onFrame?.();
+            return false;
+        }
+
+        let startedAt = null;
+        const settle = (timestamp) => {
+            startedAt ??= timestamp;
+            const progress = Math.min(
+                (timestamp - startedAt) / HORIZONTAL_REFRAME_DURATION,
+                1
+            );
+            const desiredOffset = startOffset
+                + displacement * smoothstep(progress);
+
+            this.viewport.shiftProjectedOffset(
+                desiredOffset - this.viewport.projectedOffset
+            );
+            this.render();
+            onFrame?.();
+
+            if (progress < 1) {
+                this.horizontalReframeFrame = requestAnimationFrame(settle);
+            } else {
+                this.horizontalReframeFrame = null;
+            }
+        };
+
+        this.horizontalReframeFrame = requestAnimationFrame(settle);
+        return true;
+    }
+
+    cancelHorizontalReframe() {
+        if (this.horizontalReframeFrame === null) {
+            return;
+        }
+
+        cancelAnimationFrame(this.horizontalReframeFrame);
+        this.horizontalReframeFrame = null;
     }
 
     beginLocalInteraction(targetX) {
@@ -72,6 +128,7 @@ export class SimoneApplication {
             return null;
         }
 
+        this.cancelHorizontalReframe();
         const projectedX = this.viewport.toProjectedX(targetX);
         const fieldX = Math.max(
             0,
@@ -248,6 +305,7 @@ export class SimoneApplication {
             this.parameters.carrierDistance
         );
     }
+
 }
 
 const INITIAL_PROJECTED_EXTENT = 5000;
@@ -275,4 +333,11 @@ function boundsFor(projectedColumns, start, end) {
     }
 
     return Object.freeze({ start: minimum, end: maximum });
+}
+
+const HORIZONTAL_REFRAME_DISTANCE_FACTOR = 0.5;
+const HORIZONTAL_REFRAME_DURATION = 450;
+
+function smoothstep(value) {
+    return value ** 2 * (3 - 2 * value);
 }

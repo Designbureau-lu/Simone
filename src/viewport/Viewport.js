@@ -27,6 +27,18 @@ export class Viewport {
         return this.#presentationExtent;
     }
 
+    get position() {
+        const maximumOffset = Math.max(
+            this.#contentStart,
+            this.#contentEnd - this.#projectedExtent
+        );
+        const travel = maximumOffset - this.#contentStart;
+
+        return travel === 0
+            ? 0
+            : (this.#projectedOffset - this.#contentStart) / travel;
+    }
+
     set presentationExtent(value) {
         validateCoordinate(value, "Viewport presentation extent");
         this.#presentationExtent = value;
@@ -68,6 +80,42 @@ export class Viewport {
         this.#projectedOffset = this.#contentStart
             + clamp(position, 0, 1)
                 * (maximumOffset - this.#contentStart);
+    }
+
+    shiftProjectedOffset(displacement) {
+        if (!Number.isFinite(displacement)) {
+            throw new RangeError("Viewport displacement must be finite.");
+        }
+
+        const previousOffset = this.#projectedOffset;
+        const maximumOffset = Math.max(
+            this.#contentStart,
+            this.#contentEnd - this.#projectedExtent
+        );
+        this.#projectedOffset = clamp(
+            previousOffset + displacement,
+            this.#contentStart,
+            maximumOffset
+        );
+
+        return this.#projectedOffset - previousOffset;
+    }
+
+    projectedOffsetAfterShift(displacement) {
+        if (!Number.isFinite(displacement)) {
+            throw new RangeError("Viewport displacement must be finite.");
+        }
+
+        const maximumOffset = Math.max(
+            this.#contentStart,
+            this.#contentEnd - this.#projectedExtent
+        );
+
+        return clamp(
+            this.#projectedOffset + displacement,
+            this.#contentStart,
+            maximumOffset
+        );
     }
 
     sourceRangeFor(projectedColumns) {

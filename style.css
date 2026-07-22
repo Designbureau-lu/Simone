@@ -44,7 +44,43 @@ body{
 
 }
 
-.performance-overview button{
+.performance-overview-header{
+
+    display:flex;
+
+    gap:8px;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    font-weight:bold;
+
+}
+
+.performance-overview-header button{
+
+    margin:0;
+
+    padding:0;
+
+    border:0;
+
+    background:transparent;
+
+    font:inherit;
+
+    cursor:pointer;
+
+}
+
+.performance-overview [data-performance-body]{
+
+    margin-top:8px;
+
+}
+
+.performance-overview [data-reset-worst]{
 
     display:block;
 

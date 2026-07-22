@@ -1,9 +1,14 @@
 # SIMONE Current State
 
-Updated: 2026-07-18
+Updated: 2026-07-22
 
 ## Today's work
 
+- Replaced continuous camera following with the current Invisible Reframing
+  concept. Dragging changes only the curtain. After a meaningful inward drag
+  ends in an outer 20% edge zone, the Viewport may settle by half its visible
+  extent toward additional content while the completed curtain state remains
+  frozen.
 - Rebuilt crest lighting as an isolated renderer feature in production and
   Model C. Geometry identifies outward/front regions and the rendered sample
   nearest zero slope, and maximum absolute rendered slope supplies local ridge
@@ -34,6 +39,37 @@ Updated: 2026-07-18
 - The periodic circular-fold model, `CurtainField`, and visibility semantics
   form the current geometry pipeline.
 
+## Interaction philosophy
+
+### Curtain
+
+The curtain is the visitor's direct-manipulation object. Dragging opens the
+curtain and lets the visitor reveal and discover exhibition content. It never
+directly navigates the Viewport: while the pointer is held, only curtain state
+changes and the Viewport remains stationary.
+
+### Invisible Reframing
+
+Invisible Reframing is computer assistance, not user navigation. It is
+evaluated only after a drag ends, and only when the completed gesture suggests
+that the visitor intends to continue exploring beyond the comfortable view.
+The completed curtain deformation remains frozen while the Viewport settles.
+
+The current trigger requires:
+
+- a drag starting inside the outer 20% edge zone;
+- an inward projected drag exceeding 10% of the visible Viewport width;
+- additional projected content in the corresponding direction.
+
+When eligible, the Viewport moves by approximately half its visible extent,
+shortened at content bounds, using a 450 ms smoothstep settling animation. The
+normalized Viewport slider and projected-pixel readout remain synchronized
+during the movement.
+
+These trigger heuristics are intentionally provisional. Their thresholds and
+gesture interpretation are expected to evolve through observation and visitor
+testing rather than being treated as a final navigation specification.
+
 ## Viewport
 
 The projected Viewport foundation is implemented in `src/viewport/Viewport.js`
@@ -45,8 +81,8 @@ only the relevant immutable artwork columns. The initial projected window is
 established after artwork import and remains independent of the geometry
 engine.
 
-Current worktree changes refine Viewport reset and initialization behaviour.
-They have not yet been committed as a completed Viewport milestone.
+The Viewport also supports bounded horizontal settling for Invisible Reframing
+without changing curtain geometry or interaction state.
 
 ## Performance investigation
 

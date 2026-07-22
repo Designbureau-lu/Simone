@@ -42,6 +42,7 @@ export function startSimone() {
     }
 
     const circularFoldSurface = new CircularFoldSurface();
+    bindPerformanceOverviewCollapse(performanceOverviewElement);
     const application = new ModelCApplication({
         artworkLoader: loadArtwork,
         parameters: new SurfaceParameters(),
@@ -66,11 +67,15 @@ export function startSimone() {
     });
 
     bindSurfaceControls(controls, application);
-    bindCurtainDragging(canvas, application);
-    bindViewportControl(
+    const synchronizeViewportControl = bindViewportControl(
         viewportPosition,
         viewportPositionValue,
         application
+    );
+    bindCurtainDragging(
+        canvas,
+        application,
+        synchronizeViewportControl
     );
     window.addEventListener("resize", () => application.render());
 
@@ -90,14 +95,70 @@ export function startSimone() {
     return application;
 }
 
+const PERFORMANCE_OVERVIEW_SESSION_KEY = "simone.performanceOverview.expanded";
+
+export function bindPerformanceOverviewCollapse(element) {
+    const toggle = element.querySelector("[data-performance-toggle]");
+    const body = element.querySelector("[data-performance-body]");
+
+    if (!(toggle instanceof HTMLButtonElement)
+        || !(body instanceof HTMLElement)) {
+        throw new Error("PerformanceOverview collapse controls are incomplete.");
+    }
+
+    let expanded = readPerformanceOverviewState() === "expanded";
+    const synchronize = () => {
+        body.hidden = !expanded;
+        toggle.textContent = expanded ? "▾" : "▸";
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.setAttribute(
+            "aria-label",
+            `${expanded ? "Collapse" : "Expand"} Performance Meter`
+        );
+    };
+
+    toggle.addEventListener("click", () => {
+        expanded = !expanded;
+        writePerformanceOverviewState(expanded ? "expanded" : "collapsed");
+        synchronize();
+    });
+    synchronize();
+}
+
+function readPerformanceOverviewState() {
+    try {
+        return sessionStorage.getItem(PERFORMANCE_OVERVIEW_SESSION_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function writePerformanceOverviewState(state) {
+    try {
+        sessionStorage.setItem(PERFORMANCE_OVERVIEW_SESSION_KEY, state);
+    } catch {
+        // The meter remains usable when session storage is unavailable.
+    }
+}
+
 function bindViewportControl(input, output, application) {
+    const synchronize = () => {
+        const position = application.viewport.position * 100;
+        input.value = String(position);
+        output.value = `${formatPosition(position)}% · X ${
+            formatPosition(application.viewport.projectedOffset)
+        } projected px`;
+    };
     const update = () => {
         const position = Number(input.value);
-        output.value = `${formatPosition(position)}%`;
         application.updateViewportPosition(position / 100);
+        synchronize();
     };
 
     input.addEventListener("input", update);
+    synchronize();
+
+    return synchronize;
 }
 
 function getSurfaceControls() {
@@ -159,7 +220,11 @@ function bindSurfaceControls(controls, application) {
     return updateApplication;
 }
 
-function bindCurtainDragging(canvas, application) {
+function bindCurtainDragging(
+    canvas,
+    application,
+    synchronizeViewportControl
+) {
     let drag = null;
 
     canvas.addEventListener("pointerdown", (event) => {
@@ -177,6 +242,9 @@ function bindCurtainDragging(canvas, application) {
         const targetX = (
             event.clientX - bounds.left - canvas.clientLeft
         ) * canvasScale;
+        const pointerPosition = (
+            event.clientX - bounds.left - canvas.clientLeft
+        ) / width;
         const interaction = application.beginLocalInteraction(targetX);
 
         if (!interaction) {
@@ -186,6 +254,7 @@ function bindCurtainDragging(canvas, application) {
         drag = {
             pointerId: event.pointerId,
             startX: event.clientX,
+            startPointerPosition: pointerPosition,
             displacementScale: application.interactionDisplacementScale(
                 width
             ),
@@ -209,6 +278,7 @@ function bindCurtainDragging(canvas, application) {
             drag.interaction,
             horizontalDisplacement
         );
+        synchronizeViewportControl();
     });
 
     const finishDragging = (event) => {
@@ -220,8 +290,24 @@ function bindCurtainDragging(canvas, application) {
             canvas.releasePointerCapture(event.pointerId);
         }
 
+        const totalProjectedDisplacement = (
+            event.clientX - drag.startX
+        ) * drag.displacementScale;
+        const dragStartPosition = drag.startPointerPosition;
+        const reframeDirection = horizontalReframeDirection(
+            dragStartPosition,
+            totalProjectedDisplacement,
+            application.viewport.projectedExtent
+        );
+
         drag = null;
         canvas.classList.remove("is-dragging");
+        if (reframeDirection !== 0) {
+            application.reframeHorizontal(
+                reframeDirection,
+                synchronizeViewportControl
+            );
+        }
     };
 
     canvas.addEventListener("pointerup", finishDragging);
@@ -321,6 +407,30 @@ function setControlPairValue(pair, value) {
 
 function formatPosition(value) {
     return String(Number(value.toFixed(2)));
+}
+
+const HORIZONTAL_REFRAME_EDGE_FRACTION = 0.2;
+const MINIMUM_EXPLORATORY_DRAG_FRACTION = 0.1;
+
+export function horizontalReframeDirection(
+    startPointerPosition,
+    totalProjectedDisplacement,
+    projectedViewportWidth
+) {
+    const minimumDisplacement = projectedViewportWidth
+        * MINIMUM_EXPLORATORY_DRAG_FRACTION;
+
+    if (startPointerPosition > 1 - HORIZONTAL_REFRAME_EDGE_FRACTION
+        && totalProjectedDisplacement < -minimumDisplacement) {
+        return 1;
+    }
+
+    if (startPointerPosition < HORIZONTAL_REFRAME_EDGE_FRACTION
+        && totalProjectedDisplacement > minimumDisplacement) {
+        return -1;
+    }
+
+    return 0;
 }
 
 function clamp(value, minimum, maximum) {
