@@ -11,7 +11,7 @@ const METRICS = Object.freeze([
     "overlayTime"
 ]);
 
-/** Compare legacy destination allocation with Model C using one live state. */
+/** Compare legacy destination allocation with the viewport canvas. */
 export async function runModelCComparison(application) {
     if (!application.artwork) {
         throw new Error("Import artwork before running the comparison.");

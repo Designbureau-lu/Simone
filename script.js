@@ -6,5 +6,5 @@ import {
 // Browser entry point only. Application coordination belongs in the application layer.
 const application = startSimone();
 
-// Temporary Model C measurement entry point for this prototype branch only.
+// Developer measurement entry point for SIMONE's viewport-canvas renderer.
 window.runModelCComparison = () => runModelCComparison(application);

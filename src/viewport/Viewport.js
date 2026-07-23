@@ -118,6 +118,21 @@ export class Viewport {
         );
     }
 
+    availableProjectedDisplacement(direction) {
+        if (direction !== -1 && direction !== 1) {
+            throw new RangeError("Viewport direction must be -1 or 1.");
+        }
+
+        const maximumOffset = Math.max(
+            this.#contentStart,
+            this.#contentEnd - this.#projectedExtent
+        );
+
+        return direction > 0
+            ? maximumOffset - this.#projectedOffset
+            : this.#projectedOffset - this.#contentStart;
+    }
+
     sourceRangeFor(projectedColumns) {
         if (!Array.isArray(projectedColumns)) {
             throw new TypeError("Viewport requires projected columns.");

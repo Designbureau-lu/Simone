@@ -299,12 +299,14 @@ function bindCurtainDragging(
             totalProjectedDisplacement,
             application.viewport.projectedExtent
         );
+        const grabbedInteraction = drag.interaction;
 
         drag = null;
         canvas.classList.remove("is-dragging");
         if (reframeDirection !== 0) {
             application.reframeHorizontal(
                 reframeDirection,
+                grabbedInteraction,
                 synchronizeViewportControl
             );
         }

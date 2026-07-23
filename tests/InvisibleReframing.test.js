@@ -32,7 +32,7 @@ test("reframing settles by half a viewport with smoothstep easing", () => {
         renderedFrames += 1;
     };
 
-    assert(application.reframeHorizontal(1, () => {
+    assert(application.reframeHorizontal(1, {}, () => {
         synchronizedFrames += 1;
     }));
     animation.runNext(0);
@@ -48,11 +48,11 @@ test("reframing settles by half a viewport with smoothstep easing", () => {
 
 test("reframing is shortened at viewport bounds", () => {
     const viewport = createViewport(550);
-    const application = createApplication(viewport);
+    const application = createApplication(viewport, 900);
     const animation = captureAnimationFrames();
     application.render = () => {};
 
-    assert(application.reframeHorizontal(1));
+    assert(application.reframeHorizontal(1, {}));
     animation.runNext(0);
     animation.runNext(450);
     closeTo(viewport.projectedOffset, 600);
@@ -64,11 +64,45 @@ test("reframing does not start when no content remains", () => {
     const application = createApplication(viewport);
     let synchronized = false;
 
-    assert(!application.reframeHorizontal(1, () => {
+    assert(!application.reframeHorizontal(1, {}, () => {
         synchronized = true;
     }));
     assert(synchronized);
     closeTo(viewport.projectedOffset, 600);
+});
+
+test("reframing never moves beyond the grabbed point", () => {
+    const viewport = createViewport(100);
+    const application = createApplication(viewport, 220);
+    const animation = captureAnimationFrames();
+    application.render = () => {};
+
+    assert(application.reframeHorizontal(1, {}));
+    animation.runNext(0);
+    animation.runNext(450);
+    closeTo(viewport.projectedOffset, 220);
+    animation.restore();
+});
+
+test("earlier reframing mirrors the grabbed-point limit", () => {
+    const viewport = createViewport(300);
+    const application = createApplication(viewport, 640);
+    const animation = captureAnimationFrames();
+    application.render = () => {};
+
+    assert(application.reframeHorizontal(-1, {}));
+    animation.runNext(0);
+    animation.runNext(450);
+    closeTo(viewport.projectedOffset, 240);
+    animation.restore();
+});
+
+test("grabbed point at the viewport edge prevents reframing", () => {
+    const viewport = createViewport(100);
+    const application = createApplication(viewport, 100);
+
+    assert(!application.reframeHorizontal(1, {}));
+    closeTo(viewport.projectedOffset, 100);
 });
 
 test("viewport position reflects settled offset changes", () => {
@@ -89,11 +123,15 @@ function createViewport(offset) {
     return viewport;
 }
 
-function createApplication(viewport) {
+function createApplication(viewport, grabbedProjectedX = 400) {
     const application = new SimoneApplication({
         artworkLoader: null,
-        parameters: null,
-        curtainField: { resetCurtainState: 0.55 },
+        parameters: { carrierDistance: 0 },
+        curtainField: {
+            resetCurtainState: 0.55,
+            projectedXForInteraction: () => grabbedProjectedX,
+            resolvedParametersAt: () => ({ projectedCarrierSpacing: 20 })
+        },
         viewport,
         phaseResolver: null,
         surfaces: null,

@@ -9,7 +9,7 @@ const TIME_KEYS = Object.freeze([
     ["Shading", "overlayTime"]
 ]);
 
-/** Rolling Model C measurements; intentionally isolated from production UI. */
+/** Rolling developer measurements for SIMONE's viewport-canvas renderer. */
 export class ModelCPerformanceOverview {
     #output;
     #browser;
@@ -22,7 +22,7 @@ export class ModelCPerformanceOverview {
 
         if (!(output instanceof HTMLPreElement)
             || !(reset instanceof HTMLButtonElement)) {
-            throw new Error("Model C performance controls are incomplete.");
+            throw new Error("SIMONE performance controls are incomplete.");
         }
 
         this.#output = output;
@@ -52,7 +52,7 @@ export class ModelCPerformanceOverview {
 
         const current = this.#current;
         const rows = [
-            "MODEL C — VIEWPORT CANVAS",
+            "SIMONE — VIEWPORT CANVAS",
             `${"".padEnd(18)}${"Current".padStart(10)}`
                 + `${"Median".padStart(10)}${"p95".padStart(10)}`,
             ...TIME_KEYS.map(([label, key]) => metricRow(

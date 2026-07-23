@@ -1,6 +1,6 @@
 import { SimoneApplication } from "../../application/SimoneApplication.js";
 
-/** Temporary Model C proof of concept: virtual geometry, viewing-space output. */
+/** SIMONE application using virtual geometry and viewing-space output. */
 export class ModelCApplication extends SimoneApplication {
     constructor({ viewingSurface, ...dependencies }) {
         super(dependencies);

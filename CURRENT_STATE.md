@@ -1,6 +1,6 @@
 # SIMONE Current State
 
-Updated: 2026-07-22
+Updated: 2026-07-23
 
 ## Today's work
 
@@ -9,8 +9,8 @@ Updated: 2026-07-22
   ends in an outer 20% edge zone, the Viewport may settle by half its visible
   extent toward additional content while the completed curtain state remains
   frozen.
-- Rebuilt crest lighting as an isolated renderer feature in production and
-  Model C. Geometry identifies outward/front regions and the rendered sample
+- Rebuilt crest lighting as an isolated feature in both canvas renderers.
+  Geometry identifies outward/front regions and the rendered sample
   nearest zero slope, and maximum absolute rendered slope supplies local ridge
   strength. Shading supplies a global linear lifecycle envelope; final crest
   intensity is the product of geometric strength and lifecycle. Rear/down folds
@@ -20,10 +20,9 @@ Updated: 2026-07-22
 - Established a linear influence ramp affecting the nearest
   `CONCERNED_NEIGHBORS` neighboring periods; the current implementation uses
   50 neighbors as its single influence parameter.
-- Evaluated the temporary Model C proof of concept on the
-  `model-c-viewport-canvas-poc` branch. Model C is architecturally viable: it
-  retains virtual curtain geometry and Viewport selection while rendering into
-  a CSS-size × DPR backing store.
+- Adopted the viewport-canvas architecture as part of SIMONE. It retains
+  virtual curtain geometry and Viewport selection while rendering into a
+  CSS-size × DPR backing store.
 - Continued refining the projected Viewport integration and its reset and
   initialization behaviour.
 - Added work-in-progress frame instrumentation and a developer performance
@@ -61,10 +60,11 @@ The current trigger requires:
 - an inward projected drag exceeding 10% of the visible Viewport width;
 - additional projected content in the corresponding direction.
 
-When eligible, the Viewport moves by approximately half its visible extent,
-shortened at content bounds, using a 450 ms smoothstep settling animation. The
-normalized Viewport slider and projected-pixel readout remain synchronized
-during the movement.
+When eligible, the Viewport requests approximately half its visible extent but
+limits that distance so it cannot move past the material point selected at
+pointer-down. Content bounds may shorten it further. The movement uses a 450 ms
+smoothstep settling animation; the normalized Viewport slider and
+projected-pixel readout remain synchronized throughout.
 
 These trigger heuristics are intentionally provisional. Their thresholds and
 gesture interpretation are expected to evolve through observation and visitor
@@ -102,18 +102,17 @@ Controlled experiments currently establish:
 - Chrome remains slow in both width variants; its dominant cost is not yet
   isolated.
 
-These earlier experiments led to the Model C architectural proof of concept.
-Further bottleneck isolation and renderer optimization are deferred while the
-project establishes Model C equivalence with production.
+These earlier experiments established the viewport-canvas architecture now
+used by SIMONE. Further bottleneck isolation and renderer optimization remain
+available as later engineering work.
 
 See `PERFORMANCE.md` for the recorded experimental evidence.
 
-## Model C proof-of-concept outcome
+## Viewport-canvas architecture
 
-Model C demonstrated that SIMONE can render the unrestricted virtual curtain
-into a viewport-sized destination canvas without changing the production
-renderer. Unlimited curtain interaction and dynamic curtain width were
-preserved.
+SIMONE renders the unrestricted virtual curtain into a viewport-sized
+destination canvas while preserving unlimited curtain interaction and dynamic
+curtain width.
 
 In the worst-case Firefox scene, measured performance improved from
 approximately 1050 ms per frame with the artwork-width destination canvas to
@@ -121,28 +120,15 @@ approximately 100 ms per frame with the viewport-sized destination canvas.
 This establishes the architecture as viable and the destination canvas size as
 a material part of the worst-case rendering cost.
 
-The Model C drag coordinate mapping has now been verified. Browser pointer
+The viewport-canvas drag coordinate mapping has been verified. Browser pointer
 displacement is measured against the canvas content box and converted directly
 to the visible projected extent. This is algebraically identical to the
 production canvas-coordinate conversion followed by inverse Viewport mapping;
 the intermediate canvas backing-store extent cancels. No runtime correction
 was required after the existing content-box and drag-mapping fixes.
 
-The prototype is not yet equivalent to production. Remaining differences are:
-
-- the Viewport height does not match production;
-- rendered artwork has reduced crispness;
-
-The project is now in the **equivalence phase**. Future work focuses on matching
-production behaviour and visible output, not on further performance
-optimization.
-
-## Next recommended engineering tasks
-
-1. Match the production Viewport height and vertical mapping.
-2. Restore production-equivalent artwork crispness.
-3. Validate visual and interaction equivalence across representative artwork
-   widths and curtain states before considering production integration.
+The viewport-canvas renderer is now the active SIMONE implementation rather
+than a separate proof of concept.
 
 ## Codex workflow transition
 

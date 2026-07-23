@@ -69,23 +69,63 @@ export class SimoneApplication {
         this.render();
     }
 
-    reframeHorizontal(direction, onFrame = null) {
+    reframeHorizontal(direction, interaction, onFrame = null) {
         if (!this.artwork || (direction !== -1 && direction !== 1)) {
             return false;
         }
 
         this.cancelHorizontalReframe();
         const startOffset = this.viewport.projectedOffset;
-        const targetOffset = this.viewport.projectedOffsetAfterShift(
-            direction * this.viewport.projectedExtent
-                * HORIZONTAL_REFRAME_DISTANCE_FACTOR
+        const projectedExtent = this.viewport.projectedExtent;
+        const grabbedProjectedX = this.curtainField
+            .projectedXForInteraction(interaction)
+            + this.parameters.carrierDistance / (2 * Math.PI);
+        const grabbedScreenPositionBefore = (
+            grabbedProjectedX - startOffset
+        ) / projectedExtent;
+        const originalRequestedDistance = projectedExtent
+            * HORIZONTAL_REFRAME_DISTANCE_FACTOR;
+        // The grabbed-point limit may later include a configurable safety inset
+        // after further user testing. Current inset intentionally equals zero.
+        const twoPeriodInset = 0;
+        const maximumGrabbedPointDistance = Math.max(
+            0,
+            (direction > 0
+                ? grabbedProjectedX - startOffset
+                : startOffset + projectedExtent - grabbedProjectedX)
+                - twoPeriodInset
         );
+        const viewportContentBoundLimit = this.viewport
+            .availableProjectedDisplacement(direction);
+        const appliedDistance = Math.max(
+            0,
+            Math.min(
+                originalRequestedDistance,
+                maximumGrabbedPointDistance,
+                viewportContentBoundLimit
+            )
+        );
+        const targetOffset = startOffset + direction * appliedDistance;
         const displacement = targetOffset - startOffset;
 
         if (displacement === 0) {
             onFrame?.();
             return false;
         }
+
+        const grabbedScreenPositionAfter = (
+            grabbedProjectedX - targetOffset
+        ) / projectedExtent;
+        console.info("Invisible Reframing distance", {
+            grabbedPointScreenPositionBefore: grabbedScreenPositionBefore,
+            originalRequestedDistance,
+            maximumDistanceAllowedByGrabbedPoint:
+                maximumGrabbedPointDistance,
+            twoPeriodInset,
+            viewportContentBoundLimit,
+            finalAppliedDistance: appliedDistance,
+            grabbedPointScreenPositionAfter: grabbedScreenPositionAfter
+        });
 
         let startedAt = null;
         const settle = (timestamp) => {

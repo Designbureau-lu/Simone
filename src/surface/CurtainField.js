@@ -143,6 +143,22 @@ export class CurtainField {
         return this.#periods[interaction.periodIndex].visibleFactor;
     }
 
+    projectedXForInteraction(interaction) {
+        const parameters = this.#resolvedParameters[interaction.periodIndex];
+        if (!parameters) {
+            throw new RangeError("Interaction period is outside the curtain.");
+        }
+
+        let projectedX = 0;
+        for (let index = 0; index < interaction.periodIndex; index += 1) {
+            projectedX += this.#resolvedParameters[index]
+                .projectedCarrierSpacing;
+        }
+
+        return projectedX
+            + interaction.localPosition * parameters.projectedCarrierSpacing;
+    }
+
     resolve(surfaceParameters) {
         const parametersByVisibleFactor = new Map();
         const resolvedFor = (visibleFactor) => {
