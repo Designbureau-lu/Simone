@@ -4,6 +4,9 @@ Updated: 2026-07-23
 
 ## Today's work
 
+- Added static manifest loading from `public/images.txt`. SIMONE preserves
+  manifest order and filenames, ignores blank/comment lines, and continues
+  assembling the curtain when an individual listed image fails to decode.
 - Replaced continuous camera following with the current Invisible Reframing
   concept. Dragging changes only the curtain. After a meaningful inward drag
   ends in an outer 20% edge zone, the Viewport may settle by half its visible

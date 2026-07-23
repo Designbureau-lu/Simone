@@ -90,6 +90,7 @@ Canvas
 **Responsibilities**
 
 - Decode ordered production-segment image files.
+- Load startup segment order from `public/images.txt`.
 - Assemble and own one continuous immutable source image.
 - Expose exact one-pixel-wide vertical source columns.
 

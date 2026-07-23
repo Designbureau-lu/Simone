@@ -35,6 +35,9 @@ a general cloth simulator.
 `ImmutableArtwork` owns one continuous decoded source and exposes immutable
 one-pixel-wide vertical columns. `loadArtwork` decodes ordered production
 segments, assembles them horizontally, and keeps their boundaries private.
+At startup, `public/images.txt` supplies one filename per line in display
+order; blank lines and comments beginning with `#` are ignored. The referenced
+files live in `public/images/`.
 
 ### Parameters
 

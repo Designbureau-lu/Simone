@@ -92,7 +92,50 @@ export function startSimone() {
         }
     });
 
+    loadManifestArtwork(application);
+
     return application;
+}
+
+export async function loadManifestArtwork(application) {
+    const manifestUrl = new URL("public/images.txt", document.baseURI);
+
+    try {
+        const response = await fetch(manifestUrl);
+        if (!response.ok) {
+            throw new Error(
+                `Image manifest request failed with ${response.status}.`
+            );
+        }
+
+        const filenames = imageFilenamesFromManifest(await response.text());
+        if (filenames.length === 0) {
+            console.warn("SIMONE image manifest contains no image filenames.");
+            return;
+        }
+
+        const sources = imageSourcesForFilenames(
+            filenames,
+            document.baseURI
+        );
+        await application.importArtwork(sources);
+    } catch (error) {
+        console.error("SIMONE could not load its image manifest.", error);
+    }
+}
+
+export function imageFilenamesFromManifest(manifest) {
+    return manifest.split(/\r?\n/u)
+        .filter((line) => line.trim() !== "" && !line.startsWith("#"));
+}
+
+export function imageSourcesForFilenames(filenames, applicationBaseUrl) {
+    const imageDirectory = new URL("public/images/", applicationBaseUrl);
+
+    return filenames.map((name) => Object.freeze({
+        name,
+        url: new URL(encodeURIComponent(name), imageDirectory).href
+    }));
 }
 
 const PERFORMANCE_OVERVIEW_SESSION_KEY = "simone.performanceOverview.expanded";
