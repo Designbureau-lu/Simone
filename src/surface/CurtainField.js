@@ -61,6 +61,39 @@ export class CurtainField {
         }
     }
 
+    setResetCurtainStateTarget(resetCurtainState) {
+        validateVisibleFactor(resetCurtainState);
+        this.#resetCurtainState = resetCurtainState;
+    }
+
+    setVisibleFactors(visibleFactors) {
+        if (!Array.isArray(visibleFactors)
+            || visibleFactors.length !== this.#periods.length) {
+            throw new RangeError(
+                "Visible Factors must match the Curtain Period count."
+            );
+        }
+
+        for (let index = 0; index < this.#periods.length; index += 1) {
+            this.#periods[index].setVisibleFactor(visibleFactors[index]);
+        }
+    }
+
+    setVisibleFactorRange(startIndex, endIndex, visibleFactor) {
+        validateVisibleFactor(visibleFactor);
+        if (!Number.isInteger(startIndex)
+            || !Number.isInteger(endIndex)
+            || startIndex < 0
+            || endIndex < startIndex
+            || endIndex >= this.#periods.length) {
+            throw new RangeError("Visible Factor range is outside the curtain.");
+        }
+
+        for (let index = startIndex; index <= endIndex; index += 1) {
+            this.#periods[index].setVisibleFactor(visibleFactor);
+        }
+    }
+
     beginLocalInteraction(projectedX) {
         if (!Number.isFinite(projectedX)) {
             throw new RangeError("Projected interaction position must be finite.");
@@ -95,34 +128,64 @@ export class CurtainField {
         });
     }
 
+    beginRightwardInteractionAtPeriod(periodIndex) {
+        if (!Number.isInteger(periodIndex)
+            || periodIndex < 0
+            || periodIndex >= this.#periods.length) {
+            throw new RangeError("Interaction period is outside the curtain.");
+        }
+
+        return Object.freeze({
+            periodIndex,
+            localPosition: 0,
+            leftInfluence: 0,
+            rightInfluence: influenceTotalFor(
+                periodIndex,
+                1,
+                this.#periods.length
+            ),
+            rightwardOnly: true,
+            visibleFactors: Object.freeze(this.#periods.map(
+                (period) => period.visibleFactor
+            ))
+        });
+    }
+
     applyLocalDisplacement(
         interaction,
         projectedDisplacement,
         periodLength,
         minimumVisibleFactor,
-        maximumVisibleFactor
+        maximumVisibleFactor,
+        diagnosticLabel = null
     ) {
         const displacementInPeriods = projectedDisplacement / periodLength;
         const grabbedRedistribution = displacementInPeriods
             * GRABBED_PERIOD_PARTICIPATION;
-        const leftRedistribution = displacementInPeriods
-            - interaction.localPosition * grabbedRedistribution;
-        const rightRedistribution = leftRedistribution
-            + grabbedRedistribution;
+        const leftRedistribution = interaction.rightwardOnly
+            ? 0
+            : displacementInPeriods
+                - interaction.localPosition * grabbedRedistribution;
+        const rightRedistribution = interaction.rightwardOnly
+            ? -(displacementInPeriods - grabbedRedistribution)
+            : leftRedistribution + grabbedRedistribution;
         const leftScale = interaction.leftInfluence === 0
             ? 0
             : leftRedistribution / interaction.leftInfluence;
         const rightScale = interaction.rightInfluence === 0
             ? 0
             : rightRedistribution / interaction.rightInfluence;
-        const start = Math.max(
-            0,
-            interaction.periodIndex - CONCERNED_NEIGHBORS
-        );
+        const start = interaction.rightwardOnly
+            ? interaction.periodIndex
+            : Math.max(
+                0,
+                interaction.periodIndex - CONCERNED_NEIGHBORS
+            );
         const end = Math.min(
             this.#periods.length - 1,
             interaction.periodIndex + CONCERNED_NEIGHBORS
         );
+        const changes = [];
 
         for (let index = start; index <= end; index += 1) {
             const offset = index - interaction.periodIndex;
@@ -138,7 +201,18 @@ export class CurtainField {
             );
 
             this.#periods[index].setVisibleFactor(visibleFactor);
+            changes.push(Object.freeze({
+                periodIndex: index,
+                before: interaction.visibleFactors[index],
+                after: visibleFactor
+            }));
         }
+
+        logDisplacementChanges(
+            diagnosticLabel,
+            interaction.periodIndex,
+            changes
+        );
 
         return this.#periods[interaction.periodIndex].visibleFactor;
     }
@@ -226,6 +300,26 @@ export class CurtainField {
             width
         };
     }
+}
+
+function logDisplacementChanges(label, grabbedPeriodIndex, changes) {
+    if (!label) {
+        return;
+    }
+
+    console.group(`${label} — grabbed period ${grabbedPeriodIndex}`);
+    for (const change of changes) {
+        console.log([
+            `Period ${change.periodIndex}:`,
+            `before ${change.before}`,
+            `after ${change.after}`
+        ].join("\n"));
+    }
+    console.log(
+        "Changed periods:",
+        changes.filter((change) => change.before !== change.after).length
+    );
+    console.groupEnd();
 }
 
 function validateVisibleFactor(visibleFactor) {

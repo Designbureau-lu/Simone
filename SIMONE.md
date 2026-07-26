@@ -39,6 +39,11 @@ At startup, `public/images.txt` supplies one filename per line in display
 order; blank lines and comments beginning with `#` are ignored. The referenced
 files live in `public/images/`.
 
+Semantic project ranges are defined in `public/projects.txt`. They are measured
+in logical Gutter|Column units, not inferred from image dimensions. The current
+central layout configuration uses a 40 px gutter, a 400 px artwork column, and
+10 repetitions per successfully loaded image.
+
 ### Parameters
 
 `SurfaceParameters` validates user-facing configuration and resolves the values
@@ -54,8 +59,9 @@ Factor is the canonical interaction coordinate:
 Resolved values include projected carrier spacing and the authoritative
 `foldProgress` used by both geometry and shading. Reset Curtain State defines
 the reference Visible Factor assigned to every Period when the field is
-initially created or restored; direct dragging redistributes local Period
-values.
+initially created or restored. Runtime Reset control changes interpolate each
+Period toward that reference before applying the exact reference value on the
+final frame; direct dragging redistributes local Period values.
 
 ### Geometry
 
@@ -245,6 +251,47 @@ fallbacks or unresolved defects.
 
 These limitations describe the current product boundary and should not be read
 as bugs.
+
+### Interaction modes
+
+SIMONE distinguishes two modes of attention:
+
+- **EXPLORE:** continuous discovery through direct curtain dragging. Drag
+  remains the primary gesture and projects are secondary to free exploration.
+  A future local click/Moses helper belongs only to EXPLORE: it may open around
+  a clicked physical position, but must remain secondary to drag and must not
+  perform semantic navigation.
+- **READ:** explicit project selection through a future Index combines
+  navigation and presentation. The chosen project becomes flat and readable;
+  surrounding material remains unreadable because it stays folded. Graphical
+  focus effects such as blur, fading, or darkening are not part of this model.
+  Entering READ starts a fresh composition and does not preserve or restore the
+  previous EXPLORE deformation. Reset intentionally communicates the departure
+  from EXPLORE; it is no longer merely a technical function. The selected
+  project then flattens across its exact semantic boundaries—from left gutter
+  to right edge—and is presented for reading.
+
+The READ sequence is:
+
+```text
+Select Project
+    ↓
+Reset (curtain settles)
+    ↓
+Move to project
+    ↓
+Present Project
+    ↓
+Reading
+```
+
+This composition is closer to turning a page in a book than navigating a
+website. Closing one work before presenting the next is intentionally part of
+the experience. Gentle transition folds and optical centering remain future
+refinements of the final reading composition.
+
+The existing NEXT/PREVIOUS and automatic partial reveal are provisional READ
+experiments, not final interaction design.
 
 ## 8. Future Directions
 

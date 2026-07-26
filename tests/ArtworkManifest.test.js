@@ -1,6 +1,7 @@
 import {
     imageFilenamesFromManifest,
-    imageSourcesForFilenames
+    imageSourcesForFilenames,
+    manifestUrlFor
 } from "../src/application/startSimone.js";
 import { loadArtwork } from "../src/artwork/loadArtwork.js";
 
@@ -34,6 +35,16 @@ check(
         === "https://example.test/simone/public/images/Exposition%20%C3%A9t%C3%A9%2012.jpg",
     "image URL did not preserve the application base path"
 );
+check(
+    manifestUrlFor("public/projects.txt", "http://localhost:8000/")
+        .searchParams.has("t"),
+    "development manifest URL was not cache-busted"
+);
+check(
+    !manifestUrlFor("public/projects.txt", "https://example.test/simone/")
+        .searchParams.has("t"),
+    "production manifest URL was unexpectedly cache-busted"
+);
 
 const originalConsoleError = console.error;
 const loggedErrors = [];
@@ -41,11 +52,12 @@ console.error = (...values) => loggedErrors.push(values);
 
 try {
     const artwork = await loadArtwork([
-        imageSource("Première image.svg", 3),
+        imageSource("Première image.svg", 3, 2),
         { name: "Image cassée.svg", url: "data:image/svg+xml,not-svg" },
-        imageSource("Troisième image.svg", 5)
+        imageSource("Troisième image.svg", 5, 4)
     ]);
     check(artwork.width === 8, "successful images were not assembled");
+    check(artwork.height === 4, "different source heights were not preserved");
     check(
         loggedErrors.some((values) => String(values[0])
             .includes("Image cassée.svg")),
@@ -55,17 +67,17 @@ try {
     console.error = originalConsoleError;
 }
 
-const passed = 4 - failures.length;
+const passed = 7 - failures.length;
 const summary = failures.length === 0
-    ? "PASS 4/4"
-    : `FAIL ${passed}/4\n${failures.join("\n")}`;
+    ? "PASS 7/7"
+    : `FAIL ${passed}/7\n${failures.join("\n")}`;
 
 document.getElementById("results").textContent = summary;
 document.title = summary.split("\n")[0];
 console.log(summary);
 
-function imageSource(name, width) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="2"></svg>`;
+function imageSource(name, width, height) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"></svg>`;
     return {
         name,
         url: `data:image/svg+xml,${encodeURIComponent(svg)}`

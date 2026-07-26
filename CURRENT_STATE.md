@@ -1,12 +1,52 @@
 # SIMONE Current State
 
-Updated: 2026-07-23
+Updated: 2026-07-26
 
 ## Today's work
 
+- Replaced Reset Curtain State's instant runtime jump with a cancellable
+  600 ms smoothstep reset. Every Period interpolates independently from its
+  current Visible Factor to the existing constrained reset target; the final
+  frame uses the original exact setter so the settled result is identical to
+  the former instant reset. `RESET_CURTAIN_DURATION` is the single timing
+  parameter. New curtain interaction, replacement reset, surface update, or
+  project navigation cancels an active reset sequence.
+- Added a temporary project dropdown as another entry point into the existing
+  READ prototype pipeline. Selection first completes an animated Reset to the
+  temporary fixed 50% READ-entry target, then calls the same indexed project
+  navigator used by NEXT/PREVIOUS. At arrival, the dropdown's selected semantic
+  span becomes uniformly fully open from the Period containing `artworkStart`
+  through the Period containing `artworkEnd - 1`; surrounding Periods remain
+  at the neutral 50% state. This selected-artwork presentation uses its own
+  calm 1000 ms `PROJECT_REVEAL_DURATION`, independently of Reset and the
+  NEXT/PREVIOUS prototype. Before that presentation, the semantic midpoint
+  between `artworkStart` and `artworkEnd` is aligned with the Viewport centre.
+  The shared navigator still owns project lookup and positioning, while
+  NEXT/PREVIOUS retain their existing alignment and prototype opening.
 - Added static manifest loading from `public/images.txt`. SIMONE preserves
   manifest order and filenames, ignores blank/comment lines, and continues
   assembling the curtain when an individual listed image fails to decode.
+- Added the semantic project-navigation model independently of navigation UI.
+  Project spans load from `public/projects.txt`, accumulate in logical
+  Gutter|Column units, and convert to artwork coordinates through centralized
+  layout values. Navigation is disabled when spans exceed the capacity implied
+  by the number of successfully loaded images.
+- Added temporary PREVIOUS/NEXT evaluation controls. They maintain a current
+  project index and settle the Viewport at the adjacent project's
+  geometry-mapped `artworkStart`, without wrapping or using curtain dragging
+  or Invisible Reframing eligibility.
+- PREVIOUS/NEXT still settles the Viewport at the geometry-mapped
+  `currentProject.artworkStart`. Only after arrival, automatic opening selects
+  the Period containing that exact project boundary and begins a one-sided
+  interaction with `localPosition = 0` and no left influence. A strong
+  rightward drag increases visibility only for the boundary Period and later
+  Periods. Its displacement now comes from the selected project's exact
+  semantic width, `artworkEnd - artworkStart`, replacing the former fixed
+  prototype width.
+- Extended the projected Viewport's trailing bound to the rendered content end.
+  The curtain's right edge can therefore enter and cross the visible window,
+  leaving white space after the artwork regardless of image count, while the
+  leading bound remains fixed at the rendered content start.
 - Replaced continuous camera following with the current Invisible Reframing
   concept. Dragging changes only the curtain. After a meaningful inward drag
   ends in an outer 20% edge zone, the Viewport may settle by half its visible
@@ -43,12 +83,67 @@ Updated: 2026-07-23
 
 ## Interaction philosophy
 
-### Curtain
+### EXPLORE
 
-The curtain is the visitor's direct-manipulation object. Dragging opens the
-curtain and lets the visitor reveal and discover exhibition content. It never
-directly navigates the Viewport: while the pointer is held, only curtain state
-changes and the Viewport remains stationary.
+The curtain is the visitor's direct-manipulation object. Dragging is the
+primary gesture and lets the visitor explore continuously. Projects are
+secondary to this free discovery. While the pointer is held, dragging changes
+only curtain state and never directly navigates the Viewport.
+
+A local click/Moses opening may later become a secondary magical helper,
+probably opening around the clicked position in both directions. It belongs
+only to EXPLORE and must not navigate to, isolate, or otherwise depend on a
+semantic project. No click prototype has been authorized yet.
+
+### READ
+
+READ begins when the visitor explicitly selects a project, primarily through a
+future generous Index overlay. The Index may present project name, date,
+curtain position, and alternate sorting orders. Selection expresses an intent
+to read, so navigation and reveal are combined.
+
+The selected project should become flat and readable while surrounding curtain
+material remains naturally folded and unreadable. Isolation must be produced
+by the folds themselves, not blur, fading, darkening, or another graphical
+focus effect. Moving between projects will likely refold the previous
+selection before revealing the next.
+
+Entering READ will start a fresh reading composition. The previous EXPLORE
+curtain state will neither be preserved nor restored. This requires an elegant,
+meaningful transition to the neutral folded curtain that communicates “we are
+leaving exploration.” Reset is therefore an expressive part of READ entry, not
+merely a technical state-restoration function.
+
+```text
+Select Project
+    ↓
+Reset (curtain settles)
+    ↓
+Move to project
+    ↓
+Present Project
+    ↓
+Reading
+```
+
+The selected project must flatten across its exact semantic span, from its left
+gutter to its right edge. READ must not define presentation as an arbitrary
+number of columns. The work is presented, not merely opened. Gentle folds on
+both sides should transition between the flat project and the normal dense
+curtain.
+
+Animated Reset, movement to the selected project, uniform semantic-span
+presentation, semantic project width, and geometric midpoint centering are
+implemented. Optical centering, gentle transition folds, and the final reading
+composition remain to be designed.
+
+The interaction now feels closer to turning a page in a book than navigating a
+website. Closing one work before presenting the next is an intentional part of
+the experience.
+
+The current NEXT/PREVIOUS controls and partial automatic opening are temporary
+READ-mode experiments. Preserve their useful navigation code, but do not
+expand them or treat the present reveal as final interaction design.
 
 ### Invisible Reframing
 
@@ -85,7 +180,9 @@ established after artwork import and remains independent of the geometry
 engine.
 
 The Viewport also supports bounded horizontal settling for Invisible Reframing
-without changing curtain geometry or interaction state.
+without changing curtain geometry or interaction state. Its leading bound is
+the rendered content start; its trailing bound is the rendered content end, so
+navigation can reveal white space beyond the curtain's right edge.
 
 ## Performance investigation
 

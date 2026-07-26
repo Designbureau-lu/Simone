@@ -31,16 +31,10 @@ export async function loadArtwork(files) {
     }
 
     if (images.length === 1) {
-        return new ImmutableArtwork(images[0]);
+        return new ImmutableArtwork(images[0], [images[0].naturalWidth]);
     }
 
-    const height = images[0].naturalHeight;
-
-    if (images.some((image) => image.naturalHeight !== height)) {
-        throw new RangeError(
-            "All production segments must have the same pixel height."
-        );
-    }
+    const height = Math.max(...images.map((image) => image.naturalHeight));
 
     const width = images.reduce(
         (total, image) => total + image.naturalWidth,
@@ -63,7 +57,10 @@ export async function loadArtwork(files) {
         destinationX += image.naturalWidth;
     }
 
-    return new ImmutableArtwork(source);
+    return new ImmutableArtwork(
+        source,
+        images.map((image) => image.naturalWidth)
+    );
 }
 
 function decodeImage(source) {

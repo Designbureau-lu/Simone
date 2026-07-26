@@ -37,15 +37,20 @@ export class ModelCApplication extends SimoneApplication {
             modelTransition: this.parameters.modelTransition
         });
         const virtualFrame = surface.frameFor(
-            this.artwork,
+            {
+                width: this.logicalArtworkWidth,
+                height: this.artwork.height
+            },
             this.curtainField
         );
         const projectedColumns = this.#projectGeometry(surface);
+        this.projectedColumns = Object.freeze(projectedColumns);
         const contentBounds = boundsFor(
             projectedColumns,
             0,
             projectedColumns.length
         );
+        this.projectedContentBounds = contentBounds;
 
         if (this.viewport.projectedExtent === 0) {
             this.viewport.setProjectedWindow(
@@ -149,8 +154,15 @@ export class ModelCApplication extends SimoneApplication {
 
         for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
             const column = this.artwork.columnAt(sourceX);
+            const geometryColumn = Object.freeze({
+                ...column,
+                sourceX: this.artwork.logicalXForSourceX(
+                    sourceX,
+                    this.logicalImageWidth
+                )
+            });
             placements[sourceX] = surface.mapColumn(
-                column,
+                geometryColumn,
                 this.curtainField
             );
         }

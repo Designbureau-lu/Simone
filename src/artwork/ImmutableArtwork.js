@@ -6,8 +6,9 @@
  */
 export class ImmutableArtwork {
     #source;
+    #segments;
 
-    constructor(source) {
+    constructor(source, imageWidths = [sourceWidthFor(source)]) {
         const isImage = source instanceof HTMLImageElement && source.complete;
         const isCanvas = source instanceof HTMLCanvasElement;
 
@@ -18,10 +19,24 @@ export class ImmutableArtwork {
                 "ImmutableArtwork requires a non-empty decoded source."
             );
         }
+        if (!Array.isArray(imageWidths) || imageWidths.length < 1
+            || imageWidths.some((width) => !Number.isSafeInteger(width)
+                || width < 1)) {
+            throw new RangeError(
+                "ImmutableArtwork image widths must be positive integers."
+            );
+        }
 
         this.#source = source;
+        let sourceStart = 0;
+        this.#segments = Object.freeze(imageWidths.map((width) => {
+            const segment = Object.freeze({ sourceStart, width });
+            sourceStart += width;
+            return segment;
+        }));
         this.width = sourceWidthFor(source);
         this.height = sourceHeightFor(source);
+        this.imageCount = imageWidths.length;
 
         Object.freeze(this);
     }
@@ -39,6 +54,36 @@ export class ImmutableArtwork {
             width: 1,
             height: this.height
         });
+    }
+
+    logicalXForSourceX(sourceX, logicalImageWidth) {
+        const segmentIndex = this.#segmentIndexForSourceX(sourceX);
+        const segment = this.#segments[segmentIndex];
+        return segmentIndex * logicalImageWidth
+            + (sourceX - segment.sourceStart)
+                / segment.width * logicalImageWidth;
+    }
+
+    sourceXForLogicalX(logicalX, logicalImageWidth) {
+        const segmentIndex = Math.min(
+            Math.floor(logicalX / logicalImageWidth),
+            this.#segments.length - 1
+        );
+        const segment = this.#segments[segmentIndex];
+        const localLogicalX = logicalX - segmentIndex * logicalImageWidth;
+        return segment.sourceStart + Math.floor(
+            localLogicalX / logicalImageWidth * segment.width
+        );
+    }
+
+    #segmentIndexForSourceX(sourceX) {
+        for (let index = 0; index < this.#segments.length; index += 1) {
+            const segment = this.#segments[index];
+            if (sourceX < segment.sourceStart + segment.width) {
+                return index;
+            }
+        }
+        return this.#segments.length - 1;
     }
 }
 

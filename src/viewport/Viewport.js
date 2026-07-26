@@ -28,15 +28,18 @@ export class Viewport {
     }
 
     get position() {
-        const maximumOffset = Math.max(
-            this.#contentStart,
-            this.#contentEnd - this.#projectedExtent
-        );
-        const travel = maximumOffset - this.#contentStart;
+        const travel = this.#maximumOffset() - this.#contentStart;
 
         return travel === 0
             ? 0
             : (this.#projectedOffset - this.#contentStart) / travel;
+    }
+
+    get movementBounds() {
+        return Object.freeze({
+            minimum: this.#contentStart,
+            maximum: this.#maximumOffset()
+        });
     }
 
     set presentationExtent(value) {
@@ -64,7 +67,7 @@ export class Viewport {
         this.#projectedOffset = clamp(
             this.#projectedOffset,
             start,
-            Math.max(start, end - this.#projectedExtent)
+            this.#maximumOffset()
         );
     }
 
@@ -73,13 +76,9 @@ export class Viewport {
             throw new RangeError("Viewport position must be finite.");
         }
 
-        const maximumOffset = Math.max(
-            this.#contentStart,
-            this.#contentEnd - this.#projectedExtent
-        );
         this.#projectedOffset = this.#contentStart
             + clamp(position, 0, 1)
-                * (maximumOffset - this.#contentStart);
+                * (this.#maximumOffset() - this.#contentStart);
     }
 
     shiftProjectedOffset(displacement) {
@@ -88,14 +87,10 @@ export class Viewport {
         }
 
         const previousOffset = this.#projectedOffset;
-        const maximumOffset = Math.max(
-            this.#contentStart,
-            this.#contentEnd - this.#projectedExtent
-        );
         this.#projectedOffset = clamp(
             previousOffset + displacement,
             this.#contentStart,
-            maximumOffset
+            this.#maximumOffset()
         );
 
         return this.#projectedOffset - previousOffset;
@@ -106,15 +101,10 @@ export class Viewport {
             throw new RangeError("Viewport displacement must be finite.");
         }
 
-        const maximumOffset = Math.max(
-            this.#contentStart,
-            this.#contentEnd - this.#projectedExtent
-        );
-
         return clamp(
             this.#projectedOffset + displacement,
             this.#contentStart,
-            maximumOffset
+            this.#maximumOffset()
         );
     }
 
@@ -123,13 +113,8 @@ export class Viewport {
             throw new RangeError("Viewport direction must be -1 or 1.");
         }
 
-        const maximumOffset = Math.max(
-            this.#contentStart,
-            this.#contentEnd - this.#projectedExtent
-        );
-
         return direction > 0
-            ? maximumOffset - this.#projectedOffset
+            ? this.#maximumOffset() - this.#projectedOffset
             : this.#projectedOffset - this.#contentStart;
     }
 
@@ -189,6 +174,10 @@ export class Viewport {
         }
 
         return this.#presentationExtent / this.#projectedExtent;
+    }
+
+    #maximumOffset() {
+        return Math.max(this.#contentStart, this.#contentEnd);
     }
 }
 

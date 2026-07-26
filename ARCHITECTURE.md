@@ -106,6 +106,29 @@ Canvas
 - visibility phases;
 - shading or canvas presentation.
 
+### `navigation/`
+
+**Responsibilities**
+
+- Define logical artwork structure independently of source-image dimensions.
+- Parse UTF-8 project-span metadata.
+- Convert cumulative logical unit ranges into artwork coordinates.
+- Disable semantic navigation when project spans exceed loaded capacity.
+
+**Current layout**
+
+- Gutter width: 40 px.
+- Column width: 400 px.
+- Repetitions per loaded image: 10.
+- Unit width: gutter width + column width.
+
+**Interaction-mode boundary**
+
+Project metadata and semantic navigation belong to READ mode only. EXPLORE
+must not depend on project ranges, project identity, or navigation state.
+NEXT/PREVIOUS are temporary READ evaluation controls rather than general
+curtain interactions.
+
 ### `geometry/`
 
 **Responsibilities**
@@ -187,6 +210,10 @@ Canvas
   snapshot for one Period value.
 - `CurtainField.setResetCurtainState(value)` records and applies the reference
   curtain state.
+- `CurtainField.setResetCurtainStateTarget(value)` records that reference
+  without immediately replacing runtime Period values.
+- `CurtainField.setVisibleFactors(values)` applies one validated intermediate
+  Visible Factor per Period during coordinated state transitions.
 - `CurtainField.resolve(parameters)` resolves its Period collection for a frame.
 
 **Must not know**
@@ -337,6 +364,63 @@ These approximations exist to protect artwork integrity, visual continuity, and
 interactive performance.
 
 ---
+
+## Interaction Modes
+
+### EXPLORE
+
+EXPLORE treats the curtain itself as a continuous field of discovery. Dragging
+is primary direct manipulation and must remain the dominant gesture. Projects
+are secondary in this mode. A possible future local click/Moses opening belongs
+only to EXPLORE and is secondary assistance around a physical click position,
+not project navigation or semantic project isolation.
+
+### READ
+
+READ starts with explicit project selection, expected primarily through a
+future Index. Project selection combines navigation and reveal. Geometry should
+flatten the selected project for reading while folds keep surrounding curtain
+material unreadable. READ must not simulate attention through blur, opacity,
+darkening, or other graphical focus effects.
+
+Entering READ creates a fresh composition rather than preserving or restoring
+the previous EXPLORE deformation. The transition must return the whole curtain
+meaningfully to its neutral folded state before composing the selected
+project. Reset is an expressive mode transition that communicates leaving
+EXPLORE, not merely a technical state setter.
+
+The pipeline is intentionally sequential:
+
+```text
+Select Project
+    -> Reset (curtain settles)
+    -> Move to project
+    -> Present Project
+    -> Reading
+```
+
+The flat region is the project's exact semantic interval: from its left gutter
+to its right edge. It is not an “open N columns” heuristic, and the result is a
+project presentation rather than a generic opening gesture. Gentle transition
+folds on each side will eventually connect that flat interval to the normally
+dense curtain.
+
+NEXT/PREVIOUS are provisionally part of READ and currently serve as evaluation
+controls. Their navigation code is useful, but their automatic partial opening
+is not the final READ interaction. A later READ design will likely refold the
+previous project before revealing a new selection.
+
+A temporary project dropdown is a second entry point into this same prototype
+pipeline. It supplies a selected project index after animated Reset; the shared
+indexed navigator continues to own semantic lookup and Viewport movement. The
+selected semantic span is presented uniformly at full visibility, and its
+semantic midpoint is geometrically aligned with the Viewport midpoint. Optical
+centering, gentle transition folds, and the final reading composition remain
+future refinements in that shared pipeline rather than individual controls.
+
+The sequence intentionally closes the exploratory composition before
+presenting a work. Architecturally and experientially, it behaves more like
+turning a page than following conventional website navigation.
 
 ## Future Architecture
 

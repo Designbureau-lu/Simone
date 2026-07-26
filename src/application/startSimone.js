@@ -15,6 +15,9 @@ import {
     ModelCPerformanceOverview
 } from "../prototypes/model-c/ModelCPerformanceOverview.js";
 import { ViewingSurface } from "../prototypes/model-c/ViewingSurface.js";
+import {
+    createProjectNavigation
+} from "../navigation/ProjectNavigation.js";
 import { SurfaceShading } from "../shading/SurfaceShading.js";
 import { CurtainField } from "../surface/CurtainField.js";
 import { SurfaceParameters } from "../surface/SurfaceParameters.js";
@@ -31,13 +34,17 @@ export function startSimone() {
     const performanceOverviewElement = document.getElementById(
         "performanceOverview"
     );
+    const semanticNavigationElement = document.getElementById(
+        "semanticNavigation"
+    );
     const controls = getSurfaceControls();
 
     if (!(fileInput instanceof HTMLInputElement)
         || !(canvas instanceof HTMLCanvasElement)
         || !(viewportPosition instanceof HTMLInputElement)
         || !(viewportPositionValue instanceof HTMLOutputElement)
-        || !(performanceOverviewElement instanceof HTMLElement)) {
+        || !(performanceOverviewElement instanceof HTMLElement)
+        || !(semanticNavigationElement instanceof HTMLElement)) {
         throw new Error("SIMONE could not find its required interface elements.");
     }
 
@@ -72,6 +79,11 @@ export function startSimone() {
         viewportPositionValue,
         application
     );
+    const synchronizeSemanticNavigation = bindSemanticNavigation(
+        semanticNavigationElement,
+        application,
+        synchronizeViewportControl
+    );
     bindCurtainDragging(
         canvas,
         application,
@@ -87,18 +99,25 @@ export function startSimone() {
 
         try {
             await application.importArtwork(files);
+            await loadProjectNavigation(
+                application,
+                synchronizeSemanticNavigation
+            );
         } catch (error) {
             console.error("SIMONE could not import the artwork.", error);
         }
     });
 
-    loadManifestArtwork(application);
+    loadManifestArtwork(application, synchronizeSemanticNavigation);
 
     return application;
 }
 
-export async function loadManifestArtwork(application) {
-    const manifestUrl = new URL("public/images.txt", document.baseURI);
+export async function loadManifestArtwork(application, onNavigation = null) {
+    const manifestUrl = manifestUrlFor(
+        "public/images.txt",
+        document.baseURI
+    );
 
     try {
         const response = await fetch(manifestUrl);
@@ -109,6 +128,11 @@ export async function loadManifestArtwork(application) {
         }
 
         const filenames = imageFilenamesFromManifest(await response.text());
+        console.info([
+            "Loaded images.txt",
+            `Loaded at: ${manifestLoadTime()}`,
+            `Images: ${filenames.length}`
+        ].join("\n"));
         if (filenames.length === 0) {
             console.warn("SIMONE image manifest contains no image filenames.");
             return;
@@ -119,9 +143,164 @@ export async function loadManifestArtwork(application) {
             document.baseURI
         );
         await application.importArtwork(sources);
+        await loadProjectNavigation(application, onNavigation);
     } catch (error) {
         console.error("SIMONE could not load its image manifest.", error);
     }
+}
+
+export async function loadProjectNavigation(application, onUpdate = null) {
+    const projectsUrl = manifestUrlFor(
+        "public/projects.txt",
+        document.baseURI
+    );
+
+    try {
+        const response = await fetch(projectsUrl);
+        if (!response.ok) {
+            throw new Error(
+                `Project manifest request failed with ${response.status}.`
+            );
+        }
+
+        const navigation = createProjectNavigation({
+            source: await response.text(),
+            loadedImageCount: application.imageCount
+        });
+        console.info([
+            "Loaded projects.txt",
+            `Loaded at: ${manifestLoadTime()}`,
+            `Projects: ${navigation.projects.length}`,
+            `Total span: ${navigation.projectSpanUnits}`,
+            `Unused units: ${navigation.unusedUnits}`
+        ].join("\n"));
+        application.setProjectNavigation(navigation);
+        onUpdate?.();
+
+        if (!navigation.enabled) {
+            console.error(
+                `SIMONE semantic navigation is disabled: ${navigation.error}`
+            );
+            return;
+        }
+
+        console.info("SIMONE semantic project navigation", navigation);
+        if (navigation.unusedUnits > 0) {
+            console.warn(
+                `${navigation.unusedUnits} artwork units remain after the `
+                    + "final project span."
+            );
+        }
+    } catch (error) {
+        application.setProjectNavigation(null);
+        onUpdate?.();
+        console.error(
+            "SIMONE could not configure semantic project navigation.",
+            error
+        );
+    }
+}
+
+export function manifestUrlFor(path, applicationBaseUrl) {
+    const url = new URL(path, applicationBaseUrl);
+    if (isDevelopmentHost(url.hostname)) {
+        url.searchParams.set("t", String(Date.now()));
+    }
+    return url;
+}
+
+function isDevelopmentHost(hostname) {
+    return hostname === "localhost"
+        || hostname === "127.0.0.1"
+        || hostname === "[::1]"
+        || hostname === "::1";
+}
+
+function manifestLoadTime() {
+    return new Date().toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+    });
+}
+
+export function bindSemanticNavigation(
+    element,
+    application,
+    synchronizeViewportControl
+) {
+    const previous = element.querySelector("[data-project-previous]");
+    const next = element.querySelector("[data-project-next]");
+    const select = element.querySelector("[data-project-select]");
+    const label = element.querySelector("[data-project-label]");
+    if (!(previous instanceof HTMLButtonElement)
+        || !(next instanceof HTMLButtonElement)
+        || !(select instanceof HTMLSelectElement)
+        || !(label instanceof HTMLOutputElement)) {
+        throw new Error("Semantic navigation controls are incomplete.");
+    }
+
+    const synchronize = () => {
+        const navigation = application.projectNavigation;
+        const index = application.currentProjectIndex;
+        const available = navigation?.enabled && index !== null;
+
+        if (!available) {
+            label.value = "Project — / —";
+            previous.disabled = true;
+            next.disabled = true;
+            select.disabled = true;
+            select.replaceChildren(new Option("Choose project…", ""));
+            return;
+        }
+
+        synchronizeProjectOptions(select, navigation.projects);
+        const project = navigation.projects[index];
+        label.value = `Project ${index + 1} / ${navigation.projects.length}`
+            + ` — ${project.title}`;
+        previous.disabled = index <= 0;
+        next.disabled = index >= navigation.projects.length - 1;
+        select.disabled = false;
+        select.value = String(index);
+    };
+
+    previous.addEventListener("click", () => {
+        application.navigateToPreviousProject(synchronizeViewportControl);
+        synchronize();
+    });
+    next.addEventListener("click", () => {
+        application.navigateToNextProject(synchronizeViewportControl);
+        synchronize();
+    });
+    select.addEventListener("change", () => {
+        const targetIndex = Number(select.value);
+        if (!Number.isInteger(targetIndex)) {
+            return;
+        }
+
+        application.resetAndNavigateToProject(
+            targetIndex,
+            synchronizeViewportControl,
+            synchronize
+        );
+    });
+    synchronize();
+
+    return synchronize;
+}
+
+function synchronizeProjectOptions(select, projects) {
+    if (select.options.length === projects.length
+        && projects.every((project, index) => (
+            select.options[index]?.textContent === project.title
+        ))) {
+        return;
+    }
+
+    select.replaceChildren(...projects.map((project, index) => (
+        new Option(project.title, String(index))
+    )));
 }
 
 export function imageFilenamesFromManifest(manifest) {
@@ -232,8 +411,7 @@ function getControlPair(name) {
 }
 
 function bindSurfaceControls(controls, application) {
-    const updateApplication = () => {
-        application.updateSurface({
+    const currentValues = () => ({
             minimumVisibleFactor:
                 Number(controls.minimumVisibleFactor.range.value) / 100,
             maximumVisibleFactor:
@@ -243,6 +421,11 @@ function bindSurfaceControls(controls, application) {
             carrierDistance: Number(controls.carrierDistance.range.value),
             modelTransition: Number(controls.modelTransition.range.value) / 100
         });
+    const updateApplication = () => {
+        application.updateSurface(currentValues());
+    };
+    const animateReset = () => {
+        application.animateResetCurtainState(currentValues());
     };
 
     bindControlPair(controls.minimumVisibleFactor, () => {
@@ -253,7 +436,7 @@ function bindSurfaceControls(controls, application) {
         constrainVisibleFactorControls(controls, "maximum");
         updateApplication();
     });
-    bindResetCurtainStateControl(controls, updateApplication);
+    bindResetCurtainStateControl(controls, animateReset);
     bindControlPair(controls.carrierDistance, updateApplication);
     bindControlPair(controls.modelTransition, updateApplication);
 
