@@ -1,5 +1,5 @@
 /** Prototype-only copy of the renderer with viewing-space destination height. */
-export class ModelCCanvasColumnRenderer {
+export class ViewportCanvasColumnRenderer {
     #canvas;
     #context;
     #rearRegions = [];
@@ -12,7 +12,9 @@ export class ModelCCanvasColumnRenderer {
 
     constructor(canvas) {
         if (!(canvas instanceof HTMLCanvasElement)) {
-            throw new TypeError("ModelCCanvasColumnRenderer requires a canvas.");
+            throw new TypeError(
+                "ViewportCanvasColumnRenderer requires a canvas."
+            );
         }
 
         const context = canvas.getContext("2d");

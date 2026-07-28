@@ -5,16 +5,14 @@ import {
     OperatingPhaseResolver
 } from "../geometry/OperatingPhaseResolver.js";
 import {
-    ModelCCanvasColumnRenderer
-} from "../prototypes/model-c/ModelCCanvasColumnRenderer.js";
+    ViewportCanvasColumnRenderer
+} from "../rendering/ViewportCanvasColumnRenderer.js";
 import {
-    currentBrowserName
-} from "../performance/PerformanceOverview.js";
-import { ModelCApplication } from "../prototypes/model-c/ModelCApplication.js";
-import {
-    ModelCPerformanceOverview
-} from "../prototypes/model-c/ModelCPerformanceOverview.js";
-import { ViewingSurface } from "../prototypes/model-c/ViewingSurface.js";
+    currentBrowserName,
+    FramePerformanceOverview
+} from "../performance/FramePerformanceOverview.js";
+import { ViewportApplication } from "./ViewportApplication.js";
+import { ViewingSurface } from "../viewport/ViewingSurface.js";
 import {
     createProjectNavigation
 } from "../navigation/ProjectNavigation.js";
@@ -57,7 +55,7 @@ export function startSimone() {
     }
 
     const circularFoldSurface = new CircularFoldSurface();
-    const application = new ModelCApplication({
+    const application = new ViewportApplication({
         artworkLoader: loadArtwork,
         parameters: new SurfaceParameters(),
         curtainField: new CurtainField(),
@@ -72,9 +70,9 @@ export function startSimone() {
             [OperatingPhase.POST_TRANSITION]: circularFoldSurface
         }),
         shading: new SurfaceShading(),
-        renderer: new ModelCCanvasColumnRenderer(canvas),
+        renderer: new ViewportCanvasColumnRenderer(canvas),
         viewingSurface: new ViewingSurface(canvas),
-        performanceOverview: new ModelCPerformanceOverview(
+        performanceOverview: new FramePerformanceOverview(
             performanceOverviewElement,
             currentBrowserName()
         )
@@ -334,52 +332,6 @@ export function imageSourcesForFilenames(filenames, applicationBaseUrl) {
         name,
         url: new URL(encodeURIComponent(name), imageDirectory).href
     }));
-}
-
-const PERFORMANCE_OVERVIEW_SESSION_KEY = "simone.performanceOverview.expanded";
-
-export function bindPerformanceOverviewCollapse(element) {
-    const toggle = element.querySelector("[data-performance-toggle]");
-    const body = element.querySelector("[data-performance-body]");
-
-    if (!(toggle instanceof HTMLButtonElement)
-        || !(body instanceof HTMLElement)) {
-        throw new Error("PerformanceOverview collapse controls are incomplete.");
-    }
-
-    let expanded = readPerformanceOverviewState() === "expanded";
-    const synchronize = () => {
-        body.hidden = !expanded;
-        toggle.textContent = expanded ? "▾" : "▸";
-        toggle.setAttribute("aria-expanded", String(expanded));
-        toggle.setAttribute(
-            "aria-label",
-            `${expanded ? "Collapse" : "Expand"} Performance Meter`
-        );
-    };
-
-    toggle.addEventListener("click", () => {
-        expanded = !expanded;
-        writePerformanceOverviewState(expanded ? "expanded" : "collapsed");
-        synchronize();
-    });
-    synchronize();
-}
-
-function readPerformanceOverviewState() {
-    try {
-        return sessionStorage.getItem(PERFORMANCE_OVERVIEW_SESSION_KEY);
-    } catch {
-        return null;
-    }
-}
-
-function writePerformanceOverviewState(state) {
-    try {
-        sessionStorage.setItem(PERFORMANCE_OVERVIEW_SESSION_KEY, state);
-    } catch {
-        // The meter remains usable when session storage is unavailable.
-    }
 }
 
 function bindViewportControl(input, output, application) {

@@ -1,60 +1,32 @@
 import {
-    bindPerformanceOverviewCollapse
-} from "../src/application/startSimone.js";
-import {
-    ModelCPerformanceOverview
-} from "../src/prototypes/model-c/ModelCPerformanceOverview.js";
+    FramePerformanceOverview
+} from "../src/performance/FramePerformanceOverview.js";
 
-const SESSION_KEY = "simone.performanceOverview.expanded";
 const tests = [];
 
-test("meter defaults to collapsed", () => {
-    sessionStorage.removeItem(SESSION_KEY);
+test("meter reports active frame measurements", () => {
     const element = createMeter();
-    bindPerformanceOverviewCollapse(element);
-
-    assert(element.querySelector("[data-performance-body]").hidden);
-    equal(element.querySelector("[data-performance-toggle]").textContent, "▸");
-});
-
-test("meter continues updating while collapsed", () => {
-    sessionStorage.removeItem(SESSION_KEY);
-    const element = createMeter();
-    bindPerformanceOverviewCollapse(element);
-    const overview = new ModelCPerformanceOverview(element, "Test");
+    const overview = new FramePerformanceOverview(element, "Test");
 
     overview.update(report());
-    assert(element.querySelector("[data-performance-body]").hidden);
     assert(element.querySelector("[data-performance-output]")
         .textContent.includes("Frame (ms)"));
-});
-
-test("toggle expands and restores current output", () => {
-    sessionStorage.removeItem(SESSION_KEY);
-    const element = createMeter();
-    bindPerformanceOverviewCollapse(element);
-    const overview = new ModelCPerformanceOverview(element, "Test");
-    overview.update(report());
-
-    element.querySelector("[data-performance-toggle]").click();
-    assert(!element.querySelector("[data-performance-body]").hidden);
-    equal(element.querySelector("[data-performance-toggle]").textContent, "▾");
     assert(element.textContent.includes("Selected cols"));
 });
 
-test("expanded state persists for the browser session", () => {
-    sessionStorage.setItem(SESSION_KEY, "expanded");
+test("reset samples keeps the active report visible", () => {
     const element = createMeter();
-    bindPerformanceOverviewCollapse(element);
+    const overview = new FramePerformanceOverview(element, "Test");
 
-    assert(!element.querySelector("[data-performance-body]").hidden);
-    equal(element.querySelector("[data-performance-toggle]").textContent, "▾");
+    overview.update(report());
+    element.querySelector("[data-reset-worst]").click();
+    assert(element.textContent.includes("Frame (ms)"));
+    assert(element.textContent.includes("Samples"));
 });
 
 function createMeter() {
     const element = document.createElement("aside");
     element.innerHTML = `
-        <div><span>Performance Meter</span><button type="button" data-performance-toggle>▸</button></div>
         <div data-performance-body><pre data-performance-output></pre><button type="button" data-reset-worst></button></div>
     `;
     document.body.append(element);

@@ -1,4 +1,4 @@
-/** Maps a virtual curtain frame into the browser-visible canvas backing store. */
+/** Maps the virtual curtain frame into the browser-visible canvas backing store. */
 export class ViewingSurface {
     #canvas;
     #mode = "viewport";

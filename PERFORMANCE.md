@@ -53,13 +53,13 @@ the fold-gradient passes.
 The cold penalty therefore occurs inside the same full render pipeline used on
 every pointer move. `SimoneApplication.importArtwork()` currently performs only
 one render before returning. The next execution is deferred until a control
-change or `pointermove`, where `ModelCApplication.render()` regenerates geometry
+change or `pointermove`, where `ViewportApplication.render()` regenerates geometry
 for all 60,000 artwork columns and then traverses the selected 10,000+ columns
 for Canvas drawing. The first two executions pay substantially higher geometry
 and Canvas drawing costs before settling.
 
 The evidence is most consistent with first-use Canvas 2D source/destination
-resource realization in `ModelCCanvasColumnRenderer.drawColumn()`, plus a
+resource realization in `ViewportCanvasColumnRenderer.drawColumn()`, plus a
 smaller amount of cold JavaScript execution/JIT work in the large geometry and
 rendering loops. The source is the 60,000-column assembly canvas produced by
 `loadArtwork()`, and the renderer issues thousands of narrow `drawImage()`

@@ -10,7 +10,7 @@ const TIME_KEYS = Object.freeze([
 ]);
 
 /** Rolling developer measurements for SIMONE's viewport-canvas renderer. */
-export class ModelCPerformanceOverview {
+export class FramePerformanceOverview {
     #output;
     #browser;
     #samples = [];
@@ -77,6 +77,25 @@ export class ModelCPerformanceOverview {
 
         this.#output.textContent = rows.join("\n");
     }
+}
+
+export function currentBrowserName() {
+    const userAgent = navigator.userAgent;
+
+    if (userAgent.includes("Firefox/")) {
+        return "Firefox";
+    }
+    if (userAgent.includes("Edg/")) {
+        return "Edge";
+    }
+    if (userAgent.includes("Chrome/") || userAgent.includes("CriOS/")) {
+        return "Chrome";
+    }
+    if (userAgent.includes("Safari/")) {
+        return "Safari";
+    }
+
+    return navigator.userAgentData?.brands?.[0]?.brand ?? "Unknown";
 }
 
 function percentile(samples, key, fraction) {

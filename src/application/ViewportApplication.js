@@ -1,7 +1,7 @@
-import { SimoneApplication } from "../../application/SimoneApplication.js";
+import { SimoneApplication } from "./SimoneApplication.js";
 
 /** SIMONE application using virtual geometry and viewing-space output. */
-export class ModelCApplication extends SimoneApplication {
+export class ViewportApplication extends SimoneApplication {
     constructor({ viewingSurface, ...dependencies }) {
         super(dependencies);
         this.viewingSurface = viewingSurface;
