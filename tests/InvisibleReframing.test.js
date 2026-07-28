@@ -1,10 +1,12 @@
 import { SimoneApplication } from "../src/application/SimoneApplication.js";
 import {
-    horizontalReframeDirection
+    horizontalReframeDirection,
+    isCurtainClick
 } from "../src/application/startSimone.js";
 import { Viewport } from "../src/viewport/Viewport.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
 import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
+import { SurfaceShading } from "../src/shading/SurfaceShading.js";
 
 const tests = [];
 
@@ -22,6 +24,145 @@ test("ordinary and outward drags do not request reframing", () => {
     equal(horizontalReframeDirection(0.95, 100, 400), 0);
     equal(horizontalReframeDirection(0.05, 40, 400), 0);
     equal(horizontalReframeDirection(0.05, -100, 400), 0);
+});
+
+test("Moses click tolerance preserves drag as the dominant gesture", () => {
+    assert(isCurtainClick(0, 0));
+    assert(isCurtainClick(3, 4));
+    assert(!isCurtainClick(4, 4));
+    assert(!isCurtainClick(6, 0));
+});
+
+test("a new curtain interaction restores EXPLORE after READ", () => {
+    const application = createApplication(createViewport(0));
+    application.attentionMode = "read";
+
+    assert(application.beginLocalInteraction(100));
+    equal(application.attentionMode, "explore");
+});
+
+test("crest lifecycle follows each Period instead of the dragged scene proxy", () => {
+    const parameters = new SurfaceParameters();
+    const shading = new SurfaceShading();
+    const neutral = parameters.resolve(0.5);
+    const fullyOpened = parameters.resolve(
+        parameters.maximumVisibleFactor
+    );
+
+    assert(shading.crestLifecycleFor(neutral) > 0);
+    equal(shading.crestLifecycleFor(fullyOpened), 0);
+    assert(shading.crestLifecycleFor(neutral) > 0);
+});
+
+test("Moses gently opens, holds, and restores the exact prior state", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    field.configureFor(1000, 100);
+    const application = new SimoneApplication({
+        artworkLoader: null,
+        parameters: new SurfaceParameters(),
+        curtainField: field,
+        viewport: createViewport(0),
+        phaseResolver: null,
+        surfaces: null,
+        shading: null,
+        renderer: null
+    });
+    application.artwork = {};
+    application.render = () => {};
+    field.resolve(application.parameters);
+    const startingFactors = field.periods.map(
+        (period) => period.visibleFactor
+    );
+    const interaction = Object.freeze({
+        periodIndex: 3,
+        localPosition: 0.5,
+        visibleFactors: Object.freeze(startingFactors)
+    });
+    const animation = captureAnimationFrames();
+
+    assert(application.revealLocalInteraction(interaction));
+    animation.runNext(0);
+    animation.runNext(100);
+    assert(field.periods[3].visibleFactor > startingFactors[3]);
+    equal(field.periods[9].visibleFactor, startingFactors[9]);
+    assert(field.periods.every((period) => period.visibleFactor < 1));
+    animation.runNext(340);
+    assert(field.periods[1].visibleFactor > startingFactors[1]);
+    assert(field.periods[5].visibleFactor > startingFactors[5]);
+    closeTo(field.periods[1].visibleFactor, field.periods[5].visibleFactor);
+    animation.runNext(700);
+    assert(field.periods[3].visibleFactor > startingFactors[3]);
+    animation.runNext(1200);
+    assert(field.periods[3].visibleFactor > startingFactors[3]);
+    animation.runNext(1800);
+    field.periods.forEach((period, index) => {
+        equal(period.visibleFactor, startingFactors[index]);
+    });
+    equal(application.localRevealFrame, null);
+    application.attentionMode = "read";
+    assert(!application.revealLocalInteraction(interaction));
+    animation.restore();
+});
+
+test("drag cancels Moses and restores its exact pre-click curtain state", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    field.configureFor(1000, 100);
+    const application = new SimoneApplication({
+        artworkLoader: null,
+        parameters: new SurfaceParameters(),
+        curtainField: field,
+        viewport: createViewport(0),
+        phaseResolver: null,
+        surfaces: null,
+        shading: null,
+        renderer: null
+    });
+    application.artwork = {};
+    application.render = () => {};
+    field.resolve(application.parameters);
+    const interaction = field.beginLocalInteraction(350);
+    const startingFactors = field.periods.map(
+        (period) => period.visibleFactor
+    );
+    const animation = captureAnimationFrames();
+
+    assert(application.revealLocalInteraction(interaction));
+    animation.runNext(0);
+    animation.runNext(300);
+    const dragInteraction = application.beginLocalInteraction(200);
+
+    for (let index = 0; index < field.periods.length; index += 1) {
+        equal(field.periods[index].visibleFactor, startingFactors[index]);
+        equal(dragInteraction.visibleFactors[index], startingFactors[index]);
+    }
+    equal(application.localRevealFrame, null);
+    animation.restore();
+});
+
+test("clicked projected artwork resolves to its semantic project", () => {
+    const application = createApplication(createViewport(0));
+    application.artwork = {
+        sourceXForLogicalX: (logicalX) => logicalX
+    };
+    application.logicalImageWidth = 1000;
+    application.projectNavigation = {
+        enabled: true,
+        projects: [
+            { title: "First", artworkStart: 0, artworkEnd: 3 },
+            { title: "Second", artworkStart: 3, artworkEnd: 6 }
+        ]
+    };
+    application.projectedColumns = [
+        { placement: { targetX: 10 }, width: 10 },
+        { placement: { targetX: 20 }, width: 10 },
+        { placement: { targetX: 30 }, width: 10 },
+        { placement: { targetX: 40 }, width: 10 },
+        { placement: { targetX: 50 }, width: 10 },
+        { placement: { targetX: 60 }, width: 10 }
+    ];
+
+    equal(application.projectAtPresentationX(45)?.title, "Second");
+    equal(application.projectAtPresentationX(5), null);
 });
 
 test("reframing settles by half a viewport with smoothstep easing", () => {
@@ -287,7 +428,7 @@ test("selected project opens as one uniform semantic period span", () => {
     ));
     animation.runNext(0);
     animation.runNext(450);
-    equal(viewport.projectedOffset, 300);
+    equal(viewport.projectedOffset, 340);
     animation.runNext(450);
     animation.runNext(950);
 

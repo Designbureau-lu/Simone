@@ -258,9 +258,10 @@ SIMONE distinguishes two modes of attention:
 
 - **EXPLORE:** continuous discovery through direct curtain dragging. Drag
   remains the primary gesture and projects are secondary to free exploration.
-  A future local click/Moses helper belongs only to EXPLORE: it may open around
-  a clicked physical position, but must remain secondary to drag and must not
-  perform semantic navigation.
+  The local click/Moses helper belongs only to EXPLORE: it temporarily opens
+  around a clicked physical position, remains secondary to drag, and performs
+  no semantic navigation. It reuses the curtain's local deformation and
+  returns exactly to the state captured at the click.
 - **READ:** explicit project selection through a future Index combines
   navigation and presentation. The chosen project becomes flat and readable;
   surrounding material remains unreadable because it stays folded. Graphical
@@ -287,8 +288,9 @@ Reading
 
 This composition is closer to turning a page in a book than navigating a
 website. Closing one work before presenting the next is intentionally part of
-the experience. Gentle transition folds and optical centering remain future
-refinements of the final reading composition.
+the experience. Geometric centering is followed by one consistent,
+presentation-only optical offset. Gentle transition folds remain a future
+refinement of the final reading composition.
 
 The existing NEXT/PREVIOUS and automatic partial reveal are provisional READ
 experiments, not final interaction design.
@@ -305,9 +307,15 @@ The following are research possibilities, not planned commitments:
 - perspective informed by viewer height and distance;
 - optional visibility or occlusion models;
 - an optional physically predictive mode alongside the current visual model.
+- if typography raster softness becomes a demonstrated limitation, a separate
+  high-resolution PNG, off-screen SVG/vector, or other renderable typography
+  source that still passes through the existing immutable column-projection
+  pipeline and receives exactly the same curtain deformation as all artwork.
 
 Any future work should preserve immutable artwork, modular geometry, and an
-interactive rendering budget.
+interactive rendering budget. The typography-source idea is not planned work
+and must not make the renderer aware of source type; revisit it only after the
+visual design and rendering pipeline have stabilized.
 
 ## 9. Naming
 

@@ -62,25 +62,21 @@ export class SurfaceShading {
             * surface.foldProgress;
     }
 
-    appearanceFor({
+    appearanceFor() {
+        return this.appearance;
+    }
+
+    crestLifecycleFor({
         visibleFactor,
         minimumVisibleFactor,
         maximumVisibleFactor,
         modelTransition
     }) {
-        const lifecycleMultiplier = crestLifecycleMultiplier({
+        return crestLifecycleMultiplier({
             visibleFactor,
             minimumVisibleFactor,
             maximumVisibleFactor,
             modelTransition
-        });
-
-        return Object.freeze({
-            ...this.appearance,
-            crestHighlight: Object.freeze({
-                ...this.appearance.crestHighlight,
-                lifecycleMultiplier
-            })
         });
     }
 }

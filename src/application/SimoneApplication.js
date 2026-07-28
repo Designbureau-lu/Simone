@@ -30,6 +30,7 @@ export class SimoneApplication {
         this.renderer = renderer;
         this.performanceOverview = performanceOverview;
         this.artwork = null;
+        this.attentionMode = ATTENTION_MODE_EXPLORE;
         this.projectNavigation = null;
         this.currentProjectIndex = null;
         this.projectedColumns = Object.freeze([]);
@@ -40,9 +41,12 @@ export class SimoneApplication {
         this.sceneVisibleFactor = curtainField.resetCurtainState;
         this.horizontalReframeFrame = null;
         this.resetCurtainFrame = null;
+        this.localRevealFrame = null;
+        this.localRevealState = null;
     }
 
     async importArtwork(files) {
+        this.attentionMode = ATTENTION_MODE_EXPLORE;
         this.projectNavigation = null;
         this.currentProjectIndex = null;
         this.artwork = await this.artworkLoader(files);
@@ -64,6 +68,7 @@ export class SimoneApplication {
     }
 
     updateSurface(values) {
+        this.cancelLocalReveal();
         this.cancelResetCurtainAnimation();
         const {
             resetCurtainState = this.curtainField.resetCurtainState,
@@ -95,6 +100,7 @@ export class SimoneApplication {
             ...configuration
         } = values;
 
+        this.cancelLocalReveal();
         this.cancelHorizontalReframe();
         this.cancelResetCurtainAnimation();
         this.parameters.configure(configuration);
@@ -261,7 +267,8 @@ export class SimoneApplication {
             return false;
         }
 
-        if (targetIndex === this.currentProjectIndex) {
+        if (targetIndex === this.currentProjectIndex
+            && openingMode !== PROJECT_OPENING_FLAT_SPAN) {
             return false;
         }
 
@@ -280,6 +287,7 @@ export class SimoneApplication {
             ...projection
         });
 
+        this.attentionMode = ATTENTION_MODE_READ;
         const targetOffset = openingMode === PROJECT_OPENING_FLAT_SPAN
             ? projection.requestedCenteredTarget
             : projection.requestedNextTarget;
@@ -300,6 +308,7 @@ export class SimoneApplication {
         onFrame = null,
         onSelection = null
     ) {
+        this.attentionMode = ATTENTION_MODE_READ;
         return this.animateResetCurtainState(
             {
                 resetCurtainState: READ_ENTRY_RESET_STATE
@@ -346,6 +355,7 @@ export class SimoneApplication {
         const requestedCenteredTarget = centerProjectedColumn
             ? centerProjectedColumn.placement.targetX
                 - this.viewport.projectedExtent / 2
+                + READ_CENTER_OFFSET
             : requestedNextTarget;
         const renderedArtworkWidth = this.projectedContentBounds.end
             - this.projectedContentBounds.start;
@@ -437,6 +447,8 @@ export class SimoneApplication {
             return null;
         }
 
+        this.enterExploreMode();
+        this.cancelLocalReveal();
         this.cancelHorizontalReframe();
         this.cancelResetCurtainAnimation();
         const projectedX = this.viewport.toProjectedX(targetX);
@@ -446,6 +458,52 @@ export class SimoneApplication {
         );
 
         return this.curtainField.beginLocalInteraction(fieldX);
+    }
+
+    enterExploreMode() {
+        this.attentionMode = ATTENTION_MODE_EXPLORE;
+    }
+
+    projectAtPresentationX(targetX) {
+        if (!this.artwork || !this.projectNavigation?.enabled) {
+            return null;
+        }
+
+        const projectedX = this.viewport.toProjectedX(targetX);
+        let sourceX = null;
+        for (let index = 0; index < this.projectedColumns.length; index += 1) {
+            const column = this.projectedColumns[index];
+            if (!column) {
+                continue;
+            }
+
+            const start = Math.min(
+                column.placement.targetX,
+                column.placement.targetX + column.width
+            );
+            const end = Math.max(
+                column.placement.targetX,
+                column.placement.targetX + column.width
+            );
+            if (projectedX >= start && projectedX < end) {
+                sourceX = index;
+            }
+        }
+        if (sourceX === null) {
+            return null;
+        }
+
+        return this.projectNavigation.projects.find((project) => {
+            const start = this.artwork.sourceXForLogicalX(
+                project.artworkStart,
+                this.logicalImageWidth
+            );
+            const end = this.artwork.sourceXForLogicalX(
+                project.artworkEnd,
+                this.logicalImageWidth
+            );
+            return sourceX >= start && sourceX < end;
+        }) ?? null;
     }
 
     updateLocalInteraction(interaction, horizontalDisplacement) {
@@ -461,6 +519,89 @@ export class SimoneApplication {
         this.render();
 
         return visibleFactor;
+    }
+
+    revealLocalInteraction(interaction) {
+        if (!interaction
+            || !this.artwork
+            || this.attentionMode !== ATTENTION_MODE_EXPLORE) {
+            return false;
+        }
+
+        this.cancelLocalReveal();
+        this.cancelHorizontalReframe();
+        const anchorProjectedX = this.curtainField
+            .projectedXForInteraction(interaction);
+        this.localRevealState = Object.freeze({
+            interaction,
+            anchorProjectedX,
+            viewportOffset: this.viewport.projectedOffset
+        });
+        let startedAt = null;
+        const reveal = (timestamp) => {
+            startedAt ??= timestamp;
+            const elapsed = timestamp - startedAt;
+            const visibleFactors = mosesVisibleFactors(
+                interaction,
+                elapsed,
+                this.parameters.maximumVisibleFactor
+            );
+            this.curtainField.setVisibleFactors(visibleFactors);
+            this.sceneVisibleFactor = visibleFactors[
+                interaction.periodIndex
+            ];
+            this.#anchorLocalReveal();
+            this.render();
+
+            if (elapsed < MOSES_REVEAL_DURATION) {
+                this.localRevealFrame = requestAnimationFrame(reveal);
+            } else {
+                this.localRevealFrame = null;
+                this.localRevealState = null;
+            }
+        };
+
+        this.localRevealFrame = requestAnimationFrame(reveal);
+        return true;
+    }
+
+    cancelLocalReveal() {
+        if (!this.localRevealState) {
+            return;
+        }
+
+        if (this.localRevealFrame !== null) {
+            cancelAnimationFrame(this.localRevealFrame);
+        }
+
+        const { interaction, viewportOffset } = this.localRevealState;
+        this.localRevealFrame = null;
+        this.localRevealState = null;
+        this.curtainField.setVisibleFactors(interaction.visibleFactors);
+        this.sceneVisibleFactor = interaction.visibleFactors[
+            interaction.periodIndex
+        ];
+        this.viewport.shiftProjectedOffset(
+            viewportOffset - this.viewport.projectedOffset
+        );
+        this.render();
+    }
+
+    #anchorLocalReveal() {
+        const {
+            interaction,
+            anchorProjectedX,
+            viewportOffset
+        } = this.localRevealState;
+        this.curtainField.resolve(this.parameters);
+        const currentAnchor = this.curtainField
+            .projectedXForInteraction(interaction);
+        const desiredOffset = viewportOffset
+            + currentAnchor
+            - anchorProjectedX;
+        this.viewport.shiftProjectedOffset(
+            desiredOffset - this.viewport.projectedOffset
+        );
     }
 
     #rightwardInteractionAtCurrentProjectStart() {
@@ -603,12 +744,7 @@ export class SimoneApplication {
         const geometryStartedAt = performance.now();
         const phase = this.phaseResolver.resolve(parameters);
         const surface = this.surfaces[phase];
-        const appearance = this.shading.appearanceFor({
-            visibleFactor: this.sceneVisibleFactor,
-            minimumVisibleFactor: this.parameters.minimumVisibleFactor,
-            maximumVisibleFactor: this.parameters.maximumVisibleFactor,
-            modelTransition: this.parameters.modelTransition
-        });
+        const appearance = this.shading.appearanceFor();
 
         const contentFrame = surface.frameFor(
             this.#logicalArtworkFrame(),
@@ -675,7 +811,9 @@ export class SimoneApplication {
                     alpha: placement.alpha,
                     branch: placement.branch,
                     localSlope: placement.localSlope,
-                    foldProgress: localParameters.foldProgress
+                    foldProgress: localParameters.foldProgress,
+                    crestLifecycleMultiplier:
+                        this.shading.crestLifecycleFor(localParameters)
                 }
             );
         }
@@ -794,6 +932,20 @@ const SEMANTIC_AUTO_OPEN_DURATION = 125;
 const PROJECT_REVEAL_DURATION = 1000;
 const RESET_CURTAIN_DURATION = 600;
 const READ_ENTRY_RESET_STATE = 0.5;
+// Positive values shift the presented artwork left in the Viewport.
+const READ_CENTER_OFFSET = 40;
+const MOSES_OPEN_DURATION = 220;
+const MOSES_HOLD_DURATION = 140;
+const MOSES_SETTLE_DURATION = 1200;
+const MOSES_PROPAGATION_DURATION = 240;
+const MOSES_REVEAL_DURATION = MOSES_OPEN_DURATION
+    + MOSES_HOLD_DURATION
+    + MOSES_SETTLE_DURATION
+    + MOSES_PROPAGATION_DURATION;
+const MOSES_PROPAGATION_RADIUS = 6;
+const MOSES_REMAINING_FOLD = 0.08;
+const ATTENTION_MODE_EXPLORE = "explore";
+const ATTENTION_MODE_READ = "read";
 const PROJECT_OPENING_PROTOTYPE = "prototype";
 const PROJECT_OPENING_FLAT_SPAN = "flat-semantic-span";
 function resetEaseOut(value) {
@@ -802,4 +954,78 @@ function resetEaseOut(value) {
 
 function smoothstep(value) {
     return value ** 2 * (3 - 2 * value);
+}
+
+function mosesVisibleFactors(
+    interaction,
+    elapsed,
+    maximumVisibleFactor
+) {
+    const clickPosition = interaction.periodIndex + interaction.localPosition;
+
+    return interaction.visibleFactors.map((visibleFactor, periodIndex) => {
+        const distance = distanceFromPeriod(
+            clickPosition,
+            periodIndex
+        );
+        if (distance > MOSES_PROPAGATION_RADIUS) {
+            return visibleFactor;
+        }
+
+        const delay = distance / MOSES_PROPAGATION_RADIUS
+            * MOSES_PROPAGATION_DURATION;
+        const revealAmount = mosesRevealAmount(elapsed - delay);
+        const distanceFade = mosesDistanceProfile(
+            distance / MOSES_PROPAGATION_RADIUS
+        );
+        const availableOpening = Math.max(
+            0,
+            maximumVisibleFactor
+                - MOSES_REMAINING_FOLD
+                    * (maximumVisibleFactor - visibleFactor)
+                - visibleFactor
+        );
+
+        return visibleFactor
+            + availableOpening * distanceFade * revealAmount;
+    });
+}
+
+function mosesDistanceProfile(normalizedDistance) {
+    return 1 - smoothstep(normalizedDistance);
+}
+
+function distanceFromPeriod(clickPosition, periodIndex) {
+    if (clickPosition < periodIndex) {
+        return periodIndex - clickPosition;
+    }
+
+    if (clickPosition > periodIndex + 1) {
+        return clickPosition - periodIndex - 1;
+    }
+
+    return 0;
+}
+
+function mosesRevealAmount(elapsed) {
+    if (elapsed <= 0) {
+        return 0;
+    }
+
+    if (elapsed < MOSES_OPEN_DURATION) {
+        return smoothstep(elapsed / MOSES_OPEN_DURATION);
+    }
+
+    if (elapsed < MOSES_OPEN_DURATION + MOSES_HOLD_DURATION) {
+        return 1;
+    }
+
+    const settleElapsed = elapsed
+        - MOSES_OPEN_DURATION
+        - MOSES_HOLD_DURATION;
+    if (settleElapsed < MOSES_SETTLE_DURATION) {
+        return (1 - settleElapsed / MOSES_SETTLE_DURATION) ** 3;
+    }
+
+    return 0;
 }

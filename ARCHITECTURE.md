@@ -180,12 +180,14 @@ curtain interactions.
 
 - Own all appearance constants and gradient tuning.
 - Resolve branch-dependent brightness from placement and `foldProgress`.
+- Resolve crest lifecycle from each Period's local surface parameters.
 - Provide immutable frame-level appearance settings to the renderer.
 
 **Public contract**
 
 - `SurfaceShading.factorFor(placement, parameters)` returns column brightness.
-- `SurfaceShading.appearanceFor(parameters)` returns frame appearance data.
+- `SurfaceShading.appearanceFor()` returns frame appearance data.
+- `SurfaceShading.crestLifecycleFor(parameters)` returns local crest emphasis.
 
 **Must not know**
 
@@ -371,9 +373,12 @@ interactive performance.
 
 EXPLORE treats the curtain itself as a continuous field of discovery. Dragging
 is primary direct manipulation and must remain the dominant gesture. Projects
-are secondary in this mode. A possible future local click/Moses opening belongs
-only to EXPLORE and is secondary assistance around a physical click position,
-not project navigation or semantic project isolation.
+are secondary in this mode. The first local click/Moses opening is secondary
+assistance around a physical click position, not project navigation or
+semantic project isolation. It reuses the existing symmetric local-deformation
+snapshot, animates outward, and returns to that snapshot. A small pointer
+movement tolerance distinguishes it from the dominant drag gesture, and the
+application attention-mode flag prevents Moses from running in READ.
 
 ### READ
 
@@ -414,9 +419,11 @@ A temporary project dropdown is a second entry point into this same prototype
 pipeline. It supplies a selected project index after animated Reset; the shared
 indexed navigator continues to own semantic lookup and Viewport movement. The
 selected semantic span is presented uniformly at full visibility, and its
-semantic midpoint is geometrically aligned with the Viewport midpoint. Optical
-centering, gentle transition folds, and the final reading composition remain
-future refinements in that shared pipeline rather than individual controls.
+semantic midpoint is geometrically aligned with the Viewport midpoint. A
+single presentation-only offset then supplies consistent optical centering
+without changing that semantic calculation. Gentle transition folds and the
+final reading composition remain future refinements in that shared pipeline
+rather than individual controls.
 
 The sequence intentionally closes the exploratory composition before
 presenting a work. Architecturally and experientially, it behaves more like
@@ -438,6 +445,27 @@ The following are possible architectural directions, not implementation plans:
 
 Any evolution should preserve deterministic frame resolution and keep runtime
 state separate from immutable artwork and installation configuration.
+
+### Typography source quality
+
+During development, typography proved much more sensitive than photographic
+imagery to even slight raster softening. If that sensitivity eventually limits
+typography quality, investigate preparing type as a separate high-resolution
+PNG layer, SVG rendered to an off-screen surface, or another appropriate vector
+or renderable source.
+
+The curtain renderer must remain unchanged and source-agnostic. Typography must
+enter the same immutable column-based projection pipeline and receive exactly
+the same geometry as photographic or illustrated artwork. Whether a sampled
+column originated in a photograph, illustration, typography, PNG, SVG, or
+another renderable source must not alter deformation behavior or become a
+renderer concern. Passing every source through the same projection preserves
+both identical deformation and the physical illusion of the curtain.
+
+This is an architectural reminder only, not a feature request. It requires no
+implementation or experiments and should be revisited only after the overall
+visual design and rendering pipeline have stabilized and typography quality is
+a demonstrated problem.
 
 ---
 

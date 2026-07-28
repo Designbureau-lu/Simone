@@ -15,6 +15,23 @@ test("central layout configuration defines the current logical unit", () => {
     equal(artworkLayout.repetitionsPerImage, 10);
 });
 
+test("canonical surface defaults match the public tuning", async () => {
+    const { SurfaceParameters } = await import(
+        "../src/surface/SurfaceParameters.js"
+    );
+    const { CurtainField } = await import(
+        "../src/surface/CurtainField.js"
+    );
+    const parameters = new SurfaceParameters();
+    const curtain = new CurtainField();
+
+    equal(parameters.minimumVisibleFactor, 0.2);
+    equal(parameters.maximumVisibleFactor, 1);
+    equal(parameters.carrierDistance, 120);
+    equal(parameters.modelTransition, 0.5);
+    equal(curtain.resetCurtainState, 0.5);
+});
+
 test("UTF-8 CSV parsing preserves quoted punctuation and validates spans", () => {
     const projects = parseProjects(
         "\uFEFF# comment\r\"Lenka, Denise, Charlotte,...\",3\rJérémy,2\u00a0\r"
@@ -23,9 +40,18 @@ test("UTF-8 CSV parsing preserves quoted punctuation and validates spans", () =>
     equal(projects[0].title, "Lenka, Denise, Charlotte,...");
     equal(projects[0].span, 3);
     equal(projects[1].title, "Jérémy");
+    equal(projects[1].year, null);
     equal(projects[1].span, 2);
     throws(() => parseProjects("Invalid,1.5"));
     throws(() => parseProjects("Invalid,0"));
+});
+
+test("project year is optional metadata before the semantic span", () => {
+    const projects = parseProjects("Dissolution,2024,3\nUndated,2");
+    equal(projects[0].title, "Dissolution");
+    equal(projects[0].year, "2024");
+    equal(projects[0].span, 3);
+    equal(projects[1].year, null);
 });
 
 test("project coordinates derive from logical units, not image dimensions", () => {

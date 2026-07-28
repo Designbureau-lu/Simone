@@ -78,7 +78,8 @@ export class ModelCCanvasColumnRenderer {
             placement.height,
             appearance.branch,
             appearance.localSlope,
-            appearance.foldProgress
+            appearance.foldProgress,
+            appearance.crestLifecycleMultiplier
         );
         if (appearance.branch === "rear") {
             this.#extendRearRegion(
@@ -154,9 +155,9 @@ export class ModelCCanvasColumnRenderer {
             1,
             region.maximumAbsoluteSlope
         );
-        // Local fold existence × global lifecycle emphasis.
+        // Local fold existence × this Period's lifecycle emphasis.
         const crestMultiplier = geometricMultiplier
-            * settings.lifecycleMultiplier;
+            * region.crestLifecycleMultiplier;
         addRidgeGradientStops(gradient, settings, crestMultiplier);
         this.#context.fillStyle = gradient;
         this.#context.fillRect(
@@ -192,7 +193,8 @@ export class ModelCCanvasColumnRenderer {
         height,
         branch,
         localSlope,
-        foldProgress
+        foldProgress,
+        crestLifecycleMultiplier
     ) {
         if (this.#startsNewFold(branch, localSlope)) {
             this.#finishFoldRegion();
@@ -214,7 +216,8 @@ export class ModelCCanvasColumnRenderer {
                 ridgeSampleCount: 1,
                 maximumAbsoluteSlope: Math.abs(localSlope),
                 previousSlope: localSlope,
-                foldProgress
+                foldProgress,
+                crestLifecycleMultiplier
             };
             return;
         }
@@ -225,6 +228,10 @@ export class ModelCCanvasColumnRenderer {
         region.top = Math.min(region.top, y);
         region.bottom = Math.max(region.bottom, bottom);
         region.previousSlope = localSlope;
+        region.crestLifecycleMultiplier = Math.max(
+            region.crestLifecycleMultiplier,
+            crestLifecycleMultiplier
+        );
         const absoluteSlope = Math.abs(localSlope);
         region.maximumAbsoluteSlope = Math.max(
             region.maximumAbsoluteSlope,

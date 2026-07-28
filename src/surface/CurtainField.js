@@ -21,7 +21,7 @@ export class CurtainField {
     #resetCurtainState;
     #periodLength = null;
 
-    constructor({ resetCurtainState = 0.55 } = {}) {
+    constructor({ resetCurtainState = 0.5 } = {}) {
         this.#resetCurtainState = resetCurtainState;
         validateVisibleFactor(resetCurtainState);
     }

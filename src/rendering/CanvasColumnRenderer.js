@@ -85,7 +85,8 @@ export class CanvasColumnRenderer {
             column.height,
             appearance.branch,
             appearance.localSlope,
-            appearance.foldProgress
+            appearance.foldProgress,
+            appearance.crestLifecycleMultiplier
         );
 
         if (appearance.branch === "rear") {
@@ -169,9 +170,9 @@ export class CanvasColumnRenderer {
             1,
             region.maximumAbsoluteSlope
         );
-        // Local fold existence × global lifecycle emphasis.
+        // Local fold existence × this Period's lifecycle emphasis.
         const crestMultiplier = geometricMultiplier
-            * settings.lifecycleMultiplier;
+            * region.crestLifecycleMultiplier;
         addRidgeGradientStops(gradient, settings, crestMultiplier);
         this.#context.fillStyle = gradient;
         this.#context.fillRect(
@@ -212,7 +213,8 @@ export class CanvasColumnRenderer {
         height,
         branch,
         localSlope,
-        foldProgress
+        foldProgress,
+        crestLifecycleMultiplier
     ) {
         if (this.#startsNewFold(branch, localSlope)) {
             this.#finishFoldRegion();
@@ -235,7 +237,8 @@ export class CanvasColumnRenderer {
                 ridgeSampleCount: 1,
                 maximumAbsoluteSlope: Math.abs(localSlope),
                 previousSlope: localSlope,
-                foldProgress
+                foldProgress,
+                crestLifecycleMultiplier
             };
             return;
         }
@@ -246,6 +249,10 @@ export class CanvasColumnRenderer {
         region.top = Math.min(region.top, y);
         region.bottom = Math.max(region.bottom, bottom);
         region.previousSlope = localSlope;
+        region.crestLifecycleMultiplier = Math.max(
+            region.crestLifecycleMultiplier,
+            crestLifecycleMultiplier
+        );
 
         const absoluteSlope = Math.abs(localSlope);
         region.maximumAbsoluteSlope = Math.max(

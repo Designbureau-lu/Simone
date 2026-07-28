@@ -13,13 +13,14 @@ export function createProjectNavigation({
     const parsedProjects = parseProjects(source);
     const totalUnits = loadedImageCount * resolvedLayout.repetitionsPerImage;
     let nextUnit = 0;
-    const projects = parsedProjects.map(({ title, span }) => {
+    const projects = parsedProjects.map(({ title, year, span }) => {
         const startUnit = nextUnit;
         const endUnit = startUnit + span;
         nextUnit = endUnit;
 
         return Object.freeze({
             title,
+            year,
             span,
             startUnit,
             endUnit,
@@ -77,9 +78,12 @@ export function parseProjects(source) {
             );
         }
 
-        const title = fields.slice(0, -1).join(",");
         const spanText = fields.at(-1).trim();
         const span = Number(spanText);
+        const possibleYear = fields.at(-2)?.trim() ?? "";
+        const hasYear = fields.length >= 3 && /^\d{4}$/u.test(possibleYear);
+        const year = hasYear ? possibleYear : null;
+        const title = fields.slice(0, hasYear ? -2 : -1).join(",");
         if (title === "") {
             throw new Error(
                 `projects.txt line ${index + 1} has an empty title.`
@@ -92,7 +96,7 @@ export function parseProjects(source) {
             );
         }
 
-        projects.push(Object.freeze({ title, span }));
+        projects.push(Object.freeze({ title, year, span }));
     }
 
     return Object.freeze(projects);

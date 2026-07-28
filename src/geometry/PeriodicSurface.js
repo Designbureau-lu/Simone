@@ -19,11 +19,11 @@
  *   branch; reserved for geometry-aware consumers and diagnostics.
  *
  * Shading never mutates placement. Each Period's resolved surface parameters
- * own its `foldProgress`; shading owns `brightness` and the frame-level
- * Rear/crest/valley appearance settings. The application
+ * own its `foldProgress`; shading owns `brightness`, the local crest lifecycle,
+ * and the frame-level Rear/crest/valley appearance settings. The application
  * forwards geometry's `alpha`, `branch`, and `localSlope` alongside shading's
- * local `brightness` and `foldProgress`; it derives renderer `x`, `y`, and
- * `width` from adjacent geometry placements. The renderer assumes placements
+ * local `brightness`, `foldProgress`, and crest lifecycle; it derives renderer
+ * `x`, `y`, and `width` from adjacent geometry placements. The renderer assumes placements
  * arrive in immutable
  * artwork-column order. It identifies fold boundaries from branch changes and
  * from the documented Front/Rear slope-direction reset.

@@ -30,12 +30,7 @@ export class ModelCApplication extends SimoneApplication {
         const geometryStartedAt = performance.now();
         const phase = this.phaseResolver.resolve(parameters);
         const surface = this.surfaces[phase];
-        const appearance = this.shading.appearanceFor({
-            visibleFactor: this.sceneVisibleFactor,
-            minimumVisibleFactor: this.parameters.minimumVisibleFactor,
-            maximumVisibleFactor: this.parameters.maximumVisibleFactor,
-            modelTransition: this.parameters.modelTransition
-        });
+        const appearance = this.shading.appearanceFor();
         const virtualFrame = surface.frameFor(
             {
                 width: this.logicalArtworkWidth,
@@ -114,7 +109,9 @@ export class ModelCApplication extends SimoneApplication {
                     alpha: placement.alpha,
                     branch: placement.branch,
                     localSlope: placement.localSlope,
-                    foldProgress: localParameters.foldProgress
+                    foldProgress: localParameters.foldProgress,
+                    crestLifecycleMultiplier:
+                        this.shading.crestLifecycleFor(localParameters)
                 }
             );
         }

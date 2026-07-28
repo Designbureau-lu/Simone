@@ -35,11 +35,11 @@ one gesture model.
 
 **EXPLORE** is continuous curtain discovery. Drag is its primary and most
 important gesture, and projects remain secondary to the visitor's free
-movement through the curtain. A future click interaction may become a
-secondary, local “Moses” helper that opens around the clicked position,
-probably in both directions, but it belongs only to EXPLORE and must not
-navigate to or isolate a project. That click behavior is not yet authorized
-for implementation.
+movement through the curtain. The secondary local “Moses” helper opens
+temporarily around the clicked position in both directions. It belongs only to
+EXPLORE, never navigates to or isolates a project, and returns to the captured
+curtain state after offering a brief local view. Pointer movement beyond a
+small tolerance remains the dominant drag gesture.
 
 **READ** begins only when the visitor explicitly selects a project, primarily
 through a future generous Index overlay. The Index may expose project name,

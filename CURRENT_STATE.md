@@ -1,9 +1,58 @@
 # SIMONE Current State
 
-Updated: 2026-07-26
+Updated: 2026-07-28
 
 ## Today's work
 
+- Consolidated `?debug=1` tools into one fixed, scrollable bottom-right
+  development panel. Its single-column order is the five canonical surface
+  controls, Viewport information, and permanently visible Performance
+  information. Reset Curtain State remains the original frequently used slider
+  and no separate Reset control is present. Closing leaves only a small Debug
+  reopen control; both remain completely absent from layout and hit-testing
+  without debug mode. Temporary NEXT/PREVIOUS markup remains hidden for
+  compatibility and is no longer part of the panel.
+- Established the current tuning as SIMONE's canonical startup and full-Reset
+  defaults: 20% minimum visibility, 100% maximum visibility, 50% Reset Curtain
+  State, 120 mm carrier distance, and 50% model transition. The hidden debug
+  controls expose the same initial values through `?debug=1`.
+- Fixed crest highlights disappearing after the first genuine drag. The drag
+  correctly changed local Period geometry but also left the grabbed Period's
+  Visible Factor in the frame-wide `sceneVisibleFactor`; reaching the open
+  limit therefore set the global crest lifecycle to zero. Crest lifecycle is
+  now resolved from each Period's local surface parameters and passed with its
+  columns to the existing renderer cue pass. Gradient tuning and render-pass
+  lifecycle are unchanged.
+- Profiled the production cold-start path in two clean Firefox processes before
+  further Moses work. No image/network work, WebGL setup, canvas resize, or
+  meaningful selection cost occurs during the first drag. The initial and first
+  interactive renders instead pay unusually high costs in the same full
+  geometry and Canvas 2D loops used by later frames. A clean headed trace
+  isolates most of the cold penalty in the thousands of narrow `drawImage()`
+  calls sourced from the 60,000-column assembly canvas; geometry-loop warm-up
+  is secondary. `importArtwork()` currently performs only one production render
+  before interaction. A bounded set of unchanged, awaited pre-interaction
+  render passes is the smallest candidate warm-up. No optimization has been
+  applied. Measurements and evidence are recorded in `PERFORMANCE.md`.
+- Completed and removed the experimental renderer warm-up. Production again
+  performs only its normal initial render and makes interaction available
+  immediately afterward. All warm-up pass counts, animation-frame sequencing,
+  and interaction gating have been removed; the investigation measurements
+  remain in `PERFORMANCE.md`.
+- Completed that deformation-state comparison. One strong local deformation
+  plus restoration did not help. Twenty identical neutral production renders
+  reduced first-drag rendering to 40 ms median / 43 ms p95, matching warmed
+  interaction. Different curtain states are not required; the smallest state
+  set is the neutral curtain alone. The remaining investigation is the minimum
+  identical pass count between the insufficient two and sufficient twenty.
+  Measurement-only variants were removed and no warm-up ships in production.
+- Bounded identical-pass profiling tested 4, 8, 12, 16, and 20 passes in clean
+  headed Firefox profiles at DPR 2. Twelve is the first count whose first-drag
+  rendering median/p95 (42/47 ms) matches the warmed range. Eight still has a
+  422 ms p95 hitch; sixteen and twenty add no interaction benefit. Twelve costs
+  approximately 5.4 seconds of non-interactive startup on the measured machine,
+  so it is the technical recommendation but requires an intentional loading
+  treatment. The warm-up was subsequently removed from production.
 - Replaced Reset Curtain State's instant runtime jump with a cancellable
   600 ms smoothstep reset. Every Period interpolates independently from its
   current Visible Factor to the existing constrained reset target; the final
@@ -20,9 +69,11 @@ Updated: 2026-07-26
   at the neutral 50% state. This selected-artwork presentation uses its own
   calm 1000 ms `PROJECT_REVEAL_DURATION`, independently of Reset and the
   NEXT/PREVIOUS prototype. Before that presentation, the semantic midpoint
-  between `artworkStart` and `artworkEnd` is aligned with the Viewport centre.
-  The shared navigator still owns project lookup and positioning, while
-  NEXT/PREVIOUS retain their existing alignment and prototype opening.
+  between `artworkStart` and `artworkEnd` is aligned with the Viewport centre,
+  then the independent `READ_CENTER_OFFSET` applies a 40 projected-pixel
+  optical correction. The shared navigator still owns project lookup and
+  positioning, while NEXT/PREVIOUS retain their existing alignment and
+  prototype opening.
 - Added static manifest loading from `public/images.txt`. SIMONE preserves
   manifest order and filenames, ignores blank/comment lines, and continues
   assembling the curtain when an individual listed image fails to decode.
@@ -90,10 +141,35 @@ primary gesture and lets the visitor explore continuously. Projects are
 secondary to this free discovery. While the pointer is held, dragging changes
 only curtain state and never directly navigates the Viewport.
 
-A local click/Moses opening may later become a secondary magical helper,
-probably opening around the clicked position in both directions. It belongs
-only to EXPLORE and must not navigate to, isolate, or otherwise depend on a
-semantic project. No click prototype has been authorized yet.
+A local click/Moses helper is implemented exclusively for EXPLORE. A click
+within a 5 CSS-pixel movement tolerance and on a semantic project starts a
+finite, symmetric local opening at that physical position. It uses the earlier
+restrained six-Period propagation, 220 ms opening, 140 ms hold, and 1200 ms
+cubic ease-out settling envelope, leaving an 8% fold reserve at maximum
+opening. The clicked
+point stays anchored while the material gently opens outward, then the exact
+captured Period factors and Viewport offset are restored. Starting a drag
+cancels an unfinished Moses response and restores that snapshot before direct
+manipulation begins.
+
+The temporary click-position bubbles, cartel, text timers, and “Read more”
+control have been removed. A persistent black conversation bar now sits
+independently above the curtain. It begins with “SIMONE”; a semantic click
+immediately replaces that with the real project title. A non-project click may
+show “Drag me” only before a project title has been presented and before the
+visitor has demonstrated a genuine drag. Project titles take priority.
+
+The bar's menu renders the semantic projects in manifest order, highlights the
+current project, and sends a selection through the existing Reset-and-READ
+pipeline. It closes with its × trigger, Escape, or selection and restores
+trigger focus after an explicit close. Its state controller is independent of
+the current desktop top-edge CSS so a later breakpoint can relocate it.
+
+Normal presentation hides all technical controls through one `?debug=1`
+switch. The curtain fills the remaining viewport beneath the bar without its
+former border or demo framing. Beginning any curtain interaction explicitly
+returns the application from READ to EXPLORE; this clears the stale mode state
+that previously caused later semantic Moses clicks to be rejected.
 
 ### READ
 
@@ -133,9 +209,9 @@ both sides should transition between the flat project and the normal dense
 curtain.
 
 Animated Reset, movement to the selected project, uniform semantic-span
-presentation, semantic project width, and geometric midpoint centering are
-implemented. Optical centering, gentle transition folds, and the final reading
-composition remain to be designed.
+presentation, semantic project width, geometric midpoint centering, and one
+uniform configurable optical-centering offset are implemented. Gentle
+transition folds and the final reading composition remain to be designed.
 
 The interaction now feels closer to turning a page in a book than navigating a
 website. Closing one work before presenting the next is an intentional part of

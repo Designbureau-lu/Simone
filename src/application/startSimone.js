@@ -37,6 +37,11 @@ export function startSimone() {
     const semanticNavigationElement = document.getElementById(
         "semanticNavigation"
     );
+    const conversationBarElement = document.getElementById(
+        "conversationBar"
+    );
+    const debugPanelElement = document.getElementById("debugPanel");
+    const debugReopenElement = document.getElementById("debugReopen");
     const controls = getSurfaceControls();
 
     if (!(fileInput instanceof HTMLInputElement)
@@ -44,12 +49,14 @@ export function startSimone() {
         || !(viewportPosition instanceof HTMLInputElement)
         || !(viewportPositionValue instanceof HTMLOutputElement)
         || !(performanceOverviewElement instanceof HTMLElement)
-        || !(semanticNavigationElement instanceof HTMLElement)) {
+        || !(semanticNavigationElement instanceof HTMLElement)
+        || !(conversationBarElement instanceof HTMLElement)
+        || !(debugPanelElement instanceof HTMLElement)
+        || !(debugReopenElement instanceof HTMLButtonElement)) {
         throw new Error("SIMONE could not find its required interface elements.");
     }
 
     const circularFoldSurface = new CircularFoldSurface();
-    bindPerformanceOverviewCollapse(performanceOverviewElement);
     const application = new ModelCApplication({
         artworkLoader: loadArtwork,
         parameters: new SurfaceParameters(),
@@ -73,6 +80,7 @@ export function startSimone() {
         )
     });
 
+    bindDebugPanel(debugPanelElement, debugReopenElement);
     bindSurfaceControls(controls, application);
     const synchronizeViewportControl = bindViewportControl(
         viewportPosition,
@@ -84,10 +92,21 @@ export function startSimone() {
         application,
         synchronizeViewportControl
     );
+    const conversation = bindConversationInterface(
+        conversationBarElement,
+        application,
+        synchronizeViewportControl,
+        synchronizeSemanticNavigation
+    );
+    const synchronizeInterface = () => {
+        synchronizeSemanticNavigation();
+        conversation.synchronizeProjects();
+    };
     bindCurtainDragging(
         canvas,
         application,
-        synchronizeViewportControl
+        synchronizeViewportControl,
+        conversation
     );
     window.addEventListener("resize", () => application.render());
 
@@ -101,14 +120,14 @@ export function startSimone() {
             await application.importArtwork(files);
             await loadProjectNavigation(
                 application,
-                synchronizeSemanticNavigation
+                synchronizeInterface
             );
         } catch (error) {
             console.error("SIMONE could not import the artwork.", error);
         }
     });
 
-    loadManifestArtwork(application, synchronizeSemanticNavigation);
+    loadManifestArtwork(application, synchronizeInterface);
 
     return application;
 }
@@ -392,7 +411,7 @@ function getSurfaceControls() {
         modelTransition: getControlPair("modelTransition")
     };
 
-    if (Object.values(controls).some((pair) => !pair)) {
+    if (Object.values(controls).some((control) => !control)) {
         throw new Error("SIMONE could not find its periodic surface controls.");
     }
 
@@ -446,10 +465,30 @@ function bindSurfaceControls(controls, application) {
     return updateApplication;
 }
 
+export function bindDebugPanel(panel, reopen) {
+    const close = panel.querySelector("[data-debug-close]");
+    if (!(close instanceof HTMLButtonElement)
+        || !(reopen instanceof HTMLButtonElement)) {
+        throw new Error("Development panel controls are incomplete.");
+    }
+
+    close.addEventListener("click", () => {
+        panel.hidden = true;
+        reopen.hidden = false;
+        reopen.focus();
+    });
+    reopen.addEventListener("click", () => {
+        reopen.hidden = true;
+        panel.hidden = false;
+        close.focus();
+    });
+}
+
 function bindCurtainDragging(
     canvas,
     application,
-    synchronizeViewportControl
+    synchronizeViewportControl,
+    conversation
 ) {
     let drag = null;
 
@@ -472,6 +511,7 @@ function bindCurtainDragging(
             event.clientX - bounds.left - canvas.clientLeft
         ) / width;
         const interaction = application.beginLocalInteraction(targetX);
+        const project = application.projectAtPresentationX(targetX);
 
         if (!interaction) {
             return;
@@ -480,11 +520,14 @@ function bindCurtainDragging(
         drag = {
             pointerId: event.pointerId,
             startX: event.clientX,
+            startY: event.clientY,
             startPointerPosition: pointerPosition,
             displacementScale: application.interactionDisplacementScale(
                 width
             ),
-            interaction
+            interaction,
+            project,
+            dragLearned: false
         };
 
         canvas.setPointerCapture(event.pointerId);
@@ -500,6 +543,13 @@ function bindCurtainDragging(
         const horizontalDisplacement = (
             event.clientX - drag.startX
         ) * drag.displacementScale;
+        if (!drag.dragLearned && !isCurtainClick(
+            event.clientX - drag.startX,
+            event.clientY - drag.startY
+        )) {
+            drag.dragLearned = true;
+            conversation.markDragLearned();
+        }
         application.updateLocalInteraction(
             drag.interaction,
             horizontalDisplacement
@@ -507,7 +557,7 @@ function bindCurtainDragging(
         synchronizeViewportControl();
     });
 
-    const finishDragging = (event) => {
+    const finishDragging = (event, allowClickReveal) => {
         if (!drag || event.pointerId !== drag.pointerId) {
             return;
         }
@@ -526,10 +576,21 @@ function bindCurtainDragging(
             application.viewport.projectedExtent
         );
         const grabbedInteraction = drag.interaction;
+        const grabbedProject = drag.project;
+        const clickReveal = allowClickReveal && isCurtainClick(
+            event.clientX - drag.startX,
+            event.clientY - drag.startY
+        );
 
         drag = null;
         canvas.classList.remove("is-dragging");
-        if (reframeDirection !== 0) {
+        if (clickReveal && grabbedProject) {
+            if (application.revealLocalInteraction(grabbedInteraction)) {
+                conversation.showProject(grabbedProject);
+            }
+        } else if (clickReveal) {
+            conversation.showDragHint();
+        } else if (reframeDirection !== 0) {
             application.reframeHorizontal(
                 reframeDirection,
                 grabbedInteraction,
@@ -538,8 +599,141 @@ function bindCurtainDragging(
         }
     };
 
-    canvas.addEventListener("pointerup", finishDragging);
-    canvas.addEventListener("pointercancel", finishDragging);
+    canvas.addEventListener("pointerup", (event) => {
+        finishDragging(event, true);
+    });
+    canvas.addEventListener("pointercancel", (event) => {
+        finishDragging(event, false);
+    });
+}
+
+export function bindConversationInterface(
+    element,
+    application,
+    synchronizeViewportControl,
+    synchronizeSemanticNavigation
+) {
+    const conversation = element.querySelector("[data-conversation-text]");
+    const trigger = element.querySelector("[data-conversation-menu-trigger]");
+    const panel = element.querySelector(".conversation-project-list");
+    const list = element.querySelector("[data-conversation-projects]");
+    if (!(conversation instanceof HTMLOutputElement)
+        || !(trigger instanceof HTMLButtonElement)
+        || !(panel instanceof HTMLElement)
+        || !(list instanceof HTMLUListElement)) {
+        throw new Error("Conversation interface is incomplete.");
+    }
+
+    let menuOpen = false;
+    let dragLearned = false;
+    let projectTitlePresented = false;
+    let exploredProjectIndex = null;
+    const closeMenu = ({ restoreFocus = true } = {}) => {
+        menuOpen = false;
+        panel.hidden = true;
+        element.classList.remove("is-menu-open");
+        trigger.textContent = "☰";
+        trigger.setAttribute("aria-expanded", "false");
+        trigger.setAttribute("aria-label", "Open project list");
+        if (restoreFocus) {
+            trigger.focus();
+        }
+    };
+    const openMenu = () => {
+        menuOpen = true;
+        synchronizeProjects();
+        panel.hidden = false;
+        element.classList.add("is-menu-open");
+        trigger.textContent = "×";
+        trigger.setAttribute("aria-expanded", "true");
+        trigger.setAttribute("aria-label", "Close project list");
+        const active = list.querySelector('[aria-current="true"]');
+        (active ?? list.querySelector("button"))?.focus();
+    };
+    const selectProject = (index) => {
+        const project = application.projectNavigation?.projects[index];
+        if (!project) {
+            return;
+        }
+
+        showProject(project);
+        closeMenu({ restoreFocus: false });
+        application.resetAndNavigateToProject(
+            index,
+            synchronizeViewportControl,
+            () => {
+                synchronizeSemanticNavigation();
+                synchronizeProjects();
+            }
+        );
+    };
+    const synchronizeProjects = () => {
+        const projects = application.projectNavigation?.projects;
+        if (!application.projectNavigation?.enabled || !projects) {
+            list.replaceChildren();
+            return;
+        }
+
+        list.replaceChildren(...projects.map((project, index) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = project.title;
+            const activeIndex = application.attentionMode === "read"
+                ? application.currentProjectIndex
+                : exploredProjectIndex;
+            if (index === activeIndex) {
+                button.setAttribute("aria-current", "true");
+            }
+            button.addEventListener("click", () => selectProject(index));
+            const item = document.createElement("li");
+            item.append(button);
+            return item;
+        }));
+    };
+    const showProject = (project) => {
+        projectTitlePresented = true;
+        const projectIndex = application.projectNavigation?.projects
+            .indexOf(project);
+        exploredProjectIndex = Number.isInteger(projectIndex)
+            && projectIndex >= 0
+            ? projectIndex
+            : null;
+        conversation.value = project.title;
+    };
+    const showDragHint = () => {
+        if (!dragLearned && !projectTitlePresented) {
+            conversation.value = "Drag me";
+        }
+    };
+    const markDragLearned = () => {
+        dragLearned = true;
+    };
+
+    trigger.addEventListener("click", () => {
+        if (menuOpen) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && menuOpen) {
+            closeMenu();
+        }
+    });
+
+    synchronizeProjects();
+    return Object.freeze({
+        synchronizeProjects,
+        showProject,
+        showDragHint,
+        markDragLearned
+    });
+}
+
+export function isCurtainClick(horizontalMovement, verticalMovement) {
+    return Math.hypot(horizontalMovement, verticalMovement)
+        <= CURTAIN_CLICK_TOLERANCE;
 }
 
 function constrainVisibleFactorControls(controls, changedBoundary) {
@@ -639,6 +833,7 @@ function formatPosition(value) {
 
 const HORIZONTAL_REFRAME_EDGE_FRACTION = 0.2;
 const MINIMUM_EXPLORATORY_DRAG_FRACTION = 0.1;
+const CURTAIN_CLICK_TOLERANCE = 5;
 
 export function horizontalReframeDirection(
     startPointerPosition,
