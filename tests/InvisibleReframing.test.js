@@ -123,7 +123,7 @@ test("desktop local displacement retains its existing redistribution", () => {
     );
 });
 
-test("touch exploration moves the camera and settles to its exact base state", () => {
+test("touch settlement retains only its directional deformation", () => {
     const field = new CurtainField({ resetCurtainState: 0.5 });
     field.configureFor(1000, 100);
     const viewport = createViewport(300);
@@ -155,17 +155,82 @@ test("touch exploration moves the camera and settles to its exact base state", (
         interaction,
         0.04,
         -0.02,
+        0.5,
         360
     ));
     animation.runNext(0);
     animation.runNext(180);
     assert(field.periods[interaction.periodIndex].visibleFactor > 0.5);
     animation.runNext(360);
+    equal(field.periods[interaction.periodIndex].visibleFactor, 0.5);
+    assert(
+        field.periods[interaction.periodIndex - 1].visibleFactor < 0.5
+    );
+    assert(
+        field.periods[interaction.periodIndex + 1].visibleFactor > 0.5
+    );
+    equal(application.touchExplorationFrame, null);
+    equal(application.touchExplorationState, null);
+
+    const oppositeInteraction = application.beginTouchExploration(240);
+    assert(application.updateTouchExploration(
+        oppositeInteraction,
+        0,
+        0.04,
+        0.02
+    ));
+    assert(application.settleTouchExploration(
+        oppositeInteraction,
+        0.04,
+        0.02,
+        0.5,
+        360
+    ));
+    animation.runNext(400);
+    animation.runNext(760);
+    field.periods.forEach((period) => {
+        closeTo(period.visibleFactor, 0.5);
+    });
+    animation.restore();
+});
+
+test("zero directional retention restores the captured state exactly", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    field.configureFor(1000, 100);
+    const application = new SimoneApplication({
+        artworkLoader: null,
+        parameters: new SurfaceParameters(),
+        curtainField: field,
+        viewport: createViewport(300),
+        phaseResolver: null,
+        surfaces: null,
+        shading: null,
+        renderer: null
+    });
+    application.artwork = {};
+    application.render = () => {};
+    field.resolve(application.parameters);
+    const interaction = application.beginTouchExploration(200);
+    const animation = captureAnimationFrames();
+
+    assert(application.updateTouchExploration(
+        interaction,
+        0,
+        0.04,
+        -0.02
+    ));
+    assert(application.settleTouchExploration(
+        interaction,
+        0.04,
+        -0.02,
+        0,
+        360
+    ));
+    animation.runNext(0);
+    animation.runNext(360);
     field.periods.forEach((period) => {
         equal(period.visibleFactor, 0.5);
     });
-    equal(application.touchExplorationFrame, null);
-    equal(application.touchExplorationState, null);
     animation.restore();
 });
 

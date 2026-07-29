@@ -569,6 +569,7 @@ export class SimoneApplication {
         interaction,
         initialReveal,
         initialDirectionalBias,
+        directionalRetention,
         duration,
         onFrame = null
     ) {
@@ -576,24 +577,32 @@ export class SimoneApplication {
             || !Number.isFinite(initialReveal)
             || initialReveal < 0
             || !Number.isFinite(initialDirectionalBias)
+            || !Number.isFinite(directionalRetention)
+            || directionalRetention < 0
+            || directionalRetention > 1
             || !Number.isFinite(duration)
             || duration <= 0) {
             return false;
         }
 
         this.cancelTouchExplorationResponse();
+        const retainedDirectionalBias = initialDirectionalBias
+            * directionalRetention;
         this.touchExplorationState = Object.freeze({
             interaction,
             initialReveal,
-            initialDirectionalBias
+            initialDirectionalBias,
+            retainedDirectionalBias
         });
         let startedAt = null;
         const settle = (timestamp) => {
             startedAt ??= timestamp;
             const progress = Math.min((timestamp - startedAt) / duration, 1);
-            const remainingReveal = initialReveal * (1 - progress) ** 3;
-            const remainingDirectionalBias = initialDirectionalBias
-                * (1 - progress) ** 3;
+            const temporaryProgress = (1 - progress) ** 3;
+            const remainingReveal = initialReveal * temporaryProgress;
+            const remainingDirectionalBias = retainedDirectionalBias
+                + (initialDirectionalBias - retainedDirectionalBias)
+                    * temporaryProgress;
 
             this.updateTouchExploration(
                 interaction,
@@ -624,10 +633,18 @@ export class SimoneApplication {
             cancelAnimationFrame(this.touchExplorationFrame);
         }
 
-        const { interaction } = this.touchExplorationState;
+        const {
+            interaction,
+            retainedDirectionalBias
+        } = this.touchExplorationState;
         this.touchExplorationFrame = null;
         this.touchExplorationState = null;
-        this.updateTouchExploration(interaction, 0, 0, 0);
+        this.updateTouchExploration(
+            interaction,
+            0,
+            0,
+            retainedDirectionalBias
+        );
     }
 
     revealLocalInteraction(interaction) {
