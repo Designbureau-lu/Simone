@@ -4,10 +4,10 @@ Updated: 2026-07-29
 
 ## Today's work
 
-- Added an experimental 50% retention of the temporary touch response's
+- Added experimental full retention of the temporary touch response's
   directional component. Release keeps the existing cubic settlement, removes
   the symmetric reveal and touched-centre opening completely, and settles the
-  left/right bias toward `TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 0.50`.
+  left/right bias toward `TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 1.00`.
   The retained, constrained Period factors become the captured base for the
   next gesture, so repeated drags accumulate and opposite drags can undo them.
 - Extended the temporary direct-touch curtain response with a signed directional

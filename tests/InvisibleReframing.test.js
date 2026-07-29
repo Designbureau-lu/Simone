@@ -155,7 +155,7 @@ test("touch settlement retains only its directional deformation", () => {
         interaction,
         0.04,
         -0.02,
-        0.5,
+        1,
         360
     ));
     animation.runNext(0);
@@ -183,7 +183,7 @@ test("touch settlement retains only its directional deformation", () => {
         oppositeInteraction,
         0.04,
         0.02,
-        0.5,
+        1,
         360
     ));
     animation.runNext(400);
@@ -191,6 +191,92 @@ test("touch settlement retains only its directional deformation", () => {
     field.periods.forEach((period) => {
         closeTo(period.visibleFactor, 0.5);
     });
+    animation.restore();
+});
+
+test("full directional retention accumulates, clamps, and reverses", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    field.configureFor(1000, 100);
+    const application = new SimoneApplication({
+        artworkLoader: null,
+        parameters: new SurfaceParameters(),
+        curtainField: field,
+        viewport: createViewport(300),
+        phaseResolver: null,
+        surfaces: null,
+        shading: null,
+        renderer: null
+    });
+    application.artwork = {};
+    application.render = () => {};
+    field.resolve(application.parameters);
+    const animation = captureAnimationFrames();
+    const firstInteraction = application.beginTouchExploration(200);
+    const leftIndex = firstInteraction.periodIndex - 1;
+    const rightIndex = firstInteraction.periodIndex + 1;
+
+    assert(application.updateTouchExploration(
+        firstInteraction,
+        0,
+        0.3,
+        -0.3
+    ));
+    assert(application.settleTouchExploration(
+        firstInteraction,
+        0.3,
+        -0.3,
+        1,
+        360
+    ));
+    animation.runNext(0);
+    animation.runNext(360);
+    equal(field.periods[firstInteraction.periodIndex].visibleFactor, 0.5);
+    assert(field.periods[rightIndex].visibleFactor > 0.79);
+    assert(field.periods[rightIndex].visibleFactor < 0.8);
+    assert(field.periods[leftIndex].visibleFactor > 0.2);
+    assert(field.periods[leftIndex].visibleFactor < 0.21);
+
+    const repeatedInteraction = application.beginTouchExploration(200);
+    assert(application.updateTouchExploration(
+        repeatedInteraction,
+        0,
+        0.3,
+        -0.3
+    ));
+    assert(application.settleTouchExploration(
+        repeatedInteraction,
+        0.3,
+        -0.3,
+        1,
+        360
+    ));
+    animation.runNext(400);
+    animation.runNext(760);
+    equal(field.periods[rightIndex].visibleFactor, 1);
+    equal(field.periods[leftIndex].visibleFactor, 0.2);
+    field.periods.forEach((period) => {
+        assert(period.visibleFactor >= 0.2);
+        assert(period.visibleFactor <= 1);
+    });
+
+    const oppositeInteraction = application.beginTouchExploration(200);
+    assert(application.updateTouchExploration(
+        oppositeInteraction,
+        0,
+        0.3,
+        0.3
+    ));
+    assert(application.settleTouchExploration(
+        oppositeInteraction,
+        0.3,
+        0.3,
+        1,
+        360
+    ));
+    animation.runNext(800);
+    animation.runNext(1160);
+    assert(field.periods[rightIndex].visibleFactor < 1);
+    assert(field.periods[leftIndex].visibleFactor > 0.2);
     animation.restore();
 });
 
