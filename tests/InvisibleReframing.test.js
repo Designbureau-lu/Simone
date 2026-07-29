@@ -1,7 +1,8 @@
 import { SimoneApplication } from "../src/application/SimoneApplication.js";
 import {
     horizontalReframeDirection,
-    isCurtainClick
+    isCurtainClick,
+    lowPass
 } from "../src/application/startSimone.js";
 import { Viewport } from "../src/viewport/Viewport.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
@@ -31,6 +32,82 @@ test("Moses click tolerance preserves drag as the dominant gesture", () => {
     assert(isCurtainClick(3, 4));
     assert(!isCurtainClick(4, 4));
     assert(!isCurtainClick(6, 0));
+});
+
+test("touch response smoothing follows without overshoot", () => {
+    const first = lowPass(0, 1, 45, 45);
+    const second = lowPass(first, 1, 45, 45);
+
+    assert(first > 0);
+    assert(first < 1);
+    assert(second > first);
+    assert(second < 1);
+});
+
+test("temporary touch reveal is symmetric and restores its base state", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const parameters = new SurfaceParameters();
+    field.configureFor(1000, 100);
+    field.resolve(parameters);
+    const interaction = field.beginLocalInteraction(350);
+
+    field.applyTemporaryReveal(interaction, 0.04, 0.2, 1);
+    closeTo(
+        field.periods[interaction.periodIndex].visibleFactor,
+        0.54
+    );
+    closeTo(
+        field.periods[interaction.periodIndex - 1].visibleFactor,
+        field.periods[interaction.periodIndex + 1].visibleFactor
+    );
+    assert(
+        field.periods[interaction.periodIndex - 1].visibleFactor > 0.5
+    );
+
+    field.applyTemporaryReveal(interaction, 0, 0.2, 1);
+    field.periods.forEach((period) => {
+        equal(period.visibleFactor, 0.5);
+    });
+});
+
+test("touch exploration moves the camera and settles to its exact base state", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    field.configureFor(1000, 100);
+    const viewport = createViewport(300);
+    const application = new SimoneApplication({
+        artworkLoader: null,
+        parameters: new SurfaceParameters(),
+        curtainField: field,
+        viewport,
+        phaseResolver: null,
+        surfaces: null,
+        shading: null,
+        renderer: null
+    });
+    application.artwork = {};
+    application.render = () => {};
+    field.resolve(application.parameters);
+    const interaction = application.beginTouchExploration(200);
+    const animation = captureAnimationFrames();
+
+    assert(application.updateTouchExploration(interaction, 40, 0.04));
+    assert(viewport.projectedOffset < 300);
+    closeTo(field.periods[interaction.periodIndex].visibleFactor, 0.54);
+    assert(application.settleTouchExploration(
+        interaction,
+        0.04,
+        360
+    ));
+    animation.runNext(0);
+    animation.runNext(180);
+    assert(field.periods[interaction.periodIndex].visibleFactor > 0.5);
+    animation.runNext(360);
+    field.periods.forEach((period) => {
+        equal(period.visibleFactor, 0.5);
+    });
+    equal(application.touchExplorationFrame, null);
+    equal(application.touchExplorationState, null);
+    animation.restore();
 });
 
 test("a new curtain interaction restores EXPLORE after READ", () => {

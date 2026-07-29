@@ -4,6 +4,15 @@ Updated: 2026-07-29
 
 ## Today's work
 
+- Introduced the first distinct direct-touch EXPLORE interaction. Mouse and pen
+  retain the established desktop curtain drag, while one touch now moves the
+  existing projected Viewport continuously and immediately with no threshold,
+  steps, delayed reframing, or momentum. A small velocity-smoothed local reveal
+  follows the movement with a bounded low-pass delay, remains anchored so its
+  geometry change cannot pull the artwork away from the finger, and settles
+  exactly to the captured persistent Period factors after release. This
+  temporary contribution never changes persistent curtain openness. Pinch and
+  inertia remain deliberately unimplemented for later mobile iterations.
 - Replaced the giant artwork assembly canvas with a continuous virtual artwork
   coordinate system over the ordered decoded source images. Global column
   coordinates, semantic project mapping, viewport navigation, and scrolling
@@ -149,10 +158,20 @@ Updated: 2026-07-29
 
 ### EXPLORE
 
-The curtain is the visitor's direct-manipulation object. Dragging is the
-primary gesture and lets the visitor explore continuously. Projects are
-secondary to this free discovery. While the pointer is held, dragging changes
-only curtain state and never directly navigates the Viewport.
+Desktop and direct-touch exploration now express different visitor intentions
+through one rendering architecture. With a mouse or pen, the curtain remains
+the direct-manipulation object: dragging changes only curtain state and never
+directly navigates the Viewport. With one direct-touch pointer, the artwork is
+the primary object: movement pans the bounded Viewport continuously while a
+subtle velocity-driven curtain response follows temporarily. Projects remain
+secondary to free discovery in both cases.
+
+The touch camera is attached to every finger delta without a threshold,
+predefined step, or post-gesture reframe. The secondary curtain contribution
+is computed over a captured persistent base state, follows through a bounded
+first-order delay, and settles without bounce or oscillation. It does not
+overwrite persistent openness. Momentum and two-finger persistent openness are
+reserved for later iterations.
 
 A local click/Moses helper is implemented exclusively for EXPLORE. A click
 within a 5 CSS-pixel movement tolerance and on a semantic project starts a
