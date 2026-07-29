@@ -525,6 +525,7 @@ function bindCurtainDragging(
                 project,
                 smoothedVelocity: 0,
                 temporaryReveal: 0,
+                temporaryDirectionalBias: 0,
                 dragLearned: false
             };
             canvas.setPointerCapture(event.pointerId);
@@ -583,6 +584,18 @@ function bindCurtainDragging(
                 elapsed,
                 TOUCH_CURTAIN_FOLLOW_RATE
             );
+            const targetDirectionalBias = clamp(
+                touchExploration.smoothedVelocity
+                    * TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS,
+                -TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL,
+                TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL
+            );
+            touchExploration.temporaryDirectionalBias = lowPass(
+                touchExploration.temporaryDirectionalBias,
+                targetDirectionalBias,
+                elapsed,
+                TOUCH_CURTAIN_FOLLOW_RATE
+            );
 
             if (!touchExploration.dragLearned && !isCurtainClick(
                 event.clientX - touchExploration.startX,
@@ -595,7 +608,8 @@ function bindCurtainDragging(
             application.updateTouchExploration(
                 touchExploration.interaction,
                 projectedMovement,
-                touchExploration.temporaryReveal
+                touchExploration.temporaryReveal,
+                touchExploration.temporaryDirectionalBias
             );
             touchExploration.lastX = event.clientX;
             touchExploration.lastTimestamp = event.timeStamp;
@@ -689,6 +703,7 @@ function bindCurtainDragging(
             application.updateTouchExploration(
                 completed.interaction,
                 0,
+                0,
                 0
             );
             if (completed.project
@@ -701,6 +716,7 @@ function bindCurtainDragging(
             application.settleTouchExploration(
                 completed.interaction,
                 completed.temporaryReveal,
+                completed.temporaryDirectionalBias,
                 TOUCH_CURTAIN_SETTLE_DURATION,
                 synchronizeViewportControl
             );
@@ -965,6 +981,7 @@ const TOUCH_CURTAIN_VELOCITY_SMOOTHING = 45;
 const TOUCH_CURTAIN_FOLLOW_RATE = 90;
 const TOUCH_CURTAIN_VELOCITY_TO_REVEAL = 0.04;
 const TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL = 0.30;
+const TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS = 0.02;
 const TOUCH_CURTAIN_SETTLE_DURATION = 360;
 
 export function horizontalReframeDirection(

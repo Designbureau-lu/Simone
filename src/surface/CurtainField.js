@@ -220,12 +220,18 @@ export class CurtainField {
     applyTemporaryReveal(
         interaction,
         reveal,
+        directionalBias,
         minimumVisibleFactor,
         maximumVisibleFactor
     ) {
         if (!Number.isFinite(reveal) || reveal < 0) {
             throw new RangeError(
                 "Temporary reveal must be a non-negative finite number."
+            );
+        }
+        if (!Number.isFinite(directionalBias)) {
+            throw new RangeError(
+                "Temporary directional bias must be finite."
             );
         }
 
@@ -243,8 +249,15 @@ export class CurtainField {
             const influence = distance === 0
                 ? 1
                 : influenceForDistance(distance);
+            const directionalChange = distance === 0
+                ? 0
+                : -directionalBias * Math.sign(
+                    index - interaction.periodIndex
+                ) * influence;
             const visibleFactor = clamp(
-                interaction.visibleFactors[index] + reveal * influence,
+                interaction.visibleFactors[index]
+                    + reveal * influence
+                    + directionalChange,
                 minimumVisibleFactor,
                 maximumVisibleFactor
             );
