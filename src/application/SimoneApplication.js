@@ -43,6 +43,8 @@ export class SimoneApplication {
         this.resetCurtainFrame = null;
         this.localRevealFrame = null;
         this.localRevealState = null;
+        this.touchExplorationFrame = null;
+        this.touchExplorationState = null;
     }
 
     async importArtwork(files) {
@@ -68,6 +70,7 @@ export class SimoneApplication {
     }
 
     updateSurface(values) {
+        this.cancelTouchExplorationResponse();
         this.cancelLocalReveal();
         this.cancelResetCurtainAnimation();
         const {
@@ -100,6 +103,7 @@ export class SimoneApplication {
             ...configuration
         } = values;
 
+        this.cancelTouchExplorationResponse();
         this.cancelLocalReveal();
         this.cancelHorizontalReframe();
         this.cancelResetCurtainAnimation();
@@ -170,6 +174,7 @@ export class SimoneApplication {
             return;
         }
 
+        this.cancelTouchExplorationResponse();
         this.cancelHorizontalReframe();
         this.viewport.setPosition(position);
         this.render();
@@ -272,6 +277,7 @@ export class SimoneApplication {
             return false;
         }
 
+        this.cancelTouchExplorationResponse();
         this.cancelResetCurtainAnimation();
         const project = this.projectNavigation.projects[targetIndex];
         const projection = this.projectProjectionFor(project);
@@ -448,6 +454,7 @@ export class SimoneApplication {
         }
 
         this.enterExploreMode();
+        this.cancelTouchExplorationResponse();
         this.cancelLocalReveal();
         this.cancelHorizontalReframe();
         this.cancelResetCurtainAnimation();
@@ -458,6 +465,10 @@ export class SimoneApplication {
         );
 
         return this.curtainField.beginLocalInteraction(fieldX);
+    }
+
+    beginTouchExploration(targetX) {
+        return this.beginLocalInteraction(targetX);
     }
 
     enterExploreMode() {
@@ -519,6 +530,95 @@ export class SimoneApplication {
         this.render();
 
         return visibleFactor;
+    }
+
+    updateTouchExploration(
+        interaction,
+        fingerDisplacement,
+        temporaryReveal
+    ) {
+        if (!interaction
+            || !Number.isFinite(fingerDisplacement)
+            || !Number.isFinite(temporaryReveal)) {
+            return false;
+        }
+
+        const previousAnchor = this.curtainField
+            .projectedXForInteraction(interaction);
+        this.sceneVisibleFactor = this.curtainField.applyTemporaryReveal(
+            interaction,
+            temporaryReveal,
+            this.parameters.minimumVisibleFactor,
+            this.parameters.maximumVisibleFactor
+        );
+        this.curtainField.resolve(this.parameters);
+        const currentAnchor = this.curtainField
+            .projectedXForInteraction(interaction);
+
+        this.viewport.shiftProjectedOffset(
+            currentAnchor - previousAnchor - fingerDisplacement
+        );
+        this.render();
+        return true;
+    }
+
+    settleTouchExploration(
+        interaction,
+        initialReveal,
+        duration,
+        onFrame = null
+    ) {
+        if (!interaction
+            || !Number.isFinite(initialReveal)
+            || initialReveal < 0
+            || !Number.isFinite(duration)
+            || duration <= 0) {
+            return false;
+        }
+
+        this.cancelTouchExplorationResponse();
+        this.touchExplorationState = Object.freeze({
+            interaction,
+            initialReveal
+        });
+        let startedAt = null;
+        const settle = (timestamp) => {
+            startedAt ??= timestamp;
+            const progress = Math.min((timestamp - startedAt) / duration, 1);
+            const remainingReveal = initialReveal * (1 - progress) ** 3;
+
+            this.updateTouchExploration(
+                interaction,
+                0,
+                remainingReveal
+            );
+            onFrame?.();
+
+            if (progress < 1) {
+                this.touchExplorationFrame = requestAnimationFrame(settle);
+            } else {
+                this.touchExplorationFrame = null;
+                this.touchExplorationState = null;
+            }
+        };
+
+        this.touchExplorationFrame = requestAnimationFrame(settle);
+        return true;
+    }
+
+    cancelTouchExplorationResponse() {
+        if (!this.touchExplorationState) {
+            return;
+        }
+
+        if (this.touchExplorationFrame !== null) {
+            cancelAnimationFrame(this.touchExplorationFrame);
+        }
+
+        const { interaction } = this.touchExplorationState;
+        this.touchExplorationFrame = null;
+        this.touchExplorationState = null;
+        this.updateTouchExploration(interaction, 0, 0);
     }
 
     revealLocalInteraction(interaction) {

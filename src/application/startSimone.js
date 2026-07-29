@@ -476,6 +476,7 @@ function bindCurtainDragging(
     conversation
 ) {
     let drag = null;
+    let touchExploration = null;
 
     canvas.addEventListener("pointerdown", (event) => {
         if (event.button !== 0) {
@@ -495,10 +496,40 @@ function bindCurtainDragging(
         const pointerPosition = (
             event.clientX - bounds.left - canvas.clientLeft
         ) / width;
-        const interaction = application.beginLocalInteraction(targetX);
+        const isDirectTouch = event.pointerType === "touch";
+        if (isDirectTouch && touchExploration) {
+            event.preventDefault();
+            return;
+        }
+
+        const interaction = isDirectTouch
+            ? application.beginTouchExploration(targetX)
+            : application.beginLocalInteraction(targetX);
         const project = application.projectAtPresentationX(targetX);
 
         if (!interaction) {
+            return;
+        }
+
+        if (isDirectTouch) {
+            touchExploration = {
+                pointerId: event.pointerId,
+                startX: event.clientX,
+                startY: event.clientY,
+                lastX: event.clientX,
+                lastTimestamp: event.timeStamp,
+                displacementScale: application.interactionDisplacementScale(
+                    width
+                ),
+                interaction,
+                project,
+                smoothedVelocity: 0,
+                temporaryReveal: 0,
+                dragLearned: false
+            };
+            canvas.setPointerCapture(event.pointerId);
+            canvas.classList.add("is-dragging");
+            event.preventDefault();
             return;
         }
 
@@ -521,6 +552,58 @@ function bindCurtainDragging(
     });
 
     canvas.addEventListener("pointermove", (event) => {
+        if (touchExploration
+            && event.pointerId === touchExploration.pointerId) {
+            const horizontalMovement = event.clientX
+                - touchExploration.lastX;
+            const projectedMovement = horizontalMovement
+                * touchExploration.displacementScale;
+            const elapsed = Math.max(
+                1,
+                Math.min(
+                    event.timeStamp - touchExploration.lastTimestamp,
+                    TOUCH_EXPLORATION_MAXIMUM_SAMPLE_DURATION
+                )
+            );
+            const velocity = projectedMovement / elapsed;
+            touchExploration.smoothedVelocity = lowPass(
+                touchExploration.smoothedVelocity,
+                velocity,
+                elapsed,
+                TOUCH_CURTAIN_VELOCITY_SMOOTHING
+            );
+            const targetReveal = Math.min(
+                Math.abs(touchExploration.smoothedVelocity)
+                    * TOUCH_CURTAIN_VELOCITY_TO_REVEAL,
+                TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL
+            );
+            touchExploration.temporaryReveal = lowPass(
+                touchExploration.temporaryReveal,
+                targetReveal,
+                elapsed,
+                TOUCH_CURTAIN_FOLLOW_RATE
+            );
+
+            if (!touchExploration.dragLearned && !isCurtainClick(
+                event.clientX - touchExploration.startX,
+                event.clientY - touchExploration.startY
+            )) {
+                touchExploration.dragLearned = true;
+                conversation.markDragLearned();
+            }
+
+            application.updateTouchExploration(
+                touchExploration.interaction,
+                projectedMovement,
+                touchExploration.temporaryReveal
+            );
+            touchExploration.lastX = event.clientX;
+            touchExploration.lastTimestamp = event.timeStamp;
+            synchronizeViewportControl();
+            event.preventDefault();
+            return;
+        }
+
         if (!drag || event.pointerId !== drag.pointerId) {
             return;
         }
@@ -584,10 +667,58 @@ function bindCurtainDragging(
         }
     };
 
+    const finishTouchExploration = (event, allowClickReveal) => {
+        if (!touchExploration
+            || event.pointerId !== touchExploration.pointerId) {
+            return;
+        }
+
+        if (canvas.hasPointerCapture(event.pointerId)) {
+            canvas.releasePointerCapture(event.pointerId);
+        }
+
+        const completed = touchExploration;
+        const clickReveal = allowClickReveal && isCurtainClick(
+            event.clientX - completed.startX,
+            event.clientY - completed.startY
+        );
+        touchExploration = null;
+        canvas.classList.remove("is-dragging");
+
+        if (clickReveal) {
+            application.updateTouchExploration(
+                completed.interaction,
+                0,
+                0
+            );
+            if (completed.project
+                && application.revealLocalInteraction(completed.interaction)) {
+                conversation.showProject(completed.project);
+            } else if (!completed.project) {
+                conversation.showDragHint();
+            }
+        } else {
+            application.settleTouchExploration(
+                completed.interaction,
+                completed.temporaryReveal,
+                TOUCH_CURTAIN_SETTLE_DURATION,
+                synchronizeViewportControl
+            );
+        }
+    };
+
     canvas.addEventListener("pointerup", (event) => {
+        if (event.pointerType === "touch") {
+            finishTouchExploration(event, true);
+            return;
+        }
         finishDragging(event, true);
     });
     canvas.addEventListener("pointercancel", (event) => {
+        if (event.pointerType === "touch") {
+            finishTouchExploration(event, false);
+            return;
+        }
         finishDragging(event, false);
     });
 }
@@ -721,6 +852,16 @@ export function isCurtainClick(horizontalMovement, verticalMovement) {
         <= CURTAIN_CLICK_TOLERANCE;
 }
 
+export function lowPass(
+    currentValue,
+    targetValue,
+    elapsed,
+    timeConstant
+) {
+    const progress = 1 - Math.exp(-elapsed / timeConstant);
+    return currentValue + (targetValue - currentValue) * progress;
+}
+
 function constrainVisibleFactorControls(controls, changedBoundary) {
     let minimum = Number(controls.minimumVisibleFactor.range.value);
     let maximum = Number(controls.maximumVisibleFactor.range.value);
@@ -819,6 +960,12 @@ function formatPosition(value) {
 const HORIZONTAL_REFRAME_EDGE_FRACTION = 0.2;
 const MINIMUM_EXPLORATORY_DRAG_FRACTION = 0.1;
 const CURTAIN_CLICK_TOLERANCE = 5;
+const TOUCH_EXPLORATION_MAXIMUM_SAMPLE_DURATION = 50;
+const TOUCH_CURTAIN_VELOCITY_SMOOTHING = 45;
+const TOUCH_CURTAIN_FOLLOW_RATE = 90;
+const TOUCH_CURTAIN_VELOCITY_TO_REVEAL = 0.008;
+const TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL = 0.04;
+const TOUCH_CURTAIN_SETTLE_DURATION = 360;
 
 export function horizontalReframeDirection(
     startPointerPosition,

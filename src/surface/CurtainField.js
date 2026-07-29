@@ -217,6 +217,44 @@ export class CurtainField {
         return this.#periods[interaction.periodIndex].visibleFactor;
     }
 
+    applyTemporaryReveal(
+        interaction,
+        reveal,
+        minimumVisibleFactor,
+        maximumVisibleFactor
+    ) {
+        if (!Number.isFinite(reveal) || reveal < 0) {
+            throw new RangeError(
+                "Temporary reveal must be a non-negative finite number."
+            );
+        }
+
+        const start = Math.max(
+            0,
+            interaction.periodIndex - CONCERNED_NEIGHBORS
+        );
+        const end = Math.min(
+            this.#periods.length - 1,
+            interaction.periodIndex + CONCERNED_NEIGHBORS
+        );
+
+        for (let index = start; index <= end; index += 1) {
+            const distance = Math.abs(index - interaction.periodIndex);
+            const influence = distance === 0
+                ? 1
+                : influenceForDistance(distance);
+            const visibleFactor = clamp(
+                interaction.visibleFactors[index] + reveal * influence,
+                minimumVisibleFactor,
+                maximumVisibleFactor
+            );
+
+            this.#periods[index].setVisibleFactor(visibleFactor);
+        }
+
+        return this.#periods[interaction.periodIndex].visibleFactor;
+    }
+
     projectedXForInteraction(interaction) {
         const parameters = this.#resolvedParameters[interaction.periodIndex];
         if (!parameters) {

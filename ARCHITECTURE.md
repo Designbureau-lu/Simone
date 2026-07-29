@@ -373,13 +373,21 @@ interactive performance.
 ### EXPLORE
 
 EXPLORE treats the curtain itself as a continuous field of discovery. Dragging
-is primary direct manipulation and must remain the dominant gesture. Projects
-are secondary in this mode. The first local click/Moses opening is secondary
-assistance around a physical click position, not project navigation or
-semantic project isolation. It reuses the existing symmetric local-deformation
-snapshot, animates outward, and returns to that snapshot. A small pointer
-movement tolerance distinguishes it from the dominant drag gesture, and the
-application attention-mode flag prevents Moses from running in READ.
+with a mouse or pen is primary curtain manipulation. Direct touch uses a
+different input language over the same Viewport, CurtainField, geometry, and
+renderer: one finger owns continuous bounded camera movement, while a small
+velocity-derived local Visible Factor contribution lets the curtain accompany
+exploration. The contribution is evaluated from a captured base state and
+settles exactly back to it, so one-finger exploration never changes persistent
+openness. Momentum and two-finger persistent openness are not part of the first
+touch iteration.
+
+Projects are secondary in EXPLORE. The local click/Moses opening is assistance
+around a physical click position, not project navigation or semantic project
+isolation. It reuses the existing symmetric local-deformation snapshot,
+animates outward, and returns to that snapshot. A small pointer movement
+tolerance distinguishes it from a click, and the application attention-mode
+flag prevents Moses from running in READ.
 
 ### READ
 
