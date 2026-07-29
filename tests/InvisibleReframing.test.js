@@ -156,6 +156,7 @@ test("touch settlement retains only its directional deformation", () => {
         0.04,
         -0.02,
         1,
+        3,
         360
     ));
     animation.runNext(0);
@@ -171,6 +172,9 @@ test("touch settlement retains only its directional deformation", () => {
     );
     equal(application.touchExplorationFrame, null);
     equal(application.touchExplorationState, null);
+    const firstSettledFactors = field.periods.map(
+        (period) => period.visibleFactor
+    );
 
     const oppositeInteraction = application.beginTouchExploration(240);
     assert(application.updateTouchExploration(
@@ -184,17 +188,22 @@ test("touch settlement retains only its directional deformation", () => {
         0.04,
         0.02,
         1,
+        3,
         360
     ));
     animation.runNext(400);
     animation.runNext(760);
-    field.periods.forEach((period) => {
-        closeTo(period.visibleFactor, 0.5);
+    field.periods.forEach((period, index) => {
+        assert(
+            Math.abs(period.visibleFactor - 0.5)
+                < Math.abs(firstSettledFactors[index] - 0.5)
+                || period.visibleFactor === 0.5
+        );
     });
     animation.restore();
 });
 
-test("full directional retention accumulates, clamps, and reverses", () => {
+test("directional resistance accumulates asymptotically and reverses", () => {
     const field = new CurtainField({ resetCurtainState: 0.5 });
     field.configureFor(1000, 100);
     const application = new SimoneApplication({
@@ -226,15 +235,18 @@ test("full directional retention accumulates, clamps, and reverses", () => {
         0.3,
         -0.3,
         1,
+        3,
         360
     ));
     animation.runNext(0);
     animation.runNext(360);
     equal(field.periods[firstInteraction.periodIndex].visibleFactor, 0.5);
-    assert(field.periods[rightIndex].visibleFactor > 0.79);
-    assert(field.periods[rightIndex].visibleFactor < 0.8);
-    assert(field.periods[leftIndex].visibleFactor > 0.2);
-    assert(field.periods[leftIndex].visibleFactor < 0.21);
+    const firstRight = field.periods[rightIndex].visibleFactor;
+    const firstLeft = field.periods[leftIndex].visibleFactor;
+    assert(firstRight > 0.83);
+    assert(firstRight < 0.84);
+    assert(firstLeft > 0.29);
+    assert(firstLeft < 0.31);
 
     const repeatedInteraction = application.beginTouchExploration(200);
     assert(application.updateTouchExploration(
@@ -248,12 +260,45 @@ test("full directional retention accumulates, clamps, and reverses", () => {
         0.3,
         -0.3,
         1,
+        3,
         360
     ));
     animation.runNext(400);
     animation.runNext(760);
-    equal(field.periods[rightIndex].visibleFactor, 1);
-    equal(field.periods[leftIndex].visibleFactor, 0.2);
+    const secondRight = field.periods[rightIndex].visibleFactor;
+    const secondLeft = field.periods[leftIndex].visibleFactor;
+    assert(secondRight > firstRight);
+    assert(secondLeft < firstLeft);
+    assert(secondRight < 1);
+    assert(secondLeft > 0.2);
+    assert(secondRight - firstRight < firstRight - 0.5);
+    assert(firstLeft - secondLeft < 0.5 - firstLeft);
+
+    const thirdInteraction = application.beginTouchExploration(200);
+    assert(application.updateTouchExploration(
+        thirdInteraction,
+        0,
+        0.3,
+        -0.3
+    ));
+    assert(application.settleTouchExploration(
+        thirdInteraction,
+        0.3,
+        -0.3,
+        1,
+        3,
+        360
+    ));
+    animation.runNext(800);
+    animation.runNext(1160);
+    const thirdRight = field.periods[rightIndex].visibleFactor;
+    const thirdLeft = field.periods[leftIndex].visibleFactor;
+    assert(thirdRight > secondRight);
+    assert(thirdLeft < secondLeft);
+    assert(thirdRight < 1);
+    assert(thirdLeft > 0.2);
+    assert(thirdRight - secondRight < secondRight - firstRight);
+    assert(secondLeft - thirdLeft < firstLeft - secondLeft);
     field.periods.forEach((period) => {
         assert(period.visibleFactor >= 0.2);
         assert(period.visibleFactor <= 1);
@@ -271,12 +316,13 @@ test("full directional retention accumulates, clamps, and reverses", () => {
         0.3,
         0.3,
         1,
+        3,
         360
     ));
-    animation.runNext(800);
-    animation.runNext(1160);
-    assert(field.periods[rightIndex].visibleFactor < 1);
-    assert(field.periods[leftIndex].visibleFactor > 0.2);
+    animation.runNext(1200);
+    animation.runNext(1560);
+    assert(field.periods[rightIndex].visibleFactor < thirdRight);
+    assert(field.periods[leftIndex].visibleFactor > thirdLeft);
     animation.restore();
 });
 
@@ -310,6 +356,7 @@ test("zero directional retention restores the captured state exactly", () => {
         0.04,
         -0.02,
         0,
+        3,
         360
     ));
     animation.runNext(0);

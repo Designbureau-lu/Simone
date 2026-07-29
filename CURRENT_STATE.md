@@ -4,6 +4,14 @@ Updated: 2026-07-29
 
 ## Today's work
 
+- Replaced linear retained touch accumulation with an exponential resistance
+  curve. A retained directional force now moves each affected Period through a
+  fraction of its remaining distance toward the relevant configured limit:
+  `1 - exp(-resistance * |force| / factorRange)`. This makes strong movement
+  easy around the neutral state while repeated gestures approach 20% or 100%
+  asymptotically without a hard ceiling. Reversing direction immediately uses
+  the larger distance toward the opposite limit. The current diagnostic tuning
+  is `TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE = 3.00`.
 - Added experimental full retention of the temporary touch response's
   directional component. Release keeps the existing cubic settlement, removes
   the symmetric reveal and touched-centre opening completely, and settles the

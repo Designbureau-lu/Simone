@@ -570,6 +570,7 @@ export class SimoneApplication {
         initialReveal,
         initialDirectionalBias,
         directionalRetention,
+        directionalResistance,
         duration,
         onFrame = null
     ) {
@@ -580,6 +581,8 @@ export class SimoneApplication {
             || !Number.isFinite(directionalRetention)
             || directionalRetention < 0
             || directionalRetention > 1
+            || !Number.isFinite(directionalResistance)
+            || directionalResistance <= 0
             || !Number.isFinite(duration)
             || duration <= 0) {
             return false;
@@ -588,27 +591,37 @@ export class SimoneApplication {
         this.cancelTouchExplorationResponse();
         const retainedDirectionalBias = initialDirectionalBias
             * directionalRetention;
+        const startingVisibleFactors = Object.freeze(
+            this.curtainField.periods.map((period) => period.visibleFactor)
+        );
+        const retainedVisibleFactors = this.curtainField
+            .retainedDirectionalFactors(
+                interaction,
+                retainedDirectionalBias,
+                this.parameters.minimumVisibleFactor,
+                this.parameters.maximumVisibleFactor,
+                directionalResistance
+            );
         this.touchExplorationState = Object.freeze({
             interaction,
-            initialReveal,
-            initialDirectionalBias,
-            retainedDirectionalBias
+            startingVisibleFactors,
+            retainedVisibleFactors
         });
         let startedAt = null;
         const settle = (timestamp) => {
             startedAt ??= timestamp;
             const progress = Math.min((timestamp - startedAt) / duration, 1);
             const temporaryProgress = (1 - progress) ** 3;
-            const remainingReveal = initialReveal * temporaryProgress;
-            const remainingDirectionalBias = retainedDirectionalBias
-                + (initialDirectionalBias - retainedDirectionalBias)
-                    * temporaryProgress;
+            const visibleFactors = retainedVisibleFactors.map(
+                (retained, index) => retained
+                    + (
+                        startingVisibleFactors[index] - retained
+                    ) * temporaryProgress
+            );
 
-            this.updateTouchExploration(
+            this.#applyTouchVisibleFactors(
                 interaction,
-                0,
-                remainingReveal,
-                remainingDirectionalBias
+                visibleFactors
             );
             onFrame?.();
 
@@ -635,16 +648,27 @@ export class SimoneApplication {
 
         const {
             interaction,
-            retainedDirectionalBias
+            retainedVisibleFactors
         } = this.touchExplorationState;
         this.touchExplorationFrame = null;
         this.touchExplorationState = null;
-        this.updateTouchExploration(
+        this.#applyTouchVisibleFactors(
             interaction,
-            0,
-            0,
-            retainedDirectionalBias
+            retainedVisibleFactors
         );
+    }
+
+    #applyTouchVisibleFactors(interaction, visibleFactors) {
+        const previousAnchor = this.curtainField
+            .projectedXForInteraction(interaction);
+        this.curtainField.setVisibleFactors(visibleFactors);
+        this.sceneVisibleFactor = visibleFactors[interaction.periodIndex];
+        this.curtainField.resolve(this.parameters);
+        const currentAnchor = this.curtainField
+            .projectedXForInteraction(interaction);
+
+        this.viewport.shiftProjectedOffset(currentAnchor - previousAnchor);
+        this.render();
     }
 
     revealLocalInteraction(interaction) {

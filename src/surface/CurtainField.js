@@ -249,11 +249,11 @@ export class CurtainField {
             const influence = distance === 0
                 ? 1
                 : influenceForDistance(distance);
-            const directionalChange = distance === 0
-                ? 0
-                : -directionalBias * Math.sign(
-                    index - interaction.periodIndex
-                ) * influence;
+            const directionalChange = directionalChangeFor(
+                index - interaction.periodIndex,
+                directionalBias,
+                influence
+            );
             const visibleFactor = clamp(
                 interaction.visibleFactors[index]
                     + reveal * influence
@@ -266,6 +266,58 @@ export class CurtainField {
         }
 
         return this.#periods[interaction.periodIndex].visibleFactor;
+    }
+
+    retainedDirectionalFactors(
+        interaction,
+        directionalBias,
+        minimumVisibleFactor,
+        maximumVisibleFactor,
+        resistance
+    ) {
+        if (!Number.isFinite(directionalBias)) {
+            throw new RangeError(
+                "Retained directional bias must be finite."
+            );
+        }
+        if (!Number.isFinite(resistance) || resistance <= 0) {
+            throw new RangeError(
+                "Directional resistance must be a positive finite number."
+            );
+        }
+
+        const factors = interaction.visibleFactors.slice();
+        const start = Math.max(
+            0,
+            interaction.periodIndex - CONCERNED_NEIGHBORS
+        );
+        const end = Math.min(
+            this.#periods.length - 1,
+            interaction.periodIndex + CONCERNED_NEIGHBORS
+        );
+
+        for (let index = start; index <= end; index += 1) {
+            const offset = index - interaction.periodIndex;
+            const distance = Math.abs(offset);
+            const influence = distance === 0
+                ? 1
+                : influenceForDistance(distance);
+            const force = directionalChangeFor(
+                offset,
+                directionalBias,
+                influence
+            );
+
+            factors[index] = resistedVisibleFactor(
+                interaction.visibleFactors[index],
+                force,
+                minimumVisibleFactor,
+                maximumVisibleFactor,
+                resistance
+            );
+        }
+
+        return Object.freeze(factors);
     }
 
     projectedXForInteraction(interaction) {
@@ -420,4 +472,35 @@ function redistributionForNeighbor(offset, leftScale, rightScale) {
     return offset < 0
         ? leftScale * influence
         : -rightScale * influence;
+}
+
+function directionalChangeFor(offset, directionalBias, influence) {
+    return offset === 0
+        ? 0
+        : -directionalBias * Math.sign(offset) * influence;
+}
+
+function resistedVisibleFactor(
+    visibleFactor,
+    force,
+    minimumVisibleFactor,
+    maximumVisibleFactor,
+    resistance
+) {
+    if (force === 0) {
+        return visibleFactor;
+    }
+
+    const limit = force > 0
+        ? maximumVisibleFactor
+        : minimumVisibleFactor;
+    const factorRange = maximumVisibleFactor - minimumVisibleFactor;
+    if (factorRange === 0 || visibleFactor === limit) {
+        return limit;
+    }
+
+    const response = 1 - Math.exp(
+        -resistance * Math.abs(force) / factorRange
+    );
+    return visibleFactor + (limit - visibleFactor) * response;
 }
