@@ -1,0 +1,192 @@
+/** Selects and maps a fixed projected window over the continuous curtain. */
+export class Viewport {
+    #projectedOffset;
+    #projectedExtent;
+    #presentationExtent;
+    #contentStart = 0;
+    #contentEnd = 0;
+
+    constructor({
+        projectedOffset = 0,
+        projectedExtent = 0,
+        presentationExtent = 0
+    } = {}) {
+        this.setProjectedWindow(projectedOffset, projectedExtent);
+        this.presentationExtent = presentationExtent;
+    }
+
+    get projectedOffset() {
+        return this.#projectedOffset;
+    }
+
+    get projectedExtent() {
+        return this.#projectedExtent;
+    }
+
+    get presentationExtent() {
+        return this.#presentationExtent;
+    }
+
+    get position() {
+        const travel = this.#maximumOffset() - this.#contentStart;
+
+        return travel === 0
+            ? 0
+            : (this.#projectedOffset - this.#contentStart) / travel;
+    }
+
+    get movementBounds() {
+        return Object.freeze({
+            minimum: this.#contentStart,
+            maximum: this.#maximumOffset()
+        });
+    }
+
+    set presentationExtent(value) {
+        validateCoordinate(value, "Viewport presentation extent");
+        this.#presentationExtent = value;
+    }
+
+    setProjectedWindow(offset, extent) {
+        validateCoordinate(offset, "Viewport projected offset");
+        validateCoordinate(extent, "Viewport projected extent");
+        this.#projectedOffset = offset;
+        this.#projectedExtent = extent;
+    }
+
+    setProjectedContentRange(start, end) {
+        validateCoordinate(start, "Projected content start");
+        validateCoordinate(end, "Projected content end");
+
+        if (end < start) {
+            throw new RangeError("Projected content range must be ordered.");
+        }
+
+        this.#contentStart = start;
+        this.#contentEnd = end;
+        this.#projectedOffset = clamp(
+            this.#projectedOffset,
+            start,
+            this.#maximumOffset()
+        );
+    }
+
+    setPosition(position) {
+        if (!Number.isFinite(position)) {
+            throw new RangeError("Viewport position must be finite.");
+        }
+
+        this.#projectedOffset = this.#contentStart
+            + clamp(position, 0, 1)
+                * (this.#maximumOffset() - this.#contentStart);
+    }
+
+    shiftProjectedOffset(displacement) {
+        if (!Number.isFinite(displacement)) {
+            throw new RangeError("Viewport displacement must be finite.");
+        }
+
+        const previousOffset = this.#projectedOffset;
+        this.#projectedOffset = clamp(
+            previousOffset + displacement,
+            this.#contentStart,
+            this.#maximumOffset()
+        );
+
+        return this.#projectedOffset - previousOffset;
+    }
+
+    projectedOffsetAfterShift(displacement) {
+        if (!Number.isFinite(displacement)) {
+            throw new RangeError("Viewport displacement must be finite.");
+        }
+
+        return clamp(
+            this.#projectedOffset + displacement,
+            this.#contentStart,
+            this.#maximumOffset()
+        );
+    }
+
+    availableProjectedDisplacement(direction) {
+        if (direction !== -1 && direction !== 1) {
+            throw new RangeError("Viewport direction must be -1 or 1.");
+        }
+
+        return direction > 0
+            ? this.#maximumOffset() - this.#projectedOffset
+            : this.#projectedOffset - this.#contentStart;
+    }
+
+    sourceRangeFor(projectedColumns) {
+        if (!Array.isArray(projectedColumns)) {
+            throw new TypeError("Viewport requires projected columns.");
+        }
+
+        const windowStart = this.#projectedOffset;
+        const windowEnd = windowStart + this.#projectedExtent;
+        let start = null;
+        let end = null;
+
+        for (let sourceX = 0; sourceX < projectedColumns.length; sourceX += 1) {
+            const { placement, width } = projectedColumns[sourceX];
+            const left = Math.min(
+                placement.targetX,
+                placement.targetX + width
+            );
+            const right = Math.max(
+                placement.targetX,
+                placement.targetX + width
+            );
+
+            if (right > windowStart && left < windowEnd) {
+                start ??= sourceX;
+                end = sourceX + 1;
+            }
+        }
+
+        return Object.freeze({
+            start: start ?? 0,
+            end: end ?? 0
+        });
+    }
+
+    toPresentationX(projectedX) {
+        validateCoordinate(projectedX, "Viewport projected coordinate");
+        return (projectedX - this.#projectedOffset) * this.#scale();
+    }
+
+    toProjectedX(presentationX) {
+        validateCoordinate(presentationX, "Viewport presentation coordinate");
+        return presentationX / this.#scale() + this.#projectedOffset;
+    }
+
+    presentationWidthBetween(startProjectedX, endProjectedX) {
+        return this.toPresentationX(endProjectedX)
+            - this.toPresentationX(startProjectedX);
+    }
+
+    #scale() {
+        if (this.#projectedExtent <= 0 || this.#presentationExtent <= 0) {
+            throw new RangeError(
+                "Viewport extents must be positive before mapping coordinates."
+            );
+        }
+
+        return this.#presentationExtent / this.#projectedExtent;
+    }
+
+    #maximumOffset() {
+        return Math.max(this.#contentStart, this.#contentEnd);
+    }
+}
+
+function validateCoordinate(value, name) {
+    if (!Number.isFinite(value) || value < 0) {
+        throw new RangeError(`${name} must be a non-negative finite number.`);
+    }
+}
+
+function clamp(value, minimum, maximum) {
+    return Math.min(Math.max(value, minimum), maximum);
+}

@@ -1,0 +1,89 @@
+import {
+    FramePerformanceOverview
+} from "../src/performance/FramePerformanceOverview.js";
+
+const tests = [];
+
+test("meter reports active frame measurements", () => {
+    const element = createMeter();
+    const overview = new FramePerformanceOverview(element, "Test");
+
+    overview.update(report());
+    assert(element.querySelector("[data-performance-output]")
+        .textContent.includes("Frame (ms)"));
+    assert(element.textContent.includes("Selected cols"));
+});
+
+test("reset samples keeps the active report visible", () => {
+    const element = createMeter();
+    const overview = new FramePerformanceOverview(element, "Test");
+
+    overview.update(report());
+    element.querySelector("[data-reset-worst]").click();
+    assert(element.textContent.includes("Frame (ms)"));
+    assert(element.textContent.includes("Samples"));
+});
+
+function createMeter() {
+    const element = document.createElement("aside");
+    element.innerHTML = `
+        <div data-performance-body><pre data-performance-output></pre><button type="button" data-reset-worst></button></div>
+    `;
+    document.body.append(element);
+    return element;
+}
+
+function report() {
+    return {
+        totalTime: 10,
+        geometryTime: 1,
+        viewportTime: 1,
+        canvasResetTime: 1,
+        renderingTime: 4,
+        overlayTime: 1,
+        destinationMode: "viewport",
+        pixelRatio: 2,
+        canvasWidth: 1000,
+        canvasHeight: 500,
+        destinationPixelCount: 500000,
+        drawImageCalls: 100,
+        visibleColumns: 100,
+        totalColumns: 1000,
+        periodCount: 10
+    };
+}
+
+function equal(actual, expected) {
+    assert(actual === expected, `Expected ${actual} to equal ${expected}`);
+}
+
+function assert(condition, message = "Assertion failed") {
+    if (!condition) {
+        throw new Error(message);
+    }
+}
+
+function test(name, body) {
+    tests.push({ name, body });
+}
+
+function run() {
+    const failures = [];
+
+    for (const testCase of tests) {
+        try {
+            testCase.body();
+        } catch (error) {
+            failures.push(`${testCase.name}: ${error.message}`);
+        }
+    }
+
+    const summary = failures.length === 0
+        ? `PASS ${tests.length}/${tests.length}`
+        : `FAIL ${tests.length - failures.length}/${tests.length}\n${failures.join("\n")}`;
+    document.getElementById("results").textContent = summary;
+    document.title = summary.split("\n")[0];
+    console.log(summary);
+}
+
+run();

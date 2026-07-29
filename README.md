@@ -1,9 +1,12 @@
 # SIMONE
 
-### Wave Graphic Mapper
+SIMONE is a folded-surface engine for presenting immutable graphical content on
+periodic circular folds. It prioritizes visual continuity, artwork readability,
+and interactive performance over strict cloth simulation.
 
-SIMONE is a Wave Graphic Mapper. It preserves the integrity of artwork while visualizing its visibility on periodic surfaces.
+The active geometry is `CircularFoldSurface`; user interaction is expressed
+through Visible Factor and classified by `OperatingPhaseResolver`.
 
-Originally developed for an exhibition project, it explores the visibility of large-format graphics on gathered textile systems, while remaining applicable to any periodic wave geometry.
-
-Status: Early prototype.
+See [SIMONE.md](SIMONE.md) for the design philosophy, architecture, geometry and
+rendering pipelines, intentional approximations, limitations, and research
+directions.

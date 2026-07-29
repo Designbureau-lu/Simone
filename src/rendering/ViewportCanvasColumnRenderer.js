@@ -1,10 +1,5 @@
-/**
- * Rendering layer: displays source columns at computed placements.
- *
- * It draws only exact source pixels. Geometry and visibility are supplied as
- * data and the renderer never fabricates or edits the artwork.
- */
-export class CanvasColumnRenderer {
+/** Prototype-only copy of the renderer with viewing-space destination height. */
+export class ViewportCanvasColumnRenderer {
     #canvas;
     #context;
     #rearRegions = [];
@@ -17,7 +12,9 @@ export class CanvasColumnRenderer {
 
     constructor(canvas) {
         if (!(canvas instanceof HTMLCanvasElement)) {
-            throw new TypeError("CanvasColumnRenderer requires a canvas.");
+            throw new TypeError(
+                "ViewportCanvasColumnRenderer requires a canvas."
+            );
         }
 
         const context = canvas.getContext("2d");
@@ -48,7 +45,6 @@ export class CanvasColumnRenderer {
         if (appearance.branch !== "rear") {
             this.#finishRearRegion();
         }
-
         if (appearance.alpha <= 0) {
             this.#finishRearRegion();
             return;
@@ -57,7 +53,6 @@ export class CanvasColumnRenderer {
         const startX = Math.round(placement.x);
         const endX = Math.round(placement.x + placement.width);
         const destinationWidth = endX - startX;
-
         if (destinationWidth === 0) {
             return;
         }
@@ -73,7 +68,7 @@ export class CanvasColumnRenderer {
             startX,
             placement.y,
             destinationWidth,
-            column.height
+            placement.height
         );
         this.#drawImageCalls += 1;
         this.#context.restore();
@@ -82,19 +77,18 @@ export class CanvasColumnRenderer {
             startX,
             placement.y,
             destinationWidth,
-            column.height,
+            placement.height,
             appearance.branch,
             appearance.localSlope,
             appearance.foldProgress,
             appearance.crestLifecycleMultiplier
         );
-
         if (appearance.branch === "rear") {
             this.#extendRearRegion(
                 startX,
                 placement.y,
                 destinationWidth,
-                column.height,
+                placement.height,
                 appearance.brightness
             );
         }
@@ -107,7 +101,6 @@ export class CanvasColumnRenderer {
         if (this.#rearRegions.length > 0) {
             this.#context.save();
             this.#context.globalCompositeOperation = "source-atop";
-
             for (const region of this.#rearRegions) {
                 this.#context.fillStyle = colorWithOpacity(
                     this.#appearance.rearDarkening.color,
@@ -120,12 +113,10 @@ export class CanvasColumnRenderer {
                     region.bottom - region.top
                 );
             }
-
             this.#context.restore();
         }
 
         this.#drawFoldCues();
-
         return Object.freeze({
             canvasWidth: this.#canvas.width,
             canvasHeight: this.#canvas.height,
@@ -138,17 +129,14 @@ export class CanvasColumnRenderer {
         if (this.#foldRegions.length === 0) {
             return;
         }
-
         this.#context.save();
         this.#context.globalCompositeOperation = "source-atop";
-
         for (const region of this.#foldRegions) {
             this.#drawValleyShadow(region);
             if (region.branch === "front") {
                 this.#drawCrestHighlight(region);
             }
         }
-
         this.#context.restore();
     }
 
@@ -163,7 +151,6 @@ export class CanvasColumnRenderer {
             left + width,
             0
         );
-
         // Local geometry onset: suppresses flat/near-flat folds and saturates
         // early; the lifecycle, not slope, owns the full interaction envelope.
         const geometricMultiplier = Math.min(
@@ -191,12 +178,7 @@ export class CanvasColumnRenderer {
             region.right,
             0
         );
-
-        addGradientStops(
-            gradient,
-            settings,
-            region.foldProgress
-        );
+        addGradientStops(gradient, settings, region.foldProgress);
         this.#context.fillStyle = gradient;
         this.#context.fillRect(
             region.left,
@@ -219,7 +201,6 @@ export class CanvasColumnRenderer {
         if (this.#startsNewFold(branch, localSlope)) {
             this.#finishFoldRegion();
         }
-
         const left = Math.min(x, x + width);
         const right = Math.max(x, x + width);
         const center = (left + right) / 2;
@@ -253,13 +234,11 @@ export class CanvasColumnRenderer {
             region.crestLifecycleMultiplier,
             crestLifecycleMultiplier
         );
-
         const absoluteSlope = Math.abs(localSlope);
         region.maximumAbsoluteSlope = Math.max(
             region.maximumAbsoluteSlope,
             absoluteSlope
         );
-
         if (absoluteSlope < region.ridgeSlope - Number.EPSILON) {
             region.ridgeX = center;
             region.ridgeSlope = absoluteSlope;
@@ -275,11 +254,9 @@ export class CanvasColumnRenderer {
 
     #startsNewFold(branch, localSlope) {
         const region = this.#activeFoldRegion;
-
         if (!region || branch !== region.branch) {
             return Boolean(region);
         }
-
         return branch === "front"
             ? region.previousSlope > 0 && localSlope <= 0
             : region.previousSlope < 0 && localSlope >= 0;
@@ -289,7 +266,6 @@ export class CanvasColumnRenderer {
         if (!this.#activeFoldRegion) {
             return;
         }
-
         this.#foldRegions.push(this.#activeFoldRegion);
         this.#activeFoldRegion = null;
     }
@@ -299,12 +275,10 @@ export class CanvasColumnRenderer {
         const right = Math.max(x, x + width);
         const bottom = y + height;
         const darkness = 1 - brightness;
-
         if (!this.#activeRearRegion) {
             this.#activeRearRegion = { left, right, top: y, bottom, darkness };
             return;
         }
-
         this.#activeRearRegion.left = Math.min(this.#activeRearRegion.left, left);
         this.#activeRearRegion.right = Math.max(this.#activeRearRegion.right, right);
         this.#activeRearRegion.top = Math.min(this.#activeRearRegion.top, y);
@@ -322,7 +296,6 @@ export class CanvasColumnRenderer {
         if (!this.#activeRearRegion) {
             return;
         }
-
         this.#rearRegions.push(this.#activeRearRegion);
         this.#activeRearRegion = null;
     }
