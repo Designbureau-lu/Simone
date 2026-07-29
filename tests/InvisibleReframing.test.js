@@ -51,7 +51,7 @@ test("temporary touch reveal is symmetric and restores its base state", () => {
     field.resolve(parameters);
     const interaction = field.beginLocalInteraction(350);
 
-    field.applyTemporaryReveal(interaction, 0.04, 0.2, 1);
+    field.applyTemporaryReveal(interaction, 0.04, 0, 0.2, 1);
     closeTo(
         field.periods[interaction.periodIndex].visibleFactor,
         0.54
@@ -64,10 +64,63 @@ test("temporary touch reveal is symmetric and restores its base state", () => {
         field.periods[interaction.periodIndex - 1].visibleFactor > 0.5
     );
 
-    field.applyTemporaryReveal(interaction, 0, 0.2, 1);
+    field.applyTemporaryReveal(interaction, 0, 0, 0.2, 1);
     field.periods.forEach((period) => {
         equal(period.visibleFactor, 0.5);
     });
+});
+
+test("left and right touch velocities create mirrored directional bias", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const parameters = new SurfaceParameters();
+    field.configureFor(2000, 100);
+    field.resolve(parameters);
+    const interaction = field.beginLocalInteraction(800);
+    const leftIndex = interaction.periodIndex - 1;
+    const rightIndex = interaction.periodIndex + 1;
+
+    field.applyTemporaryReveal(interaction, 0.1, -0.04, 0.2, 1);
+    const leftDrag = {
+        left: field.periods[leftIndex].visibleFactor,
+        center: field.periods[interaction.periodIndex].visibleFactor,
+        right: field.periods[rightIndex].visibleFactor
+    };
+    assert(leftDrag.left < leftDrag.right);
+    closeTo(leftDrag.center, 0.6);
+
+    field.applyTemporaryReveal(interaction, 0.1, 0.04, 0.2, 1);
+    const rightDrag = {
+        left: field.periods[leftIndex].visibleFactor,
+        center: field.periods[interaction.periodIndex].visibleFactor,
+        right: field.periods[rightIndex].visibleFactor
+    };
+    assert(rightDrag.left > rightDrag.right);
+    closeTo(rightDrag.center, 0.6);
+    closeTo(leftDrag.left, rightDrag.right);
+    closeTo(leftDrag.right, rightDrag.left);
+});
+
+test("desktop local displacement retains its existing redistribution", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const parameters = new SurfaceParameters();
+    field.configureFor(2000, 100);
+    field.resolve(parameters);
+    const interaction = field.beginLocalInteraction(800);
+
+    field.applyLocalDisplacement(
+        interaction,
+        100,
+        100,
+        0.2,
+        1
+    );
+
+    assert(
+        field.periods[interaction.periodIndex - 1].visibleFactor > 0.5
+    );
+    assert(
+        field.periods[interaction.periodIndex + 1].visibleFactor < 0.5
+    );
 });
 
 test("touch exploration moves the camera and settles to its exact base state", () => {
@@ -90,12 +143,18 @@ test("touch exploration moves the camera and settles to its exact base state", (
     const interaction = application.beginTouchExploration(200);
     const animation = captureAnimationFrames();
 
-    assert(application.updateTouchExploration(interaction, 40, 0.04));
+    assert(application.updateTouchExploration(
+        interaction,
+        40,
+        0.04,
+        -0.02
+    ));
     assert(viewport.projectedOffset < 300);
     closeTo(field.periods[interaction.periodIndex].visibleFactor, 0.54);
     assert(application.settleTouchExploration(
         interaction,
         0.04,
+        -0.02,
         360
     ));
     animation.runNext(0);

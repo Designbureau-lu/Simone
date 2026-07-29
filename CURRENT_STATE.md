@@ -4,6 +4,13 @@ Updated: 2026-07-29
 
 ## Today's work
 
+- Extended the temporary direct-touch curtain response with a signed directional
+  component while retaining the exaggerated symmetric diagnostic reveal. The
+  touched Period remains open; a leftward gesture temporarily compresses the
+  left side and opens the right, while a rightward gesture mirrors that bias.
+  Both components use the existing local influence falloff, anchor compensation,
+  and cubic settlement back to the exact captured persistent state. Directional
+  strength is isolated in `TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS`.
 - Introduced the first distinct direct-touch EXPLORE interaction. Mouse and pen
   retain the established desktop curtain drag, while one touch now moves the
   existing projected Viewport continuously and immediately with no threshold,
