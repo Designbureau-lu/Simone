@@ -25,6 +25,9 @@ import { Viewport } from "../viewport/Viewport.js";
 export function startSimone() {
     const fileInput = document.getElementById("fileInput");
     const canvas = document.getElementById("canvas");
+    const curtainPresentation = document.getElementById(
+        "curtainPresentation"
+    );
     const viewportPosition = document.getElementById("viewportPositionInput");
     const viewportPositionValue = document.getElementById(
         "viewportPositionValue"
@@ -44,6 +47,7 @@ export function startSimone() {
 
     if (!(fileInput instanceof HTMLInputElement)
         || !(canvas instanceof HTMLCanvasElement)
+        || !(curtainPresentation instanceof HTMLElement)
         || !(viewportPosition instanceof HTMLInputElement)
         || !(viewportPositionValue instanceof HTMLOutputElement)
         || !(performanceOverviewElement instanceof HTMLElement)
@@ -106,7 +110,11 @@ export function startSimone() {
         synchronizeViewportControl,
         conversation
     );
-    window.addEventListener("resize", () => application.render());
+    bindViewingSurfaceResize(
+        curtainPresentation,
+        application,
+        synchronizeViewportControl
+    );
 
     fileInput.addEventListener("change", async (event) => {
         const files = Array.from(event.target.files ?? []);
@@ -128,6 +136,31 @@ export function startSimone() {
     loadManifestArtwork(application, synchronizeInterface);
 
     return application;
+}
+
+function bindViewingSurfaceResize(
+    element,
+    application,
+    synchronizeViewportControl
+) {
+    let frame = null;
+    const scheduleRender = () => {
+        if (frame !== null) {
+            return;
+        }
+        frame = requestAnimationFrame(() => {
+            frame = null;
+            application.render();
+            synchronizeViewportControl();
+        });
+    };
+
+    window.addEventListener("resize", scheduleRender);
+    window.visualViewport?.addEventListener("resize", scheduleRender);
+    if ("ResizeObserver" in window) {
+        const observer = new ResizeObserver(scheduleRender);
+        observer.observe(element);
+    }
 }
 
 export async function loadManifestArtwork(application, onNavigation = null) {

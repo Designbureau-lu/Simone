@@ -58,7 +58,8 @@ for all 60,000 artwork columns and then traverses the selected 10,000+ columns
 for Canvas drawing. The first two executions pay substantially higher geometry
 and Canvas drawing costs before settling.
 
-The evidence is most consistent with first-use Canvas 2D source/destination
+At the time of this measurement, the evidence was most consistent with
+first-use Canvas 2D source/destination
 resource realization in `ViewportCanvasColumnRenderer.drawColumn()`, plus a
 smaller amount of cold JavaScript execution/JIT work in the large geometry and
 rendering loops. The source is the 60,000-column assembly canvas produced by
@@ -70,6 +71,10 @@ and shader warm-up remains part of the likely Canvas realization cost. Object
 and array creation inside `#projectGeometry()` remains a significant
 steady-state cost, but it repeats on later frames and does not by itself explain
 the cold-only difference.
+
+The production artwork architecture subsequently removed that assembly canvas.
+The historical measurements above describe the renderer configuration used
+during the investigation.
 
 The smallest safe candidate fix is a bounded set of unchanged production render
 passes after artwork import, before the interface accepts interaction. Begin

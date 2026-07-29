@@ -1,9 +1,22 @@
 # SIMONE Current State
 
-Updated: 2026-07-28
+Updated: 2026-07-29
 
 ## Today's work
 
+- Replaced the giant artwork assembly canvas with a continuous virtual artwork
+  coordinate system over the ordered decoded source images. Global column
+  coordinates, semantic project mapping, viewport navigation, and scrolling
+  remain unchanged; each rendered column now resolves directly to its source
+  image and local source coordinate. Production no longer allocates the former
+  60,000 × 2,500 intermediate canvas.
+- Replaced the active camera's fixed 5000-unit width with an aspect-derived
+  projected extent based on artwork height and the rendered curtain container.
+  Portrait therefore shows a narrower window without horizontal compression,
+  while landscape shows a wider window at the same visual scale. Camera-centre
+  continuity, semantic navigation, and slider synchronization are preserved
+  across container, orientation, and `visualViewport` size changes. The
+  curtain height uses dynamic viewport units with the existing `vh` fallback.
 - Consolidated `?debug=1` tools into one fixed, scrollable bottom-right
   development panel. Its single-column order is the five canonical surface
   controls, Viewport information, and permanently visible Performance
@@ -252,8 +265,10 @@ and integrated into the application and renderer.
 The Viewport maintains the projected content range and visible projected
 window, maps that window to a source-column range, and lets the renderer draw
 only the relevant immutable artwork columns. The initial projected window is
-established after artwork import and remains independent of the geometry
-engine.
+established after artwork import. Its width is derived from artwork height and
+the rendered viewing-surface aspect ratio, then updated around the current
+camera centre when that container changes size. It remains independent of the
+geometry engine.
 
 The Viewport also supports bounded horizontal settling for Invisible Reframing
 without changing curtain geometry or interaction state. Its leading bound is

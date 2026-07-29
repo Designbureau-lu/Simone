@@ -5,38 +5,32 @@
  * columns. It never resamples, generates, edits, or interprets source pixels.
  */
 export class ImmutableArtwork {
-    #source;
     #segments;
 
-    constructor(source, imageWidths = [sourceWidthFor(source)]) {
-        const isImage = source instanceof HTMLImageElement && source.complete;
-        const isCanvas = source instanceof HTMLCanvasElement;
-
-        if ((!isImage && !isCanvas)
-            || sourceWidthFor(source) <= 0
-            || sourceHeightFor(source) <= 0) {
+    constructor(sources) {
+        if (!Array.isArray(sources)
+            || sources.length < 1
+            || sources.some((source) => !isDecodedSource(source))) {
             throw new TypeError(
-                "ImmutableArtwork requires a non-empty decoded source."
-            );
-        }
-        if (!Array.isArray(imageWidths) || imageWidths.length < 1
-            || imageWidths.some((width) => !Number.isSafeInteger(width)
-                || width < 1)) {
-            throw new RangeError(
-                "ImmutableArtwork image widths must be positive integers."
+                "ImmutableArtwork requires decoded source images."
             );
         }
 
-        this.#source = source;
         let sourceStart = 0;
-        this.#segments = Object.freeze(imageWidths.map((width) => {
-            const segment = Object.freeze({ sourceStart, width });
+        this.#segments = Object.freeze(sources.map((source) => {
+            const width = sourceWidthFor(source);
+            const segment = Object.freeze({
+                source,
+                sourceStart,
+                width,
+                height: sourceHeightFor(source)
+            });
             sourceStart += width;
             return segment;
         }));
-        this.width = sourceWidthFor(source);
-        this.height = sourceHeightFor(source);
-        this.imageCount = imageWidths.length;
+        this.width = sourceStart;
+        this.height = Math.max(...this.#segments.map(({ height }) => height));
+        this.imageCount = this.#segments.length;
 
         Object.freeze(this);
     }
@@ -47,12 +41,14 @@ export class ImmutableArtwork {
             throw new RangeError("Artwork column is outside the source image.");
         }
 
+        const segment = this.#segments[this.#segmentIndexForSourceX(sourceX)];
         return Object.freeze({
-            source: this.#source,
-            sourceX,
+            source: segment.source,
+            sourceX: sourceX - segment.sourceStart,
             sourceY: 0,
             width: 1,
-            height: this.height
+            height: segment.height,
+            artworkX: sourceX
         });
     }
 
@@ -97,4 +93,14 @@ function sourceHeightFor(source) {
     return source instanceof HTMLImageElement
         ? source.naturalHeight
         : source.height;
+}
+
+function isDecodedSource(source) {
+    const isImage = source instanceof HTMLImageElement && source.complete;
+    const isCanvas = source instanceof HTMLCanvasElement;
+    return (isImage || isCanvas)
+        && Number.isSafeInteger(sourceWidthFor(source))
+        && sourceWidthFor(source) > 0
+        && Number.isSafeInteger(sourceHeightFor(source))
+        && sourceHeightFor(source) > 0;
 }

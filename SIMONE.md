@@ -32,9 +32,10 @@ a general cloth simulator.
 
 ### Artwork
 
-`ImmutableArtwork` owns one continuous decoded source and exposes immutable
-one-pixel-wide vertical columns. `loadArtwork` decodes ordered production
-segments, assembles them horizontally, and keeps their boundaries private.
+`ImmutableArtwork` owns one continuous virtual coordinate system across
+ordered decoded sources and exposes immutable one-pixel-wide vertical columns.
+`loadArtwork` keeps the decoded sources separate; each virtual column resolves
+to its owning source image and local sampling coordinate.
 At startup, `public/images.txt` supplies one filename per line in display
 order; blank lines and comments beginning with `#` are ignored. The referenced
 files live in `public/images/`.

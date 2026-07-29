@@ -46,20 +46,27 @@ export class ViewportApplication extends SimoneApplication {
             projectedColumns.length
         );
         this.projectedContentBounds = contentBounds;
+        const viewing = this.viewingSurface.resolve(
+            virtualFrame,
+            this.artwork.height
+        );
 
-        if (this.viewport.projectedExtent === 0) {
-            this.viewport.setProjectedWindow(
-                contentBounds.start,
-                INITIAL_PROJECTED_EXTENT
-            );
-        }
+        const previousExtent = this.viewport.projectedExtent;
+        const projectedExtent = viewing.projectedExtent ?? previousExtent;
+        const projectedOffset = previousExtent === 0
+            ? contentBounds.start
+            : this.viewport.projectedOffset
+                + (previousExtent - projectedExtent) / 2;
+        this.viewport.setProjectedWindow(
+            Math.max(contentBounds.start, projectedOffset),
+            projectedExtent
+        );
 
         this.viewport.setProjectedContentRange(
             contentBounds.start,
             contentBounds.end
         );
 
-        const viewing = this.viewingSurface.resolve(virtualFrame);
         this.viewport.presentationExtent = viewing.frame.width;
         const viewingAppearance = this.viewingSurface.appearanceFor(
             appearance,
@@ -185,8 +192,6 @@ export class ViewportApplication extends SimoneApplication {
         return projectedColumns;
     }
 }
-
-const INITIAL_PROJECTED_EXTENT = 5000;
 
 function boundsFor(projectedColumns, start, end) {
     let minimum = Infinity;

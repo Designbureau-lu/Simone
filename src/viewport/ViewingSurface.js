@@ -18,13 +18,14 @@ export class ViewingSurface {
         this.#mode = value;
     }
 
-    resolve(virtualFrame) {
+    resolve(virtualFrame, artworkHeight = virtualFrame.height) {
         if (this.#mode === "dynamic") {
             return Object.freeze({
                 frame: virtualFrame,
                 scaleX: 1,
                 scaleY: 1,
                 pixelRatio: window.devicePixelRatio || 1,
+                projectedExtent: null,
                 mode: this.#mode
             });
         }
@@ -38,6 +39,7 @@ export class ViewingSurface {
             scaleX: width / virtualFrame.width,
             scaleY: height / virtualFrame.height,
             pixelRatio,
+            projectedExtent: artworkHeight * width / height,
             mode: this.#mode
         });
     }

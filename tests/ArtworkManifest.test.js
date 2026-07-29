@@ -56,8 +56,25 @@ try {
         { name: "Image cassée.svg", url: "data:image/svg+xml,not-svg" },
         imageSource("Troisième image.svg", 5, 4)
     ]);
-    check(artwork.width === 8, "successful images were not assembled");
+    check(artwork.width === 8, "virtual artwork width is not continuous");
     check(artwork.height === 4, "different source heights were not preserved");
+    check(artwork.imageCount === 2, "successful source count changed");
+    const firstLastColumn = artwork.columnAt(2);
+    const secondFirstColumn = artwork.columnAt(3);
+    check(
+        firstLastColumn.source !== secondFirstColumn.source,
+        "segment boundary did not switch decoded sources"
+    );
+    check(firstLastColumn.sourceX === 2, "first source coordinate changed");
+    check(secondFirstColumn.sourceX === 0, "second source did not start at zero");
+    check(
+        firstLastColumn.artworkX === 2 && secondFirstColumn.artworkX === 3,
+        "continuous virtual coordinates changed at a segment boundary"
+    );
+    check(
+        firstLastColumn.height === 2 && secondFirstColumn.height === 4,
+        "individual source heights were not preserved"
+    );
     check(
         loggedErrors.some((values) => String(values[0])
             .includes("Image cassée.svg")),
@@ -67,10 +84,10 @@ try {
     console.error = originalConsoleError;
 }
 
-const passed = 7 - failures.length;
+const passed = 13 - failures.length;
 const summary = failures.length === 0
-    ? "PASS 7/7"
-    : `FAIL ${passed}/7\n${failures.join("\n")}`;
+    ? "PASS 13/13"
+    : `FAIL ${passed}/13\n${failures.join("\n")}`;
 
 document.getElementById("results").textContent = summary;
 document.title = summary.split("\n")[0];

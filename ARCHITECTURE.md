@@ -91,7 +91,8 @@ Canvas
 
 - Decode ordered production-segment image files.
 - Load startup segment order from `public/images.txt`.
-- Assemble and own one continuous immutable source image.
+- Present separate decoded sources through one continuous immutable coordinate
+  system without assembling a giant intermediate canvas.
 - Expose exact one-pixel-wide vertical source columns.
 
 **Public contract**

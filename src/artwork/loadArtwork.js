@@ -1,8 +1,7 @@
 import { ImmutableArtwork } from "./ImmutableArtwork.js";
 
 /**
- * Decodes ordered production segments and assembles one continuous artwork.
- * Segment boundaries remain private to this loading operation.
+ * Decodes ordered production segments as one continuous virtual artwork.
  */
 export async function loadArtwork(files) {
     if (!Array.isArray(files)
@@ -30,37 +29,7 @@ export async function loadArtwork(files) {
         throw new Error("None of the listed artwork images could be loaded.");
     }
 
-    if (images.length === 1) {
-        return new ImmutableArtwork(images[0], [images[0].naturalWidth]);
-    }
-
-    const height = Math.max(...images.map((image) => image.naturalHeight));
-
-    const width = images.reduce(
-        (total, image) => total + image.naturalWidth,
-        0
-    );
-    const source = document.createElement("canvas");
-    source.width = width;
-    source.height = height;
-
-    const context = source.getContext("2d");
-    if (!context) {
-        throw new Error("A 2D context is unavailable for artwork assembly.");
-    }
-
-    context.imageSmoothingEnabled = false;
-    let destinationX = 0;
-
-    for (const image of images) {
-        context.drawImage(image, destinationX, 0);
-        destinationX += image.naturalWidth;
-    }
-
-    return new ImmutableArtwork(
-        source,
-        images.map((image) => image.naturalWidth)
-    );
+    return new ImmutableArtwork(images);
 }
 
 function decodeImage(source) {

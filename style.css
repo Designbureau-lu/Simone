@@ -394,6 +394,8 @@ body{
 
     height:calc(100vh - var(--conversation-bar-height));
 
+    height:calc(100dvh - var(--conversation-bar-height));
+
 }
 
 .curtain-presentation canvas{
