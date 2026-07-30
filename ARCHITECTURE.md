@@ -381,13 +381,14 @@ exploration. The contribution is evaluated from a captured base state, retains
 part of its local reveal and directional redistribution, and develops
 continuously through camera inertia and settlement. Two fingers own a separate
 direct curtain manipulation. Each finger captures its own local CurtainField
-interaction. Their horizontal displacements run through the same redistribution
-model as desktop curtain dragging, and the two contributions are added over one
-captured base state. Pulling outward opens the folds between the fingers and
-gathers fabric outside them; returning the fingers to their starting positions
-restores the captured state. Pinch never zooms artwork or moves the Viewport.
-Returning to one finger immediately starts a fresh pan from the remaining touch
-position.
+interaction at one of two virtual horizontal grabs centered on the pinch
+midpoint. Only the scalar change in Euclidean finger separation is used: half
+moves the left grab outward and half moves the right grab outward, regardless
+of finger angle. Both grabs run through the desktop redistribution model and
+their contributions are added over one captured base state. Increasing
+separation opens the folds between them and gathers fabric outside; restoring
+the original separation restores the captured state. Pinch never zooms artwork
+or moves the Viewport. Returning to one finger immediately starts a fresh pan.
 
 Projects are secondary in EXPLORE. The local click/Moses opening is assistance
 around a physical click position, not project navigation or semantic project

@@ -518,9 +518,7 @@ export function bindCurtainDragging(
     };
 
     const beginTouchPinch = () => {
-        const pointers = Array.from(touchPointers.values()).sort(
-            (first, second) => first.clientX - second.clientX
-        );
+        const pointers = Array.from(touchPointers.values());
         const width = canvas.clientWidth;
         if (pointers.length !== 2 || width <= 0) {
             return false;
@@ -528,12 +526,14 @@ export function bindCurtainDragging(
 
         const bounds = canvas.getBoundingClientRect();
         const canvasScale = canvas.width / width;
-        const targetXFor = (pointer) => (
-            pointer.clientX - bounds.left - canvas.clientLeft
+        const initialDistance = touchDistance(pointers[0], pointers[1]);
+        const midpointX = (pointers[0].clientX + pointers[1].clientX) / 2;
+        const targetXFor = (clientX) => (
+            clientX - bounds.left - canvas.clientLeft
         ) * canvasScale;
         const interaction = application.beginTouchPinch(
-            targetXFor(pointers[0]),
-            targetXFor(pointers[1])
+            targetXFor(midpointX - initialDistance / 2),
+            targetXFor(midpointX + initialDistance / 2)
         );
         if (!interaction) {
             return false;
@@ -544,8 +544,7 @@ export function bindCurtainDragging(
             interaction,
             firstPointerId: pointers[0].pointerId,
             secondPointerId: pointers[1].pointerId,
-            firstStartX: pointers[0].clientX,
-            secondStartX: pointers[1].clientX,
+            initialDistance,
             displacementScale: application.interactionDisplacementScale(width)
         };
         return true;
@@ -625,12 +624,14 @@ export function bindCurtainDragging(
                     touchPinch.secondPointerId
                 );
                 if (first && second) {
+                    const separationDisplacement = (
+                        touchDistance(first, second)
+                            - touchPinch.initialDistance
+                    ) * touchPinch.displacementScale / 2;
                     application.updateTouchPinch(
                         touchPinch.interaction,
-                        (first.clientX - touchPinch.firstStartX)
-                            * touchPinch.displacementScale,
-                        (second.clientX - touchPinch.secondStartX)
-                            * touchPinch.displacementScale
+                        -separationDisplacement,
+                        separationDisplacement
                     );
                 }
                 event.preventDefault();
@@ -1148,4 +1149,11 @@ function touchPointerFrom(event) {
         clientY: event.clientY,
         timeStamp: event.timeStamp
     });
+}
+
+function touchDistance(first, second) {
+    return Math.hypot(
+        second.clientX - first.clientX,
+        second.clientY - first.clientY
+    );
 }

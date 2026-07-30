@@ -5,14 +5,15 @@ Updated: 2026-07-30
 ## Today's work
 
 - Replaced the field-like Pinch reveal with direct two-finger fabric
-  manipulation. Each finger captures a normal local CurtainField interaction;
-  its horizontal movement uses the established drag redistribution, and both
-  contributions are added over the same captured Period factors. Pulling
-  outward therefore opens the fabric between the grabs and gathers it outside;
-  moving both fingers back restores the captured state exactly. Lifting while
-  apart leaves the directly manipulated curtain where the fingers placed it.
-  No reveal radius, falloff profile, generated amplitude, zoom, or Viewport
-  movement remains. Pan-to-Pinch and Pinch-to-Pan ownership is unchanged.
+  manipulation. The pinch midpoint locates two virtual horizontal grabs whose
+  initial span equals the Euclidean distance between the touches. Only the
+  change in that scalar distance drives the curtain: half moves each grab
+  outward or inward, so horizontal, vertical, and diagonal pinches with equal
+  separation changes produce identical deformation. Both grabs use the
+  established drag redistribution over the same captured Period factors.
+  Increasing separation opens between them and gathers outside; returning to
+  the original separation restores the captured state exactly. No reveal
+  field, zoom, or Viewport movement remains.
 - Replaced the curtain-only momentum experiment with bounded Viewport inertia.
   A fast direct-touch release continues the finger-derived camera movement with
   `velocity * VIEWPORT_INERTIA_GAIN * elapsed`, damping velocity through

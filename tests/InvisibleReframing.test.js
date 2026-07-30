@@ -150,8 +150,8 @@ test("touch input transitions directly between pan and pinch", () => {
     );
     const pinchUpdate = calls.find(([name]) => name === "pinch");
     assert(pinchUpdate);
-    closeTo(pinchUpdate[1], 0);
-    assert(pinchUpdate[2] > 0);
+    closeTo(pinchUpdate[1], -30);
+    closeTo(pinchUpdate[2], 30);
 
     canvas.dispatchEvent(touchEvent("pointerup", 2, 260, 100, 40));
     canvas.dispatchEvent(touchEvent("pointermove", 1, 140, 100, 56));
@@ -163,6 +163,22 @@ test("touch input transitions directly between pan and pinch", () => {
             > panCallsBeforePinch
     );
     canvas.dispatchEvent(touchEvent("pointerup", 1, 140, 100, 60));
+
+    canvas.dispatchEvent(touchEvent("pointerdown", 3, 160, 60, 70));
+    canvas.dispatchEvent(touchEvent("pointerdown", 4, 160, 140, 74));
+    const verticalPinchStart = calls.filter(
+        ([name]) => name === "begin-pinch"
+    ).at(-1);
+    closeTo(verticalPinchStart[1], 120);
+    closeTo(verticalPinchStart[2], 200);
+    canvas.dispatchEvent(touchEvent("pointermove", 4, 160, 200, 90));
+    const verticalPinchUpdate = calls.filter(
+        ([name]) => name === "pinch"
+    ).at(-1);
+    closeTo(verticalPinchUpdate[1], pinchUpdate[1]);
+    closeTo(verticalPinchUpdate[2], pinchUpdate[2]);
+    canvas.dispatchEvent(touchEvent("pointerup", 4, 160, 200, 94));
+    canvas.dispatchEvent(touchEvent("pointerup", 3, 160, 60, 98));
 });
 
 test("temporary touch reveal is symmetric and restores its base state", () => {
