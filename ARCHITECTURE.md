@@ -381,11 +381,11 @@ exploration. The contribution is evaluated from a captured base state, retains
 part of its local reveal and directional redistribution, and develops
 continuously through camera inertia and settlement. Two fingers own a separate
 local reveal centered on their midpoint. Separation adds a symmetric reveal
-through the CurtainField's existing 50-neighbor linear influence ramp, so the
-center opens most and distant periods remain unchanged. Release uses the same
-retained reveal and cubic settlement as touch exploration. Pinch never zooms
-artwork or moves the Viewport. Returning to one finger immediately starts a
-fresh pan from the remaining touch position.
+through a compact Pinch-only influence profile: 100% at the center, 40% for
+the immediate neighbors, 10% for the next neighbors, and zero beyond them.
+Release uses the same retained reveal and cubic settlement as touch
+exploration. Pinch never zooms artwork or moves the Viewport. Returning to one
+finger immediately starts a fresh pan from the remaining touch position.
 
 Projects are secondary in EXPLORE. The local click/Moses opening is assistance
 around a physical click position, not project navigation or semantic project

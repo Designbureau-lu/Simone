@@ -222,7 +222,8 @@ export class CurtainField {
         reveal,
         directionalBias,
         minimumVisibleFactor,
-        maximumVisibleFactor
+        maximumVisibleFactor,
+        revealInfluences = null
     ) {
         if (!Number.isFinite(reveal) || reveal < 0) {
             throw new RangeError(
@@ -234,21 +235,26 @@ export class CurtainField {
                 "Temporary directional bias must be finite."
             );
         }
+        validateRevealInfluences(revealInfluences);
+        const concernedNeighbors = revealInfluences
+            ? revealInfluences.length - 1
+            : CONCERNED_NEIGHBORS;
 
         const start = Math.max(
             0,
-            interaction.periodIndex - CONCERNED_NEIGHBORS
+            interaction.periodIndex - concernedNeighbors
         );
         const end = Math.min(
             this.#periods.length - 1,
-            interaction.periodIndex + CONCERNED_NEIGHBORS
+            interaction.periodIndex + concernedNeighbors
         );
 
         for (let index = start; index <= end; index += 1) {
             const distance = Math.abs(index - interaction.periodIndex);
-            const influence = distance === 0
-                ? 1
-                : influenceForDistance(distance);
+            const influence = revealInfluenceFor(
+                distance,
+                revealInfluences
+            );
             const directionalChange = directionalChangeFor(
                 index - interaction.periodIndex,
                 directionalBias,
@@ -274,7 +280,8 @@ export class CurtainField {
         minimumVisibleFactor,
         maximumVisibleFactor,
         resistance,
-        retainedReveal = 0
+        retainedReveal = 0,
+        revealInfluences = null
     ) {
         if (!Number.isFinite(directionalBias)) {
             throw new RangeError(
@@ -291,23 +298,28 @@ export class CurtainField {
                 "Retained reveal must be a non-negative finite number."
             );
         }
+        validateRevealInfluences(revealInfluences);
+        const concernedNeighbors = revealInfluences
+            ? revealInfluences.length - 1
+            : CONCERNED_NEIGHBORS;
 
         const factors = interaction.visibleFactors.slice();
         const start = Math.max(
             0,
-            interaction.periodIndex - CONCERNED_NEIGHBORS
+            interaction.periodIndex - concernedNeighbors
         );
         const end = Math.min(
             this.#periods.length - 1,
-            interaction.periodIndex + CONCERNED_NEIGHBORS
+            interaction.periodIndex + concernedNeighbors
         );
 
         for (let index = start; index <= end; index += 1) {
             const offset = index - interaction.periodIndex;
             const distance = Math.abs(offset);
-            const influence = distance === 0
-                ? 1
-                : influenceForDistance(distance);
+            const influence = revealInfluenceFor(
+                distance,
+                revealInfluences
+            );
             const force = directionalChangeFor(
                 offset,
                 directionalBias,
@@ -477,6 +489,32 @@ function influenceTotalFor(periodIndex, direction, periodCount) {
 
 function influenceForDistance(distance) {
     return 1 - distance / (CONCERNED_NEIGHBORS + 1);
+}
+
+function revealInfluenceFor(distance, revealInfluences) {
+    return revealInfluences
+        ? revealInfluences[distance]
+        : distance === 0
+            ? 1
+            : influenceForDistance(distance);
+}
+
+function validateRevealInfluences(revealInfluences) {
+    if (revealInfluences === null) {
+        return;
+    }
+    if (!Array.isArray(revealInfluences)
+        || revealInfluences.length === 0
+        || revealInfluences[0] !== 1
+        || revealInfluences.some(
+            (influence) => !Number.isFinite(influence)
+                || influence < 0
+                || influence > 1
+        )) {
+        throw new RangeError(
+            "Reveal influences must begin at 1 and remain between 0 and 1."
+        );
+    }
 }
 
 function redistributionForNeighbor(offset, leftScale, rightScale) {

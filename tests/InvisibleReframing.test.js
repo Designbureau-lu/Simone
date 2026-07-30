@@ -73,28 +73,32 @@ test("pinch reveals locally while preserving deformation and camera", () => {
     const viewportOffset = application.viewport.projectedOffset;
 
     const pinch = application.beginTouchPinch(520);
+    const pinchInfluences = [1, 0.4, 0.1];
     const centerIndex = pinch.periodIndex;
     const leftIndex = centerIndex - 1;
     const rightIndex = centerIndex + 1;
     const localDifference = pinch.visibleFactors[rightIndex]
         - pinch.visibleFactors[leftIndex];
-    const distantIndex = centerIndex + 60;
+    const distantIndex = centerIndex + 3;
     const distantFactor = field.periods[distantIndex].visibleFactor;
     closeTo(
-        application.updateTouchPinch(pinch, 0.2),
+        application.updateTouchPinch(pinch, 0.2, pinchInfluences),
         pinch.visibleFactors[centerIndex] + 0.2
     );
-    assert(
+    closeTo(
         field.periods[centerIndex].visibleFactor
-            - pinch.visibleFactors[centerIndex]
-            > field.periods[centerIndex + 1].visibleFactor
-                - pinch.visibleFactors[centerIndex + 1]
+            - pinch.visibleFactors[centerIndex],
+        0.2
     );
-    assert(
+    closeTo(
         field.periods[centerIndex + 1].visibleFactor
-            - pinch.visibleFactors[centerIndex + 1]
-            > field.periods[centerIndex + 25].visibleFactor
-                - pinch.visibleFactors[centerIndex + 25]
+            - pinch.visibleFactors[centerIndex + 1],
+        0.08
+    );
+    closeTo(
+        field.periods[centerIndex + 2].visibleFactor
+            - pinch.visibleFactors[centerIndex + 2],
+        0.02
     );
     closeTo(field.periods[distantIndex].visibleFactor, distantFactor);
     closeTo(
@@ -105,7 +109,7 @@ test("pinch reveals locally while preserving deformation and camera", () => {
     closeTo(application.viewport.projectedOffset, viewportOffset);
 
     closeTo(
-        application.updateTouchPinch(pinch, 0.05),
+        application.updateTouchPinch(pinch, 0.05, pinchInfluences),
         pinch.visibleFactors[centerIndex] + 0.05
     );
     assert(
@@ -119,21 +123,27 @@ test("pinch reveals locally while preserving deformation and camera", () => {
     );
 
     closeTo(
-        application.updateTouchPinch(pinch, 0),
+        application.updateTouchPinch(pinch, 0, pinchInfluences),
         pinch.visibleFactors[centerIndex]
     );
     closeTo(field.periods[distantIndex].visibleFactor, distantFactor);
     closeTo(application.viewport.projectedOffset, viewportOffset);
 
-    application.updateTouchPinch(pinch, 10);
+    application.updateTouchPinch(pinch, 10, pinchInfluences);
     field.periods.forEach((period) => {
         assert(period.visibleFactor >= 0.2);
         assert(period.visibleFactor <= 1);
     });
 
-    application.updateTouchPinch(pinch, 0.2);
+    application.updateTouchPinch(pinch, 0.2, pinchInfluences);
     const animation = captureAnimationFrames();
-    assert(application.settleTouchPinch(pinch, 0.2, 0.6, 360));
+    assert(application.settleTouchPinch(
+        pinch,
+        0.2,
+        0.6,
+        360,
+        pinchInfluences
+    ));
     animation.runNext(0);
     closeTo(application.viewport.projectedOffset, viewportOffset);
     animation.runNext(360);

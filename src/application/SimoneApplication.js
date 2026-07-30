@@ -475,7 +475,7 @@ export class SimoneApplication {
         return this.beginLocalInteraction(targetX);
     }
 
-    updateTouchPinch(interaction, reveal) {
+    updateTouchPinch(interaction, reveal, revealInfluences) {
         if (!interaction
             || !Number.isFinite(reveal)
             || reveal < 0) {
@@ -487,7 +487,8 @@ export class SimoneApplication {
             reveal,
             0,
             this.parameters.minimumVisibleFactor,
-            this.parameters.maximumVisibleFactor
+            this.parameters.maximumVisibleFactor,
+            revealInfluences
         );
         this.curtainField.resolve(this.parameters);
         this.render();
@@ -499,6 +500,7 @@ export class SimoneApplication {
         reveal,
         revealRetention,
         duration,
+        revealInfluences,
         onFrame = null
     ) {
         return this.settleTouchExploration(
@@ -514,7 +516,8 @@ export class SimoneApplication {
             duration,
             revealRetention,
             onFrame,
-            false
+            false,
+            revealInfluences
         );
     }
 
@@ -647,7 +650,8 @@ export class SimoneApplication {
         curtainDevelopmentDuration = duration,
         revealRetention = 0,
         onFrame = null,
-        anchorViewport = true
+        anchorViewport = true,
+        revealInfluences = null
     ) {
         if (!interaction
             || !Number.isFinite(initialReveal)
@@ -687,7 +691,8 @@ export class SimoneApplication {
                 this.parameters.minimumVisibleFactor,
                 this.parameters.maximumVisibleFactor,
                 directionalResistance,
-                initialReveal * revealRetention
+                initialReveal * revealRetention,
+                revealInfluences
             );
         this.touchExplorationState = {
             interaction,

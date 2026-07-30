@@ -624,7 +624,8 @@ export function bindCurtainDragging(
                     );
                     application.updateTouchPinch(
                         touchPinch.interaction,
-                        touchPinch.reveal
+                        touchPinch.reveal,
+                        TOUCH_CURTAIN_PINCH_REVEAL_INFLUENCES
                     );
                 }
                 event.preventDefault();
@@ -832,6 +833,7 @@ export function bindCurtainDragging(
                 touchPinch.reveal,
                 TOUCH_CURTAIN_REVEAL_RETENTION,
                 TOUCH_CURTAIN_SETTLE_DURATION,
+                TOUCH_CURTAIN_PINCH_REVEAL_INFLUENCES,
                 synchronizeViewportControl
             );
             touchPinch = null;
@@ -1113,6 +1115,11 @@ const TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 1.00;
 const TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE = 3.00;
 const TOUCH_CURTAIN_REVEAL_RETENTION = 0.60;
 const TOUCH_CURTAIN_PINCH_SENSITIVITY = 1.00;
+const TOUCH_CURTAIN_PINCH_REVEAL_INFLUENCES = Object.freeze([
+    1.00,
+    0.40,
+    0.10
+]);
 const VIEWPORT_INERTIA_GAIN = 1.75;
 const VIEWPORT_INERTIA_DAMPING = 4.00;
 const TOUCH_CURTAIN_SETTLE_DURATION = 360;

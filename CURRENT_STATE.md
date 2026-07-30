@@ -8,12 +8,14 @@ Updated: 2026-07-30
   midpoint begins a normal CurtainField local interaction; finger separation,
   normalized by presentation width and
   `TOUCH_CURTAIN_PINCH_SENSITIVITY = 1.00`, drives its symmetric reveal. The
-  existing 50-neighbor linear influence ramp opens the center most, fades
-  smoothly through nearby folds, and leaves distant periods unchanged. Release
-  uses the existing 60% reveal retention and 360 ms cubic settlement without
-  moving the Viewport. A second touch changes Pan into Pinch; lifting either
-  pinch touch immediately begins a fresh Pan from the remaining finger.
-  Existing `touch-action: none` prevents browser page scaling.
+  Pinch-only influence profile is `[1.00, 0.40, 0.10]`: the center Period and
+  two neighbors on each side participate, while everything beyond that
+  five-Period span remains unchanged. This is roughly 24–25% of the 20–21
+  Periods normally visible on an iPhone. Release uses the existing 60% reveal
+  retention and 360 ms cubic settlement without moving the Viewport. A second
+  touch changes Pan into Pinch; lifting either pinch touch immediately begins a
+  fresh Pan from the remaining finger. Existing `touch-action: none` prevents
+  browser page scaling.
 - Replaced the curtain-only momentum experiment with bounded Viewport inertia.
   A fast direct-touch release continues the finger-derived camera movement with
   `velocity * VIEWPORT_INERTIA_GAIN * elapsed`, damping velocity through
