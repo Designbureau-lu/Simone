@@ -388,7 +388,10 @@ of finger angle. Both grabs run through the desktop redistribution model and
 their contributions are added over one captured base state. Increasing
 separation opens the folds between them and gathers fabric outside; restoring
 the original separation restores the captured state. Pinch never zooms artwork
-or moves the Viewport. Returning to one finger immediately starts a fresh pan.
+or moves the Viewport. The current exploration build multiplies separation
+movement by `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 4.00`; this deliberately
+exaggerates the direct manipulation without shifting its midpoint. Returning
+to one finger immediately starts a fresh pan.
 
 Projects are secondary in EXPLORE. The local click/Moses opening is assistance
 around a physical click position, not project navigation or semantic project

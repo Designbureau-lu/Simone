@@ -627,7 +627,8 @@ export function bindCurtainDragging(
                     const separationDisplacement = (
                         touchDistance(first, second)
                             - touchPinch.initialDistance
-                    ) * touchPinch.displacementScale / 2;
+                    ) * touchPinch.displacementScale
+                        * TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN / 2;
                     application.updateTouchPinch(
                         touchPinch.interaction,
                         -separationDisplacement,
@@ -1112,6 +1113,7 @@ const TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS = 0.10;
 const TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 1.00;
 const TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE = 3.00;
 const TOUCH_CURTAIN_REVEAL_RETENTION = 0.60;
+const TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 4.00;
 const VIEWPORT_INERTIA_GAIN = 1.75;
 const VIEWPORT_INERTIA_DAMPING = 4.00;
 const TOUCH_CURTAIN_SETTLE_DURATION = 360;

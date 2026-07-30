@@ -4,6 +4,11 @@ Updated: 2026-07-30
 
 ## Today's work
 
+- Exaggerated direct two-finger curtain manipulation for calibration. The
+  scalar change in finger separation now passes through
+  `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 4.00` before being divided equally
+  into mirrored left/right grab displacement. The virtual grabs remain exactly
+  centered on the touch midpoint; no centering compensation was introduced.
 - Replaced the field-like Pinch reveal with direct two-finger fabric
   manipulation. The pinch midpoint locates two virtual horizontal grabs whose
   initial span equals the Euclidean distance between the touches. Only the

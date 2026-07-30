@@ -140,6 +140,7 @@ test("touch input transitions directly between pan and pinch", () => {
     const pinchStart = calls.find(([name]) => name === "begin-pinch");
     closeTo(pinchStart[1], 120);
     closeTo(pinchStart[2], 200);
+    closeTo((pinchStart[1] + pinchStart[2]) / 2, 160);
     const panCallsBeforePinch = calls.filter(
         ([name]) => name === "pan"
     ).length;
@@ -150,8 +151,9 @@ test("touch input transitions directly between pan and pinch", () => {
     );
     const pinchUpdate = calls.find(([name]) => name === "pinch");
     assert(pinchUpdate);
-    closeTo(pinchUpdate[1], -30);
-    closeTo(pinchUpdate[2], 30);
+    closeTo(pinchUpdate[1], -120);
+    closeTo(pinchUpdate[2], 120);
+    closeTo((pinchUpdate[1] + pinchUpdate[2]) / 2, 0);
 
     canvas.dispatchEvent(touchEvent("pointerup", 2, 260, 100, 40));
     canvas.dispatchEvent(touchEvent("pointermove", 1, 140, 100, 56));
@@ -171,6 +173,10 @@ test("touch input transitions directly between pan and pinch", () => {
     ).at(-1);
     closeTo(verticalPinchStart[1], 120);
     closeTo(verticalPinchStart[2], 200);
+    closeTo(
+        (verticalPinchStart[1] + verticalPinchStart[2]) / 2,
+        160
+    );
     canvas.dispatchEvent(touchEvent("pointermove", 4, 160, 200, 90));
     const verticalPinchUpdate = calls.filter(
         ([name]) => name === "pinch"
