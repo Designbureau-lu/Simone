@@ -273,7 +273,8 @@ export class CurtainField {
         directionalBias,
         minimumVisibleFactor,
         maximumVisibleFactor,
-        resistance
+        resistance,
+        retainedReveal = 0
     ) {
         if (!Number.isFinite(directionalBias)) {
             throw new RangeError(
@@ -283,6 +284,11 @@ export class CurtainField {
         if (!Number.isFinite(resistance) || resistance <= 0) {
             throw new RangeError(
                 "Directional resistance must be a positive finite number."
+            );
+        }
+        if (!Number.isFinite(retainedReveal) || retainedReveal < 0) {
+            throw new RangeError(
+                "Retained reveal must be a non-negative finite number."
             );
         }
 
@@ -307,9 +313,15 @@ export class CurtainField {
                 directionalBias,
                 influence
             );
+            const revealedFactor = clamp(
+                interaction.visibleFactors[index]
+                    + retainedReveal * influence,
+                minimumVisibleFactor,
+                maximumVisibleFactor
+            );
 
             factors[index] = resistedVisibleFactor(
-                interaction.visibleFactors[index],
+                revealedFactor,
                 force,
                 minimumVisibleFactor,
                 maximumVisibleFactor,

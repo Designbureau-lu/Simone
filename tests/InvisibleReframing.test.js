@@ -348,7 +348,7 @@ test("viewport inertia develops the curtain before a continuous stop", () => {
     const runInertia = (
         gestureVelocity,
         initialViewportVelocity = gestureVelocity,
-        inertiaGain = 1.25
+        inertiaGain = 1.75
     ) => {
         const field = new CurtainField({ resetCurtainState: 0.5 });
         field.configureFor(5000, 100);
@@ -383,6 +383,9 @@ test("viewport inertia develops the curtain before a continuous stop", () => {
             temporaryReveal,
             temporaryDirectionalBias
         ));
+        const openingAtRelease = field.periods[
+            interaction.periodIndex
+        ].visibleFactor;
         const startingOffset = viewport.projectedOffset;
         assert(application.settleTouchExploration(
             interaction,
@@ -394,7 +397,8 @@ test("viewport inertia develops the curtain before a continuous stop", () => {
             inertiaGain,
             4,
             360,
-            160
+            160,
+            0.6
         ));
 
         let timestamp = 0;
@@ -404,6 +408,7 @@ test("viewport inertia develops the curtain before a continuous stop", () => {
         let factorsBeforeCameraRest = null;
         let factorsAtCameraRest = null;
         let retainedFactorsAtCameraRest = null;
+        let openingAtCameraRest = null;
         while (application.touchExplorationFrame !== null
             && timestamp < 3000) {
             const velocityBeforeFrame = application
@@ -429,6 +434,9 @@ test("viewport inertia develops the curtain before a continuous stop", () => {
                 factorsAtCameraRest = field.periods.map(
                     (period) => period.visibleFactor
                 );
+                openingAtCameraRest = field.periods[
+                    interaction.periodIndex
+                ].visibleFactor;
                 retainedFactorsAtCameraRest = [
                     ...application.touchExplorationState.retainedVisibleFactors
                 ];
@@ -439,7 +447,9 @@ test("viewport inertia develops the curtain before a continuous stop", () => {
 
         equal(application.touchExplorationFrame, null);
         equal(application.touchExplorationState, null);
-        equal(field.periods[interaction.periodIndex].visibleFactor, 0.5);
+        const finalOpening = field.periods[
+            interaction.periodIndex
+        ].visibleFactor;
         field.periods.forEach((period) => {
             assert(period.visibleFactor >= 0.2);
             assert(period.visibleFactor <= 1);
@@ -451,6 +461,9 @@ test("viewport inertia develops the curtain before a continuous stop", () => {
             inertiaFrames,
             directionMaintained,
             frameCount,
+            openingAtRelease,
+            openingAtCameraRest,
+            finalOpening,
             stopDiscontinuity: factorsAtCameraRest
                 ? maximumFactorDifference(
                     factorsBeforeCameraRest,
@@ -470,9 +483,9 @@ test("viewport inertia develops the curtain before a continuous stop", () => {
 
     const gentle = runInertia(-0.04);
     const gentleWithoutInertia = runInertia(-0.04, 0);
-    const fastWithoutInertia = runInertia(-3, 0);
-    const previousGain = runInertia(-3, -3, 1);
-    const fast = runInertia(-3);
+    const fastWithoutInertia = runInertia(-7.5, 0);
+    const previousGain = runInertia(-7.5, -3, 1.25);
+    const fast = runInertia(-7.5, -3);
 
     assert(
         fast.distance > gentle.distance + 300,
@@ -483,14 +496,33 @@ test("viewport inertia develops the curtain before a continuous stop", () => {
     assert(fast.directionMaintained);
     equal(fast.stopDiscontinuity, 0);
     assert(
-        fast.retainedDistanceAtCameraRest < 0.01,
+        fast.retainedDistanceAtCameraRest < 0.015,
         "Expected retained curtain target to be effectively developed "
             + `at camera rest, got ${fast.retainedDistanceAtCameraRest}`
     );
     assert(
         fast.distance > previousGain.distance * 1.2,
-        `Expected gain 1.25 travel ${fast.distance} to exceed gain 1.00 `
+        `Expected gain 1.75 travel ${fast.distance} to exceed gain 1.25 `
             + `travel ${previousGain.distance} by at least 20%`
+    );
+    assert(
+        fast.openingAtRelease > fast.finalOpening,
+        "Expected following folds to retain a visible closing movement"
+    );
+    assert(
+        fast.openingAtRelease >= 0.79
+            && fast.openingAtRelease <= 0.81,
+        `Expected the saturated temporary opening near 0.8, got `
+            + fast.openingAtRelease
+    );
+    assert(
+        fast.finalOpening >= 0.67 && fast.finalOpening <= 0.69,
+        `Expected retained opening to remain well above 0.5, got `
+            + fast.finalOpening
+    );
+    assert(
+        Math.abs(fast.openingAtCameraRest - fast.finalOpening) < 0.01,
+        "Expected retained opening to be developed by camera rest"
     );
     closeTo(gentle.distance, gentleWithoutInertia.distance);
     closeTo(fast.right, fastWithoutInertia.right);

@@ -598,6 +598,7 @@ export class SimoneApplication {
         inertiaDamping,
         duration,
         curtainDevelopmentDuration = duration,
+        revealRetention = 0,
         onFrame = null
     ) {
         if (!interaction
@@ -617,7 +618,10 @@ export class SimoneApplication {
             || !Number.isFinite(duration)
             || duration <= 0
             || !Number.isFinite(curtainDevelopmentDuration)
-            || curtainDevelopmentDuration <= 0) {
+            || curtainDevelopmentDuration <= 0
+            || !Number.isFinite(revealRetention)
+            || revealRetention < 0
+            || revealRetention > 1) {
             return false;
         }
 
@@ -633,7 +637,8 @@ export class SimoneApplication {
                 retainedDirectionalBias,
                 this.parameters.minimumVisibleFactor,
                 this.parameters.maximumVisibleFactor,
-                directionalResistance
+                directionalResistance,
+                initialReveal * revealRetention
             );
         this.touchExplorationState = {
             interaction,

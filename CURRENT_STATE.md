@@ -13,9 +13,16 @@ Updated: 2026-07-30
   `TOUCH_CURTAIN_INERTIA_DEVELOPMENT_DURATION`. This makes the retained shape
   essentially complete before the camera reaches its stop threshold; the
   unchanged cubic settlement then finishes continuously and exactly. The
-  diagnostic settings are gain `1.25`, damping `4.00`, and curtain development
+  diagnostic settings are gain `1.75`, damping `4.00`, and curtain development
   duration `160` ms. No separate curtain force survives the camera, and there
   is no bounce, rubber-banding, oscillation, pinch, or desktop-path change.
+- Retained touch settlement now keeps
+  `TOUCH_CURTAIN_REVEAL_RETENTION = 0.60` of the symmetric local opening in
+  addition to the existing retained directional redistribution. The remaining
+  opening still closes through the same travelling inertia response and
+  360 ms cubic settlement, but a strong reveal no longer returns its touched
+  centre to the captured pre-gesture factor. The nonlinear directional
+  resistance remains unchanged.
 - Replaced linear retained touch accumulation with an exponential resistance
   curve. A retained directional force now moves each affected Period through a
   fraction of its remaining distance toward the relevant configured limit:
