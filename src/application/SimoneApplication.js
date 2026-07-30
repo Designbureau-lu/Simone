@@ -536,24 +536,46 @@ export class SimoneApplication {
         interaction,
         fingerDisplacement,
         temporaryReveal,
-        temporaryDirectionalBias
+        temporaryDirectionalBias,
+        retainedVisibleFactors = null,
+        retainedDevelopment = 0
     ) {
         if (!interaction
             || !Number.isFinite(fingerDisplacement)
             || !Number.isFinite(temporaryReveal)
-            || !Number.isFinite(temporaryDirectionalBias)) {
+            || !Number.isFinite(temporaryDirectionalBias)
+            || !Number.isFinite(retainedDevelopment)
+            || retainedDevelopment < 0
+            || retainedDevelopment > 1) {
             return false;
         }
 
         const previousAnchor = this.curtainField
             .projectedXForInteraction(interaction);
-        this.sceneVisibleFactor = this.curtainField.applyTemporaryReveal(
+        this.curtainField.applyTemporaryReveal(
             interaction,
             temporaryReveal,
             temporaryDirectionalBias,
             this.parameters.minimumVisibleFactor,
             this.parameters.maximumVisibleFactor
         );
+        if (retainedVisibleFactors) {
+            const visibleFactors = this.curtainField.periods.map(
+                (period, index) => Math.min(
+                    this.parameters.maximumVisibleFactor,
+                    Math.max(
+                        this.parameters.minimumVisibleFactor,
+                        period.visibleFactor + (
+                            retainedVisibleFactors[index]
+                                - interaction.visibleFactors[index]
+                        ) * retainedDevelopment
+                    )
+                )
+            );
+            this.curtainField.setVisibleFactors(visibleFactors);
+        }
+        this.sceneVisibleFactor = this.curtainField
+            .periods[interaction.periodIndex].visibleFactor;
         this.curtainField.resolve(this.parameters);
         const currentAnchor = this.curtainField
             .projectedXForInteraction(interaction);
@@ -575,6 +597,7 @@ export class SimoneApplication {
         inertiaGain,
         inertiaDamping,
         duration,
+        curtainDevelopmentDuration = duration,
         onFrame = null
     ) {
         if (!interaction
@@ -592,7 +615,9 @@ export class SimoneApplication {
             || !Number.isFinite(inertiaDamping)
             || inertiaDamping <= 0
             || !Number.isFinite(duration)
-            || duration <= 0) {
+            || duration <= 0
+            || !Number.isFinite(curtainDevelopmentDuration)
+            || curtainDevelopmentDuration <= 0) {
             return false;
         }
 
@@ -616,6 +641,7 @@ export class SimoneApplication {
             viewportVelocity: initialViewportVelocity
         };
         let previousTimestamp = null;
+        let inertiaStartedAt = null;
         let settleStartedAt = null;
         let settleStartingFactors = startingVisibleFactors;
         const settle = (timestamp) => {
@@ -635,6 +661,11 @@ export class SimoneApplication {
 
             if (canContinue) {
                 if (frameDuration > 0) {
+                    inertiaStartedAt ??= timestamp - frameDuration;
+                    const retainedDevelopment = 1 - Math.exp(
+                        -(timestamp - inertiaStartedAt)
+                            / curtainDevelopmentDuration
+                    );
                     const velocityScale = initialViewportVelocity === 0
                         ? 0
                         : viewportVelocity / initialViewportVelocity;
@@ -642,7 +673,9 @@ export class SimoneApplication {
                         interaction,
                         viewportVelocity * inertiaGain * frameDuration,
                         initialReveal * Math.abs(velocityScale),
-                        initialDirectionalBias * velocityScale
+                        initialDirectionalBias * velocityScale,
+                        retainedVisibleFactors,
+                        retainedDevelopment
                     );
                     viewportVelocity *= Math.exp(
                         -inertiaDamping * frameDuration / 1000

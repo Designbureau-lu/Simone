@@ -729,6 +729,7 @@ function bindCurtainDragging(
                 VIEWPORT_INERTIA_GAIN,
                 VIEWPORT_INERTIA_DAMPING,
                 TOUCH_CURTAIN_SETTLE_DURATION,
+                TOUCH_CURTAIN_INERTIA_DEVELOPMENT_DURATION,
                 synchronizeViewportControl
             );
         }
@@ -995,9 +996,10 @@ const TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL = 0.30;
 const TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS = 0.10;
 const TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 1.00;
 const TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE = 3.00;
-const VIEWPORT_INERTIA_GAIN = 1.00;
+const VIEWPORT_INERTIA_GAIN = 1.25;
 const VIEWPORT_INERTIA_DAMPING = 4.00;
 const TOUCH_CURTAIN_SETTLE_DURATION = 360;
+const TOUCH_CURTAIN_INERTIA_DEVELOPMENT_DURATION = 160;
 
 export function horizontalReframeDirection(
     startPointerPosition,

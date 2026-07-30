@@ -344,14 +344,15 @@ test("directional resistance accumulates asymptotically and reverses", () => {
     animation.restore();
 });
 
-test("viewport inertia distinguishes gentle release from a fast flick", () => {
+test("viewport inertia develops the curtain before a continuous stop", () => {
     const runInertia = (
         gestureVelocity,
-        initialViewportVelocity = gestureVelocity
+        initialViewportVelocity = gestureVelocity,
+        inertiaGain = 1.25
     ) => {
         const field = new CurtainField({ resetCurtainState: 0.5 });
-        field.configureFor(1000, 100);
-        const viewport = createViewport(300);
+        field.configureFor(5000, 100);
+        const viewport = createViewport(1000, 5000);
         const application = new SimoneApplication({
             artworkLoader: null,
             parameters: new SurfaceParameters(),
@@ -390,20 +391,27 @@ test("viewport inertia distinguishes gentle release from a fast flick", () => {
             1,
             3,
             initialViewportVelocity,
-            1,
+            inertiaGain,
             4,
-            360
+            360,
+            160
         ));
 
         let timestamp = 0;
         let frameCount = 0;
         let inertiaFrames = 0;
         let directionMaintained = true;
+        let factorsBeforeCameraRest = null;
+        let factorsAtCameraRest = null;
+        let retainedFactorsAtCameraRest = null;
         while (application.touchExplorationFrame !== null
             && timestamp < 3000) {
-            const inertiaActive = Math.abs(
-                application.touchExplorationState.viewportVelocity
-            ) > 0.05;
+            const velocityBeforeFrame = application
+                .touchExplorationState.viewportVelocity;
+            const inertiaActive = Math.abs(velocityBeforeFrame) > 0.05;
+            const factorsBeforeFrame = field.periods.map(
+                (period) => period.visibleFactor
+            );
             animation.runNext(timestamp);
             if (inertiaActive) {
                 inertiaFrames += 1;
@@ -413,6 +421,17 @@ test("viewport inertia distinguishes gentle release from a fast flick", () => {
                     ].visibleFactor > field.periods[
                         interaction.periodIndex - 1
                     ].visibleFactor;
+            }
+            if (velocityBeforeFrame !== 0
+                && application.touchExplorationState
+                && application.touchExplorationState.viewportVelocity === 0) {
+                factorsBeforeCameraRest = factorsBeforeFrame;
+                factorsAtCameraRest = field.periods.map(
+                    (period) => period.visibleFactor
+                );
+                retainedFactorsAtCameraRest = [
+                    ...application.touchExplorationState.retainedVisibleFactors
+                ];
             }
             timestamp += 32;
             frameCount += 1;
@@ -431,14 +450,28 @@ test("viewport inertia distinguishes gentle release from a fast flick", () => {
             distance: viewport.projectedOffset - startingOffset,
             inertiaFrames,
             directionMaintained,
-            frameCount
+            frameCount,
+            stopDiscontinuity: factorsAtCameraRest
+                ? maximumFactorDifference(
+                    factorsBeforeCameraRest,
+                    factorsAtCameraRest
+                )
+                : 0,
+            retainedDistanceAtCameraRest: factorsAtCameraRest
+                ? maximumFactorDifference(
+                    factorsAtCameraRest,
+                    retainedFactorsAtCameraRest
+                )
+                : 0
         };
         animation.restore();
         return result;
     };
 
     const gentle = runInertia(-0.04);
+    const gentleWithoutInertia = runInertia(-0.04, 0);
     const fastWithoutInertia = runInertia(-3, 0);
+    const previousGain = runInertia(-3, -3, 1);
     const fast = runInertia(-3);
 
     assert(
@@ -448,6 +481,18 @@ test("viewport inertia distinguishes gentle release from a fast flick", () => {
     );
     assert(fast.inertiaFrames > 0);
     assert(fast.directionMaintained);
+    equal(fast.stopDiscontinuity, 0);
+    assert(
+        fast.retainedDistanceAtCameraRest < 0.01,
+        "Expected retained curtain target to be effectively developed "
+            + `at camera rest, got ${fast.retainedDistanceAtCameraRest}`
+    );
+    assert(
+        fast.distance > previousGain.distance * 1.2,
+        `Expected gain 1.25 travel ${fast.distance} to exceed gain 1.00 `
+            + `travel ${previousGain.distance} by at least 20%`
+    );
+    closeTo(gentle.distance, gentleWithoutInertia.distance);
     closeTo(fast.right, fastWithoutInertia.right);
     closeTo(fast.left, fastWithoutInertia.left);
     assert(
@@ -1092,13 +1137,13 @@ test("viewport preserves the left bound and permits trailing white space", () =>
     closeTo(viewport.projectedOffset, 0);
 });
 
-function createViewport(offset) {
+function createViewport(offset, contentEnd = 1000) {
     const viewport = new Viewport({
         projectedOffset: offset,
         projectedExtent: 400,
         presentationExtent: 400
     });
-    viewport.setProjectedContentRange(0, 1000);
+    viewport.setProjectedContentRange(0, contentEnd);
     return viewport;
 }
 
@@ -1148,6 +1193,17 @@ function captureAnimationFrames() {
 function closeTo(actual, expected) {
     assert(Math.abs(actual - expected) <= 1e-12,
         `Expected ${actual} to equal ${expected}`);
+}
+
+function maximumFactorDifference(first, second) {
+    assert(first && second, "Expected both factor collections");
+    return first.reduce(
+        (maximum, value, index) => Math.max(
+            maximum,
+            Math.abs(value - second[index])
+        ),
+        0
+    );
 }
 
 function equal(actual, expected) {
