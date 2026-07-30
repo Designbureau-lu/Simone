@@ -157,6 +157,9 @@ test("touch settlement retains only its directional deformation", () => {
         -0.02,
         1,
         3,
+        0,
+        0.35,
+        4.5,
         360
     ));
     animation.runNext(0);
@@ -189,6 +192,9 @@ test("touch settlement retains only its directional deformation", () => {
         0.02,
         1,
         3,
+        0,
+        0.35,
+        4.5,
         360
     ));
     animation.runNext(400);
@@ -236,6 +242,9 @@ test("directional resistance accumulates asymptotically and reverses", () => {
         -0.3,
         1,
         3,
+        0,
+        0.35,
+        4.5,
         360
     ));
     animation.runNext(0);
@@ -261,6 +270,9 @@ test("directional resistance accumulates asymptotically and reverses", () => {
         -0.3,
         1,
         3,
+        0,
+        0.35,
+        4.5,
         360
     ));
     animation.runNext(400);
@@ -287,6 +299,9 @@ test("directional resistance accumulates asymptotically and reverses", () => {
         -0.3,
         1,
         3,
+        0,
+        0.35,
+        4.5,
         360
     ));
     animation.runNext(800);
@@ -317,6 +332,9 @@ test("directional resistance accumulates asymptotically and reverses", () => {
         0.3,
         1,
         3,
+        0,
+        0.35,
+        4.5,
         360
     ));
     animation.runNext(1200);
@@ -324,6 +342,88 @@ test("directional resistance accumulates asymptotically and reverses", () => {
     assert(field.periods[rightIndex].visibleFactor < thirdRight);
     assert(field.periods[leftIndex].visibleFactor > thirdLeft);
     animation.restore();
+});
+
+test("curtain momentum distinguishes gentle release from a fast flick", () => {
+    const runMomentum = (initialMomentumVelocity) => {
+        const field = new CurtainField({ resetCurtainState: 0.5 });
+        field.configureFor(1000, 100);
+        const viewport = createViewport(300);
+        const application = new SimoneApplication({
+            artworkLoader: null,
+            parameters: new SurfaceParameters(),
+            curtainField: field,
+            viewport,
+            phaseResolver: null,
+            surfaces: null,
+            shading: null,
+            renderer: null
+        });
+        application.artwork = {};
+        application.render = () => {};
+        field.resolve(application.parameters);
+        const interaction = application.beginTouchExploration(200);
+        const animation = captureAnimationFrames();
+
+        assert(application.updateTouchExploration(
+            interaction,
+            0,
+            0.05,
+            -0.05
+        ));
+        const anchorBefore = field.projectedXForInteraction(interaction)
+            - viewport.projectedOffset;
+        assert(application.settleTouchExploration(
+            interaction,
+            0.05,
+            -0.05,
+            1,
+            3,
+            initialMomentumVelocity,
+            0.35,
+            4.5,
+            360
+        ));
+
+        let timestamp = 0;
+        let frameCount = 0;
+        while (application.touchExplorationFrame !== null
+            && timestamp < 3000) {
+            animation.runNext(timestamp);
+            timestamp += 32;
+            frameCount += 1;
+        }
+
+        equal(application.touchExplorationFrame, null);
+        equal(application.touchExplorationState, null);
+        const anchorAfter = field.projectedXForInteraction(interaction)
+            - viewport.projectedOffset;
+        closeTo(anchorAfter, anchorBefore);
+        equal(field.periods[interaction.periodIndex].visibleFactor, 0.5);
+        field.periods.forEach((period) => {
+            assert(period.visibleFactor >= 0.2);
+            assert(period.visibleFactor <= 1);
+        });
+        const result = {
+            left: field.periods[interaction.periodIndex - 1].visibleFactor,
+            right: field.periods[interaction.periodIndex + 1].visibleFactor,
+            frameCount
+        };
+        animation.restore();
+        return result;
+    };
+
+    const stationary = runMomentum(0);
+    const gentle = runMomentum(-0.05);
+    const fast = runMomentum(-3);
+
+    assert(gentle.right > 0.5);
+    assert(gentle.left < 0.5);
+    assert(gentle.right - stationary.right < 0.01);
+    assert(stationary.left - gentle.left < 0.01);
+    assert(fast.right > gentle.right + 0.1);
+    assert(fast.left < gentle.left - 0.05);
+    assert(fast.frameCount > gentle.frameCount);
 });
 
 test("zero directional retention restores the captured state exactly", () => {
@@ -357,6 +457,9 @@ test("zero directional retention restores the captured state exactly", () => {
         -0.02,
         0,
         3,
+        0,
+        0.35,
+        4.5,
         360
     ));
     animation.runNext(0);

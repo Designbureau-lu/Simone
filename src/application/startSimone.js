@@ -719,6 +719,15 @@ function bindCurtainDragging(
                 completed.temporaryDirectionalBias,
                 TOUCH_CURTAIN_DIRECTIONAL_RETENTION,
                 TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE,
+                clamp(
+                    completed.smoothedVelocity,
+                    -TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL
+                        / TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS,
+                    TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL
+                        / TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS
+                ),
+                TOUCH_CURTAIN_MOMENTUM_GAIN,
+                TOUCH_CURTAIN_MOMENTUM_DAMPING,
                 TOUCH_CURTAIN_SETTLE_DURATION,
                 synchronizeViewportControl
             );
@@ -986,6 +995,8 @@ const TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL = 0.30;
 const TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS = 0.10;
 const TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 1.00;
 const TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE = 3.00;
+const TOUCH_CURTAIN_MOMENTUM_GAIN = 0.35;
+const TOUCH_CURTAIN_MOMENTUM_DAMPING = 4.50;
 const TOUCH_CURTAIN_SETTLE_DURATION = 360;
 
 export function horizontalReframeDirection(

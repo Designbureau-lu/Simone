@@ -4,6 +4,15 @@ Updated: 2026-07-29
 
 ## Today's work
 
+- Added curtain-only momentum after direct-touch release. The signed smoothed
+  touch velocity now supplies a frame-rate-independent directional force while
+  the existing cubic settlement runs. Each frame applies
+  `velocity * TOUCH_CURTAIN_MOMENTUM_GAIN * elapsedSeconds` through the retained
+  resistance curve, then damps velocity exponentially with
+  `exp(-TOUCH_CURTAIN_MOMENTUM_DAMPING * elapsedSeconds)`. The diagnostic
+  settings are gain `0.35` and damping `4.50`; gentle releases contribute
+  almost nothing, while fast flicks continue reshaping the curtain without
+  moving the camera, oscillating, bouncing, or changing the desktop path.
 - Replaced linear retained touch accumulation with an exponential resistance
   curve. A retained directional force now moves each affected Period through a
   fraction of its remaining distance toward the relevant configured limit:

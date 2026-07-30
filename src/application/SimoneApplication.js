@@ -571,6 +571,9 @@ export class SimoneApplication {
         initialDirectionalBias,
         directionalRetention,
         directionalResistance,
+        initialMomentumVelocity,
+        momentumGain,
+        momentumDamping,
         duration,
         onFrame = null
     ) {
@@ -583,6 +586,11 @@ export class SimoneApplication {
             || directionalRetention > 1
             || !Number.isFinite(directionalResistance)
             || directionalResistance <= 0
+            || !Number.isFinite(initialMomentumVelocity)
+            || !Number.isFinite(momentumGain)
+            || momentumGain < 0
+            || !Number.isFinite(momentumDamping)
+            || momentumDamping <= 0
             || !Number.isFinite(duration)
             || duration <= 0) {
             return false;
@@ -602,17 +610,57 @@ export class SimoneApplication {
                 this.parameters.maximumVisibleFactor,
                 directionalResistance
             );
-        this.touchExplorationState = Object.freeze({
+        this.touchExplorationState = {
             interaction,
             startingVisibleFactors,
-            retainedVisibleFactors
-        });
+            retainedVisibleFactors,
+            momentumVelocity: initialMomentumVelocity
+        };
         let startedAt = null;
+        let previousTimestamp = null;
         const settle = (timestamp) => {
             startedAt ??= timestamp;
+            previousTimestamp ??= timestamp;
+            const frameDuration = Math.min(
+                Math.max(timestamp - previousTimestamp, 0),
+                MAXIMUM_TOUCH_MOMENTUM_FRAME_DURATION
+            );
+            previousTimestamp = timestamp;
+            const frameDurationSeconds = frameDuration / 1000;
+            let {
+                retainedVisibleFactors: currentRetainedFactors,
+                momentumVelocity
+            } = this.touchExplorationState;
+
+            if (frameDuration > 0
+                && Math.abs(momentumVelocity)
+                    > MINIMUM_TOUCH_MOMENTUM_VELOCITY) {
+                const momentumInteraction = {
+                    ...interaction,
+                    visibleFactors: currentRetainedFactors
+                };
+                currentRetainedFactors = this.curtainField
+                    .retainedDirectionalFactors(
+                        momentumInteraction,
+                        momentumVelocity
+                            * momentumGain
+                            * frameDurationSeconds,
+                        this.parameters.minimumVisibleFactor,
+                        this.parameters.maximumVisibleFactor,
+                        directionalResistance
+                    );
+                momentumVelocity *= Math.exp(
+                    -momentumDamping * frameDurationSeconds
+                );
+                this.touchExplorationState.retainedVisibleFactors
+                    = currentRetainedFactors;
+                this.touchExplorationState.momentumVelocity
+                    = momentumVelocity;
+            }
+
             const progress = Math.min((timestamp - startedAt) / duration, 1);
             const temporaryProgress = (1 - progress) ** 3;
-            const visibleFactors = retainedVisibleFactors.map(
+            const visibleFactors = currentRetainedFactors.map(
                 (retained, index) => retained
                     + (
                         startingVisibleFactors[index] - retained
@@ -625,7 +673,9 @@ export class SimoneApplication {
             );
             onFrame?.();
 
-            if (progress < 1) {
+            if (progress < 1
+                || Math.abs(momentumVelocity)
+                    > MINIMUM_TOUCH_MOMENTUM_VELOCITY) {
                 this.touchExplorationFrame = requestAnimationFrame(settle);
             } else {
                 this.touchExplorationFrame = null;
@@ -1098,6 +1148,8 @@ const ATTENTION_MODE_EXPLORE = "explore";
 const ATTENTION_MODE_READ = "read";
 const PROJECT_OPENING_PROTOTYPE = "prototype";
 const PROJECT_OPENING_FLAT_SPAN = "flat-semantic-span";
+const MAXIMUM_TOUCH_MOMENTUM_FRAME_DURATION = 32;
+const MINIMUM_TOUCH_MOMENTUM_VELOCITY = 0.01;
 function resetEaseOut(value) {
     return 1 - (1 - value) ** 3;
 }
