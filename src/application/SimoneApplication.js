@@ -571,9 +571,9 @@ export class SimoneApplication {
         initialDirectionalBias,
         directionalRetention,
         directionalResistance,
-        initialMomentumVelocity,
-        momentumGain,
-        momentumDamping,
+        initialViewportVelocity,
+        inertiaGain,
+        inertiaDamping,
         duration,
         onFrame = null
     ) {
@@ -586,11 +586,11 @@ export class SimoneApplication {
             || directionalRetention > 1
             || !Number.isFinite(directionalResistance)
             || directionalResistance <= 0
-            || !Number.isFinite(initialMomentumVelocity)
-            || !Number.isFinite(momentumGain)
-            || momentumGain < 0
-            || !Number.isFinite(momentumDamping)
-            || momentumDamping <= 0
+            || !Number.isFinite(initialViewportVelocity)
+            || !Number.isFinite(inertiaGain)
+            || inertiaGain < 0
+            || !Number.isFinite(inertiaDamping)
+            || inertiaDamping <= 0
             || !Number.isFinite(duration)
             || duration <= 0) {
             return false;
@@ -612,58 +612,67 @@ export class SimoneApplication {
             );
         this.touchExplorationState = {
             interaction,
-            startingVisibleFactors,
             retainedVisibleFactors,
-            momentumVelocity: initialMomentumVelocity
+            viewportVelocity: initialViewportVelocity
         };
-        let startedAt = null;
         let previousTimestamp = null;
+        let settleStartedAt = null;
+        let settleStartingFactors = startingVisibleFactors;
         const settle = (timestamp) => {
-            startedAt ??= timestamp;
             previousTimestamp ??= timestamp;
             const frameDuration = Math.min(
                 Math.max(timestamp - previousTimestamp, 0),
-                MAXIMUM_TOUCH_MOMENTUM_FRAME_DURATION
+                MAXIMUM_VIEWPORT_INERTIA_FRAME_DURATION
             );
             previousTimestamp = timestamp;
-            const frameDurationSeconds = frameDuration / 1000;
-            let {
-                retainedVisibleFactors: currentRetainedFactors,
-                momentumVelocity
-            } = this.touchExplorationState;
+            let { viewportVelocity } = this.touchExplorationState;
+            const viewportDirection = viewportVelocity > 0 ? -1 : 1;
+            const canContinue = Math.abs(viewportVelocity)
+                    > MINIMUM_VIEWPORT_INERTIA_VELOCITY
+                && this.viewport.availableProjectedDisplacement(
+                    viewportDirection
+                ) > 0;
 
-            if (frameDuration > 0
-                && Math.abs(momentumVelocity)
-                    > MINIMUM_TOUCH_MOMENTUM_VELOCITY) {
-                const momentumInteraction = {
-                    ...interaction,
-                    visibleFactors: currentRetainedFactors
-                };
-                currentRetainedFactors = this.curtainField
-                    .retainedDirectionalFactors(
-                        momentumInteraction,
-                        momentumVelocity
-                            * momentumGain
-                            * frameDurationSeconds,
-                        this.parameters.minimumVisibleFactor,
-                        this.parameters.maximumVisibleFactor,
-                        directionalResistance
+            if (canContinue) {
+                if (frameDuration > 0) {
+                    const velocityScale = initialViewportVelocity === 0
+                        ? 0
+                        : viewportVelocity / initialViewportVelocity;
+                    this.updateTouchExploration(
+                        interaction,
+                        viewportVelocity * inertiaGain * frameDuration,
+                        initialReveal * Math.abs(velocityScale),
+                        initialDirectionalBias * velocityScale
                     );
-                momentumVelocity *= Math.exp(
-                    -momentumDamping * frameDurationSeconds
-                );
-                this.touchExplorationState.retainedVisibleFactors
-                    = currentRetainedFactors;
-                this.touchExplorationState.momentumVelocity
-                    = momentumVelocity;
+                    viewportVelocity *= Math.exp(
+                        -inertiaDamping * frameDuration / 1000
+                    );
+                    this.touchExplorationState.viewportVelocity
+                        = viewportVelocity;
+                    onFrame?.();
+                }
+                this.touchExplorationFrame = requestAnimationFrame(settle);
+                return;
             }
 
-            const progress = Math.min((timestamp - startedAt) / duration, 1);
+            this.touchExplorationState.viewportVelocity = 0;
+            if (settleStartedAt === null) {
+                settleStartedAt = timestamp;
+                settleStartingFactors = Object.freeze(
+                    this.curtainField.periods.map(
+                        (period) => period.visibleFactor
+                    )
+                );
+            }
+            const progress = Math.min(
+                (timestamp - settleStartedAt) / duration,
+                1
+            );
             const temporaryProgress = (1 - progress) ** 3;
-            const visibleFactors = currentRetainedFactors.map(
+            const visibleFactors = retainedVisibleFactors.map(
                 (retained, index) => retained
                     + (
-                        startingVisibleFactors[index] - retained
+                        settleStartingFactors[index] - retained
                     ) * temporaryProgress
             );
 
@@ -673,9 +682,7 @@ export class SimoneApplication {
             );
             onFrame?.();
 
-            if (progress < 1
-                || Math.abs(momentumVelocity)
-                    > MINIMUM_TOUCH_MOMENTUM_VELOCITY) {
+            if (progress < 1) {
                 this.touchExplorationFrame = requestAnimationFrame(settle);
             } else {
                 this.touchExplorationFrame = null;
@@ -1148,8 +1155,8 @@ const ATTENTION_MODE_EXPLORE = "explore";
 const ATTENTION_MODE_READ = "read";
 const PROJECT_OPENING_PROTOTYPE = "prototype";
 const PROJECT_OPENING_FLAT_SPAN = "flat-semantic-span";
-const MAXIMUM_TOUCH_MOMENTUM_FRAME_DURATION = 32;
-const MINIMUM_TOUCH_MOMENTUM_VELOCITY = 0.01;
+const MAXIMUM_VIEWPORT_INERTIA_FRAME_DURATION = 32;
+const MINIMUM_VIEWPORT_INERTIA_VELOCITY = 0.05;
 function resetEaseOut(value) {
     return 1 - (1 - value) ** 3;
 }

@@ -158,8 +158,8 @@ test("touch settlement retains only its directional deformation", () => {
         1,
         3,
         0,
-        0.35,
-        4.5,
+        1,
+        4,
         360
     ));
     animation.runNext(0);
@@ -193,8 +193,8 @@ test("touch settlement retains only its directional deformation", () => {
         1,
         3,
         0,
-        0.35,
-        4.5,
+        1,
+        4,
         360
     ));
     animation.runNext(400);
@@ -243,8 +243,8 @@ test("directional resistance accumulates asymptotically and reverses", () => {
         1,
         3,
         0,
-        0.35,
-        4.5,
+        1,
+        4,
         360
     ));
     animation.runNext(0);
@@ -271,8 +271,8 @@ test("directional resistance accumulates asymptotically and reverses", () => {
         1,
         3,
         0,
-        0.35,
-        4.5,
+        1,
+        4,
         360
     ));
     animation.runNext(400);
@@ -300,8 +300,8 @@ test("directional resistance accumulates asymptotically and reverses", () => {
         1,
         3,
         0,
-        0.35,
-        4.5,
+        1,
+        4,
         360
     ));
     animation.runNext(800);
@@ -333,8 +333,8 @@ test("directional resistance accumulates asymptotically and reverses", () => {
         1,
         3,
         0,
-        0.35,
-        4.5,
+        1,
+        4,
         360
     ));
     animation.runNext(1200);
@@ -344,8 +344,11 @@ test("directional resistance accumulates asymptotically and reverses", () => {
     animation.restore();
 });
 
-test("curtain momentum distinguishes gentle release from a fast flick", () => {
-    const runMomentum = (initialMomentumVelocity) => {
+test("viewport inertia distinguishes gentle release from a fast flick", () => {
+    const runInertia = (
+        gestureVelocity,
+        initialViewportVelocity = gestureVelocity
+    ) => {
         const field = new CurtainField({ resetCurtainState: 0.5 });
         field.configureFor(1000, 100);
         const viewport = createViewport(300);
@@ -364,41 +367,59 @@ test("curtain momentum distinguishes gentle release from a fast flick", () => {
         field.resolve(application.parameters);
         const interaction = application.beginTouchExploration(200);
         const animation = captureAnimationFrames();
+        const temporaryReveal = Math.min(
+            Math.abs(gestureVelocity) * 0.04,
+            0.3
+        );
+        const temporaryDirectionalBias = Math.min(
+            Math.max(gestureVelocity * 0.1, -0.3),
+            0.3
+        );
 
         assert(application.updateTouchExploration(
             interaction,
             0,
-            0.05,
-            -0.05
+            temporaryReveal,
+            temporaryDirectionalBias
         ));
-        const anchorBefore = field.projectedXForInteraction(interaction)
-            - viewport.projectedOffset;
+        const startingOffset = viewport.projectedOffset;
         assert(application.settleTouchExploration(
             interaction,
-            0.05,
-            -0.05,
+            temporaryReveal,
+            temporaryDirectionalBias,
             1,
             3,
-            initialMomentumVelocity,
-            0.35,
-            4.5,
+            initialViewportVelocity,
+            1,
+            4,
             360
         ));
 
         let timestamp = 0;
         let frameCount = 0;
+        let inertiaFrames = 0;
+        let directionMaintained = true;
         while (application.touchExplorationFrame !== null
             && timestamp < 3000) {
+            const inertiaActive = Math.abs(
+                application.touchExplorationState.viewportVelocity
+            ) > 0.05;
             animation.runNext(timestamp);
+            if (inertiaActive) {
+                inertiaFrames += 1;
+                directionMaintained = directionMaintained
+                    && field.periods[
+                        interaction.periodIndex + 1
+                    ].visibleFactor > field.periods[
+                        interaction.periodIndex - 1
+                    ].visibleFactor;
+            }
             timestamp += 32;
             frameCount += 1;
         }
 
         equal(application.touchExplorationFrame, null);
         equal(application.touchExplorationState, null);
-        const anchorAfter = field.projectedXForInteraction(interaction)
-            - viewport.projectedOffset;
-        closeTo(anchorAfter, anchorBefore);
         equal(field.periods[interaction.periodIndex].visibleFactor, 0.5);
         field.periods.forEach((period) => {
             assert(period.visibleFactor >= 0.2);
@@ -407,23 +428,32 @@ test("curtain momentum distinguishes gentle release from a fast flick", () => {
         const result = {
             left: field.periods[interaction.periodIndex - 1].visibleFactor,
             right: field.periods[interaction.periodIndex + 1].visibleFactor,
+            distance: viewport.projectedOffset - startingOffset,
+            inertiaFrames,
+            directionMaintained,
             frameCount
         };
         animation.restore();
         return result;
     };
 
-    const stationary = runMomentum(0);
-    const gentle = runMomentum(-0.05);
-    const fast = runMomentum(-3);
+    const gentle = runInertia(-0.04);
+    const fastWithoutInertia = runInertia(-3, 0);
+    const fast = runInertia(-3);
 
-    assert(gentle.right > 0.5);
-    assert(gentle.left < 0.5);
-    assert(gentle.right - stationary.right < 0.01);
-    assert(stationary.left - gentle.left < 0.01);
-    assert(fast.right > gentle.right + 0.1);
-    assert(fast.left < gentle.left - 0.05);
-    assert(fast.frameCount > gentle.frameCount);
+    assert(
+        fast.distance > gentle.distance + 300,
+        `Expected fast travel ${fast.distance} to exceed gentle `
+            + `${gentle.distance} by 300`
+    );
+    assert(fast.inertiaFrames > 0);
+    assert(fast.directionMaintained);
+    closeTo(fast.right, fastWithoutInertia.right);
+    closeTo(fast.left, fastWithoutInertia.left);
+    assert(
+        fast.frameCount > gentle.frameCount,
+        "Expected a fast flick to run for more frames"
+    );
 });
 
 test("zero directional retention restores the captured state exactly", () => {
@@ -458,8 +488,8 @@ test("zero directional retention restores the captured state exactly", () => {
         0,
         3,
         0,
-        0.35,
-        4.5,
+        1,
+        4,
         360
     ));
     animation.runNext(0);
