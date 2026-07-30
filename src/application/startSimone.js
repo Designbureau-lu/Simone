@@ -519,8 +519,18 @@ export function bindCurtainDragging(
 
     const beginTouchPinch = () => {
         const pointers = Array.from(touchPointers.values());
-        const interaction = application.beginTouchPinch();
-        if (pointers.length !== 2 || !interaction) {
+        const width = canvas.clientWidth;
+        if (pointers.length !== 2 || width <= 0) {
+            return false;
+        }
+
+        const bounds = canvas.getBoundingClientRect();
+        const midpointX = (pointers[0].clientX + pointers[1].clientX) / 2;
+        const targetX = (
+            midpointX - bounds.left - canvas.clientLeft
+        ) * canvas.width / width;
+        const interaction = application.beginTouchPinch(targetX);
+        if (!interaction) {
             return false;
         }
 
@@ -528,9 +538,10 @@ export function bindCurtainDragging(
         touchPinch = {
             interaction,
             initialDistance: touchDistance(pointers[0], pointers[1]),
-            presentationWidth: canvas.clientWidth
+            presentationWidth: width,
+            reveal: 0
         };
-        return touchPinch.presentationWidth > 0;
+        return true;
     };
 
     canvas.addEventListener("pointerdown", (event) => {
@@ -606,10 +617,14 @@ export function bindCurtainDragging(
                         touchDistance(pointers[0], pointers[1])
                             - touchPinch.initialDistance
                     ) / touchPinch.presentationWidth;
+                    touchPinch.reveal = clamp(
+                        distanceChange * TOUCH_CURTAIN_PINCH_SENSITIVITY,
+                        0,
+                        TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL
+                    );
                     application.updateTouchPinch(
                         touchPinch.interaction,
-                        distanceChange,
-                        TOUCH_CURTAIN_PINCH_SENSITIVITY
+                        touchPinch.reveal
                     );
                 }
                 event.preventDefault();
@@ -812,6 +827,13 @@ export function bindCurtainDragging(
             if (canvas.hasPointerCapture(event.pointerId)) {
                 canvas.releasePointerCapture(event.pointerId);
             }
+            application.settleTouchPinch(
+                touchPinch.interaction,
+                touchPinch.reveal,
+                TOUCH_CURTAIN_REVEAL_RETENTION,
+                TOUCH_CURTAIN_SETTLE_DURATION,
+                synchronizeViewportControl
+            );
             touchPinch = null;
             if (touchPointers.size === 1) {
                 beginTouchExploration(

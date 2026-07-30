@@ -4,15 +4,16 @@ Updated: 2026-07-30
 
 ## Today's work
 
-- Added two-finger direct-touch Pinch as persistent global curtain openness.
-  `touchCurtainGlobalOpenness` stores the baseline independently from the
-  existing per-Period local deformation. Pinch applies one clamped uniform
-  delta to a captured factor snapshot, so opening or closing preserves local
-  directional differences and never changes Viewport position or artwork
-  scale. `TOUCH_CURTAIN_PINCH_SENSITIVITY = 1.00` maps a full presentation-width
-  distance change to one Visible Factor. A second touch changes Pan into Pinch;
-  lifting either pinch touch immediately begins a fresh Pan from the remaining
-  finger. Existing `touch-action: none` prevents browser page scaling.
+- Added two-finger direct-touch Pinch as a local reading reveal. The pinch
+  midpoint begins a normal CurtainField local interaction; finger separation,
+  normalized by presentation width and
+  `TOUCH_CURTAIN_PINCH_SENSITIVITY = 1.00`, drives its symmetric reveal. The
+  existing 50-neighbor linear influence ramp opens the center most, fades
+  smoothly through nearby folds, and leaves distant periods unchanged. Release
+  uses the existing 60% reveal retention and 360 ms cubic settlement without
+  moving the Viewport. A second touch changes Pan into Pinch; lifting either
+  pinch touch immediately begins a fresh Pan from the remaining finger.
+  Existing `touch-action: none` prevents browser page scaling.
 - Replaced the curtain-only momentum experiment with bounded Viewport inertia.
   A fast direct-touch release continues the finger-derived camera movement with
   `velocity * VIEWPORT_INERTIA_GAIN * elapsed`, damping velocity through
@@ -219,8 +220,8 @@ predefined step, or post-gesture reframe. The secondary curtain contribution
 is computed over a captured persistent base state, follows through a bounded
 first-order delay, and settles without bounce or oscillation. Camera inertia
 continues the same velocity-derived response after a fast release. Two-finger
-Pinch changes a separate global openness baseline while preserving local
-deformation, and never zooms the artwork or moves the camera.
+Pinch creates a midpoint-centered local reading reveal and never zooms the
+artwork or moves the camera.
 
 A local click/Moses helper is implemented exclusively for EXPLORE. A click
 within a 5 CSS-pixel movement tolerance and on a semantic project starts a

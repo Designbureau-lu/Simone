@@ -45,7 +45,7 @@ test("touch response smoothing follows without overshoot", () => {
     assert(second < 1);
 });
 
-test("pinch changes global openness while preserving local deformation", () => {
+test("pinch reveals locally while preserving deformation and camera", () => {
     const field = new CurtainField({ resetCurtainState: 0.5 });
     const application = new SimoneApplication({
         artworkLoader: null,
@@ -59,9 +59,9 @@ test("pinch changes global openness while preserving local deformation", () => {
     });
     application.artwork = {};
     application.render = () => {};
-    field.configureFor(2000, 100);
+    field.configureFor(10000, 100);
     field.resolve(application.parameters);
-    const localInteraction = field.beginLocalInteraction(800);
+    const localInteraction = application.beginTouchPinch(520);
     field.applyTemporaryReveal(
         localInteraction,
         0.05,
@@ -70,15 +70,33 @@ test("pinch changes global openness while preserving local deformation", () => {
         1
     );
     field.resolve(application.parameters);
-    const leftIndex = localInteraction.periodIndex - 1;
-    const rightIndex = localInteraction.periodIndex + 1;
-    const localDifference = field.periods[rightIndex].visibleFactor
-        - field.periods[leftIndex].visibleFactor;
     const viewportOffset = application.viewport.projectedOffset;
 
-    const openingPinch = application.beginTouchPinch();
-    closeTo(application.updateTouchPinch(openingPinch, 0.2, 1), 0.7);
-    closeTo(application.touchCurtainGlobalOpenness, 0.7);
+    const pinch = application.beginTouchPinch(520);
+    const centerIndex = pinch.periodIndex;
+    const leftIndex = centerIndex - 1;
+    const rightIndex = centerIndex + 1;
+    const localDifference = pinch.visibleFactors[rightIndex]
+        - pinch.visibleFactors[leftIndex];
+    const distantIndex = centerIndex + 60;
+    const distantFactor = field.periods[distantIndex].visibleFactor;
+    closeTo(
+        application.updateTouchPinch(pinch, 0.2),
+        pinch.visibleFactors[centerIndex] + 0.2
+    );
+    assert(
+        field.periods[centerIndex].visibleFactor
+            - pinch.visibleFactors[centerIndex]
+            > field.periods[centerIndex + 1].visibleFactor
+                - pinch.visibleFactors[centerIndex + 1]
+    );
+    assert(
+        field.periods[centerIndex + 1].visibleFactor
+            - pinch.visibleFactors[centerIndex + 1]
+            > field.periods[centerIndex + 25].visibleFactor
+                - pinch.visibleFactors[centerIndex + 25]
+    );
+    closeTo(field.periods[distantIndex].visibleFactor, distantFactor);
     closeTo(
         field.periods[rightIndex].visibleFactor
             - field.periods[leftIndex].visibleFactor,
@@ -86,27 +104,45 @@ test("pinch changes global openness while preserving local deformation", () => {
     );
     closeTo(application.viewport.projectedOffset, viewportOffset);
 
-    const closingPinch = application.beginTouchPinch();
-    closeTo(application.updateTouchPinch(closingPinch, -0.3, 1), 0.4);
-    closeTo(application.touchCurtainGlobalOpenness, 0.4);
+    closeTo(
+        application.updateTouchPinch(pinch, 0.05),
+        pinch.visibleFactors[centerIndex] + 0.05
+    );
+    assert(
+        field.periods[centerIndex].visibleFactor
+            < pinch.visibleFactors[centerIndex] + 0.2
+    );
     closeTo(
         field.periods[rightIndex].visibleFactor
             - field.periods[leftIndex].visibleFactor,
         localDifference
     );
 
-    const minimumPinch = application.beginTouchPinch();
-    closeTo(application.updateTouchPinch(minimumPinch, -10, 1), 0.2);
+    closeTo(
+        application.updateTouchPinch(pinch, 0),
+        pinch.visibleFactors[centerIndex]
+    );
+    closeTo(field.periods[distantIndex].visibleFactor, distantFactor);
+    closeTo(application.viewport.projectedOffset, viewportOffset);
+
+    application.updateTouchPinch(pinch, 10);
     field.periods.forEach((period) => {
         assert(period.visibleFactor >= 0.2);
         assert(period.visibleFactor <= 1);
     });
-    const maximumPinch = application.beginTouchPinch();
-    closeTo(application.updateTouchPinch(maximumPinch, 10, 1), 1);
-    field.periods.forEach((period) => {
-        assert(period.visibleFactor >= 0.2);
-        assert(period.visibleFactor <= 1);
-    });
+
+    application.updateTouchPinch(pinch, 0.2);
+    const animation = captureAnimationFrames();
+    assert(application.settleTouchPinch(pinch, 0.2, 0.6, 360));
+    animation.runNext(0);
+    closeTo(application.viewport.projectedOffset, viewportOffset);
+    animation.runNext(360);
+    closeTo(
+        field.periods[centerIndex].visibleFactor,
+        pinch.visibleFactors[centerIndex] + 0.12
+    );
+    closeTo(application.viewport.projectedOffset, viewportOffset);
+    animation.restore();
 });
 
 test("touch input transitions directly between pan and pinch", () => {
@@ -118,13 +154,17 @@ test("touch input transitions directly between pan and pinch", () => {
             calls.push(["begin-pan", targetX]);
             return { visibleFactors: [0.5] };
         },
-        beginTouchPinch() {
-            calls.push(["begin-pinch"]);
-            return { globalOpenness: 0.5, visibleFactors: [0.5] };
+        beginTouchPinch(targetX) {
+            calls.push(["begin-pinch", targetX]);
+            return { visibleFactors: [0.5] };
         },
-        updateTouchPinch(interaction, distanceChange, sensitivity) {
-            calls.push(["pinch", distanceChange, sensitivity]);
-            return 0.5 + distanceChange * sensitivity;
+        updateTouchPinch(interaction, reveal) {
+            calls.push(["pinch", reveal]);
+            return 0.5 + reveal;
+        },
+        settleTouchPinch() {
+            calls.push(["settle-pinch"]);
+            return true;
         },
         interactionDisplacementScale: () => 1,
         projectAtPresentationX: () => null,
@@ -147,6 +187,8 @@ test("touch input transitions directly between pan and pinch", () => {
     canvas.dispatchEvent(touchEvent("pointerdown", 1, 100, 100, 0));
     canvas.dispatchEvent(touchEvent("pointermove", 1, 120, 100, 16));
     canvas.dispatchEvent(touchEvent("pointerdown", 2, 200, 100, 20));
+    const pinchStart = calls.find(([name]) => name === "begin-pinch");
+    closeTo(pinchStart[1], 160);
     const panCallsBeforePinch = calls.filter(
         ([name]) => name === "pan"
     ).length;
@@ -155,9 +197,12 @@ test("touch input transitions directly between pan and pinch", () => {
         calls.filter(([name]) => name === "pan").length,
         panCallsBeforePinch
     );
-    assert(calls.some(([name]) => name === "pinch"));
+    const pinchUpdate = calls.find(([name]) => name === "pinch");
+    assert(pinchUpdate);
+    assert(pinchUpdate[1] > 0);
 
     canvas.dispatchEvent(touchEvent("pointerup", 2, 260, 100, 40));
+    assert(calls.some(([name]) => name === "settle-pinch"));
     canvas.dispatchEvent(touchEvent("pointermove", 1, 140, 100, 56));
     assert(
         calls.filter(([name]) => name === "begin-pan").length === 2
