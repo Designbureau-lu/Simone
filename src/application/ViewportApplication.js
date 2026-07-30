@@ -2,6 +2,10 @@ import { SimoneApplication } from "./SimoneApplication.js";
 
 /** SIMONE application using virtual geometry and viewing-space output. */
 export class ViewportApplication extends SimoneApplication {
+    #logicalSourceXs = null;
+    #logicalSourceArtwork = null;
+    #logicalSourceImageWidth = null;
+
     constructor({ viewingSurface, ...dependencies }) {
         super(dependencies);
         this.viewingSurface = viewingSurface;
@@ -155,16 +159,11 @@ export class ViewportApplication extends SimoneApplication {
 
     #projectGeometry(surface) {
         const placements = new Array(this.artwork.width);
+        const logicalSourceXs = this.#logicalSourceXsForArtwork();
+        const geometryColumn = { sourceX: 0 };
 
         for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
-            const column = this.artwork.columnAt(sourceX);
-            const geometryColumn = Object.freeze({
-                ...column,
-                sourceX: this.artwork.logicalXForSourceX(
-                    sourceX,
-                    this.logicalImageWidth
-                )
-            });
+            geometryColumn.sourceX = logicalSourceXs[sourceX];
             placements[sourceX] = surface.mapColumn(
                 geometryColumn,
                 this.curtainField
@@ -190,6 +189,25 @@ export class ViewportApplication extends SimoneApplication {
         }
 
         return projectedColumns;
+    }
+
+    #logicalSourceXsForArtwork() {
+        if (this.#logicalSourceArtwork === this.artwork
+            && this.#logicalSourceImageWidth === this.logicalImageWidth) {
+            return this.#logicalSourceXs;
+        }
+
+        const logicalSourceXs = new Float64Array(this.artwork.width);
+        for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
+            logicalSourceXs[sourceX] = this.artwork.logicalXForSourceX(
+                sourceX,
+                this.logicalImageWidth
+            );
+        }
+        this.#logicalSourceXs = logicalSourceXs;
+        this.#logicalSourceArtwork = this.artwork;
+        this.#logicalSourceImageWidth = this.logicalImageWidth;
+        return logicalSourceXs;
     }
 }
 

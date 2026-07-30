@@ -29,10 +29,13 @@ export class ViewportCanvasColumnRenderer {
     beginFrame({ width, height }, appearance) {
         this.#backingStoreResized = this.#canvas.width !== width
             || this.#canvas.height !== height;
-        this.#canvas.width = width;
-        this.#canvas.height = height;
+        if (this.#backingStoreResized) {
+            this.#canvas.width = width;
+            this.#canvas.height = height;
+        }
         this.#appearance = appearance;
         this.#drawImageCalls = 0;
+        this.#context.globalAlpha = 1;
         this.#context.imageSmoothingEnabled = false;
         this.#context.clearRect(0, 0, width, height);
         this.#rearRegions = [];
@@ -57,7 +60,6 @@ export class ViewportCanvasColumnRenderer {
             return;
         }
 
-        this.#context.save();
         this.#context.globalAlpha = appearance.alpha;
         this.#context.drawImage(
             column.source,
@@ -71,7 +73,6 @@ export class ViewportCanvasColumnRenderer {
             placement.height
         );
         this.#drawImageCalls += 1;
-        this.#context.restore();
 
         this.#extendFoldRegion(
             startX,
@@ -97,6 +98,7 @@ export class ViewportCanvasColumnRenderer {
     endFrame() {
         this.#finishRearRegion();
         this.#finishFoldRegion();
+        this.#context.globalAlpha = 1;
 
         if (this.#rearRegions.length > 0) {
             this.#context.save();

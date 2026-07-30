@@ -6,6 +6,7 @@
  */
 export class ImmutableArtwork {
     #segments;
+    #columns;
 
     constructor(sources) {
         if (!Array.isArray(sources)
@@ -31,6 +32,18 @@ export class ImmutableArtwork {
         this.width = sourceStart;
         this.height = Math.max(...this.#segments.map(({ height }) => height));
         this.imageCount = this.#segments.length;
+        this.#columns = Object.freeze(this.#segments.flatMap((segment) =>
+            Array.from({ length: segment.width }, (_, sourceX) =>
+                Object.freeze({
+                    source: segment.source,
+                    sourceX,
+                    sourceY: 0,
+                    width: 1,
+                    height: segment.height,
+                    artworkX: segment.sourceStart + sourceX
+                })
+            )
+        ));
 
         Object.freeze(this);
     }
@@ -41,15 +54,7 @@ export class ImmutableArtwork {
             throw new RangeError("Artwork column is outside the source image.");
         }
 
-        const segment = this.#segments[this.#segmentIndexForSourceX(sourceX)];
-        return Object.freeze({
-            source: segment.source,
-            sourceX: sourceX - segment.sourceStart,
-            sourceY: 0,
-            width: 1,
-            height: segment.height,
-            artworkX: sourceX
-        });
+        return this.#columns[sourceX];
     }
 
     logicalXForSourceX(sourceX, logicalImageWidth) {

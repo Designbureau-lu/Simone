@@ -358,6 +358,12 @@ Artwork columns remain continuously mapped across the visible arc. SIMONE does
 not currently remove columns through physical carrier occlusion. Readability and
 continuity take precedence over exact visible material length.
 
+Decoded source-column descriptors are immutable and cached for the lifetime of
+an imported artwork. Their logical virtual coordinates are likewise cached for
+the active artwork layout. Production frames reuse both inputs while continuing
+to recompute the same curtain projection; caching changes allocation lifecycle,
+not artwork sampling or geometry.
+
 ### Lightweight shading
 
 Rear darkening and crest/valley gradients provide stable depth cues. They are

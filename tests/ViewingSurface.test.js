@@ -1,4 +1,7 @@
 import { ViewingSurface } from "../src/viewport/ViewingSurface.js";
+import {
+    ViewportCanvasColumnRenderer
+} from "../src/rendering/ViewportCanvasColumnRenderer.js";
 
 const tests = [];
 
@@ -40,6 +43,26 @@ test("camera extent follows a changed rendered container aspect", () => {
     closeTo(portrait.projectedExtent, 1_250);
     closeTo(landscape.projectedExtent, 5_000);
     fixture.remove();
+});
+
+test("renderer preserves an unchanged canvas backing store", () => {
+    const canvas = document.createElement("canvas");
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    const frame = { width: 400, height: 200 };
+    const appearance = {
+        rearDarkening: { color: [0, 0, 0] },
+        crestHighlight: {},
+        valleyShadow: {}
+    };
+
+    renderer.beginFrame(frame, appearance);
+    const first = renderer.endFrame();
+    renderer.beginFrame(frame, appearance);
+    const second = renderer.endFrame();
+
+    assert(first.backingStoreResized);
+    assert(!second.backingStoreResized);
+    assert(canvas.width === 400 && canvas.height === 200);
 });
 
 function createViewingSurface(width, height) {

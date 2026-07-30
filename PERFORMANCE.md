@@ -3,6 +3,46 @@
 This document records controlled performance observations. It does not define
 optimization decisions.
 
+## Interaction-frame allocation and Canvas-state pass
+
+A controlled production interaction trace in a clean headless Firefox profile
+measured the current segmented-image renderer before and after removing
+behavior-neutral per-frame lifecycle work. The same 20-step drag, application
+state, destination size, and performance meter were used for both cases.
+
+| Metric | Before | After |
+| --- | ---: | ---: |
+| Frame median | 52 ms | 34 ms |
+| Frame p95 | 64 ms | 44 ms |
+| Rendering median | 17 ms | 14 ms |
+| Rendering p95 | 23 ms | 21 ms |
+| Maximum observed frame gap | 132 ms | 83 ms |
+| Frame gaps over 50 ms | 9 | 2 |
+
+The primary steady-frame cost was full virtual geometry projection combined
+with allocation churn around it. Every frame requested and froze a new artwork
+column descriptor, spread that descriptor into another temporary geometry
+object, and repeatedly resolved its source segment for all artwork columns.
+Immutable source-column descriptors and logical source coordinates are now
+created once per imported artwork/layout and reused. Geometry calculations,
+mapped coordinates, and the number of projected columns are unchanged.
+
+The renderer also saved and restored the complete Canvas state around every
+visible one-pixel source-column draw. It now changes only `globalAlpha`, the
+sole per-column Canvas property involved, and restores alpha once before the
+existing overlay passes. Canvas backing dimensions are assigned only when the
+measured frame size actually changes; unchanged frames retain the backing store
+and are cleared normally.
+
+The trace indicates an approximately 35% lower median frame time. It is a
+desktop Firefox control rather than an iPhone Safari trace, so real-device
+frame pacing remains the final validation. The largest remaining cost is still
+mapping the entire virtual artwork on every deformation frame and allocating
+new arc placements/projected-column records. Canvas column drawing and
+crest/valley overlays remain the next visible costs. Further work should begin
+with a Safari device trace before introducing incremental or region-based
+geometry updates.
+
 ## Cold-start interaction trace
 
 A clean headless Firefox process and profile loaded the production manifest,

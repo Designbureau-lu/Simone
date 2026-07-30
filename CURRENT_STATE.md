@@ -4,6 +4,15 @@ Updated: 2026-07-30
 
 ## Today's work
 
+- Profiled the active segmented renderer under a controlled production drag and
+  removed behavior-neutral frame churn. Immutable source-column descriptors and
+  logical source coordinates are now reused instead of rebuilt for every one of
+  the artwork's columns on every frame. The Canvas renderer no longer performs
+  a full save/restore around every pixel-column draw and no longer reassigns an
+  unchanged backing-store size. The same Firefox trace improved from 52 ms to
+  34 ms median frame time and from 64 ms to 44 ms p95 without changing input,
+  geometry, shading, or animation timing. Full virtual geometry mapping remains
+  the principal future target.
 - Exaggerated direct two-finger curtain manipulation for calibration. The
   scalar change in finger separation now passes through
   `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 4.00` before being divided equally

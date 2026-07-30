@@ -76,6 +76,10 @@ try {
         "individual source heights were not preserved"
     );
     check(
+        artwork.columnAt(2) === firstLastColumn,
+        "immutable column descriptor was recreated"
+    );
+    check(
         loggedErrors.some((values) => String(values[0])
             .includes("Image cassée.svg")),
         "failed image filename was not reported"
@@ -84,10 +88,10 @@ try {
     console.error = originalConsoleError;
 }
 
-const passed = 13 - failures.length;
+const passed = 14 - failures.length;
 const summary = failures.length === 0
-    ? "PASS 13/13"
-    : `FAIL ${passed}/13\n${failures.join("\n")}`;
+    ? "PASS 14/14"
+    : `FAIL ${passed}/14\n${failures.join("\n")}`;
 
 document.getElementById("results").textContent = summary;
 document.title = summary.split("\n")[0];
