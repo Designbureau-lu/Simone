@@ -159,43 +159,22 @@ export class CurtainField {
         maximumVisibleFactor,
         diagnosticLabel = null
     ) {
-        const displacementInPeriods = projectedDisplacement / periodLength;
-        const grabbedRedistribution = displacementInPeriods
-            * GRABBED_PERIOD_PARTICIPATION;
-        const leftRedistribution = interaction.rightwardOnly
-            ? 0
-            : displacementInPeriods
-                - interaction.localPosition * grabbedRedistribution;
-        const rightRedistribution = interaction.rightwardOnly
-            ? -(displacementInPeriods - grabbedRedistribution)
-            : leftRedistribution + grabbedRedistribution;
-        const leftScale = interaction.leftInfluence === 0
-            ? 0
-            : leftRedistribution / interaction.leftInfluence;
-        const rightScale = interaction.rightInfluence === 0
-            ? 0
-            : rightRedistribution / interaction.rightInfluence;
-        const start = interaction.rightwardOnly
-            ? interaction.periodIndex
-            : Math.max(
-                0,
-                interaction.periodIndex - CONCERNED_NEIGHBORS
-            );
-        const end = Math.min(
-            this.#periods.length - 1,
-            interaction.periodIndex + CONCERNED_NEIGHBORS
+        const deformation = localDeformationFor(
+            interaction,
+            projectedDisplacement,
+            periodLength,
+            this.#periods.length
         );
         const changes = [];
 
-        for (let index = start; index <= end; index += 1) {
-            const offset = index - interaction.periodIndex;
-
-            const redistribution = offset === 0
-                ? grabbedRedistribution
-                : redistributionForNeighbor(offset, leftScale, rightScale);
+        for (
+            let index = deformation.start;
+            index <= deformation.end;
+            index += 1
+        ) {
             const visibleFactor = clamp(
                 interaction.visibleFactors[index]
-                    + redistribution,
+                    + deformation.redistributions[index],
                 minimumVisibleFactor,
                 maximumVisibleFactor
             );
@@ -217,13 +196,50 @@ export class CurtainField {
         return this.#periods[interaction.periodIndex].visibleFactor;
     }
 
+    applyPinchDisplacement(
+        firstInteraction,
+        firstDisplacement,
+        secondInteraction,
+        secondDisplacement,
+        periodLength,
+        minimumVisibleFactor,
+        maximumVisibleFactor
+    ) {
+        const first = localDeformationFor(
+            firstInteraction,
+            firstDisplacement,
+            periodLength,
+            this.#periods.length
+        );
+        const second = localDeformationFor(
+            secondInteraction,
+            secondDisplacement,
+            periodLength,
+            this.#periods.length
+        );
+        const visibleFactors = firstInteraction.visibleFactors.map(
+            (visibleFactor, index) => clamp(
+                visibleFactor
+                    + first.redistributions[index]
+                    + second.redistributions[index],
+                minimumVisibleFactor,
+                maximumVisibleFactor
+            )
+        );
+
+        this.setVisibleFactors(visibleFactors);
+        const centerIndex = Math.round(
+            (firstInteraction.periodIndex + secondInteraction.periodIndex) / 2
+        );
+        return this.#periods[centerIndex].visibleFactor;
+    }
+
     applyTemporaryReveal(
         interaction,
         reveal,
         directionalBias,
         minimumVisibleFactor,
-        maximumVisibleFactor,
-        revealInfluences = null
+        maximumVisibleFactor
     ) {
         if (!Number.isFinite(reveal) || reveal < 0) {
             throw new RangeError(
@@ -235,26 +251,20 @@ export class CurtainField {
                 "Temporary directional bias must be finite."
             );
         }
-        validateRevealInfluences(revealInfluences);
-        const concernedNeighbors = revealInfluences
-            ? revealInfluences.length - 1
-            : CONCERNED_NEIGHBORS;
-
         const start = Math.max(
             0,
-            interaction.periodIndex - concernedNeighbors
+            interaction.periodIndex - CONCERNED_NEIGHBORS
         );
         const end = Math.min(
             this.#periods.length - 1,
-            interaction.periodIndex + concernedNeighbors
+            interaction.periodIndex + CONCERNED_NEIGHBORS
         );
 
         for (let index = start; index <= end; index += 1) {
             const distance = Math.abs(index - interaction.periodIndex);
-            const influence = revealInfluenceFor(
-                distance,
-                revealInfluences
-            );
+            const influence = distance === 0
+                ? 1
+                : influenceForDistance(distance);
             const directionalChange = directionalChangeFor(
                 index - interaction.periodIndex,
                 directionalBias,
@@ -280,8 +290,7 @@ export class CurtainField {
         minimumVisibleFactor,
         maximumVisibleFactor,
         resistance,
-        retainedReveal = 0,
-        revealInfluences = null
+        retainedReveal = 0
     ) {
         if (!Number.isFinite(directionalBias)) {
             throw new RangeError(
@@ -298,28 +307,22 @@ export class CurtainField {
                 "Retained reveal must be a non-negative finite number."
             );
         }
-        validateRevealInfluences(revealInfluences);
-        const concernedNeighbors = revealInfluences
-            ? revealInfluences.length - 1
-            : CONCERNED_NEIGHBORS;
-
         const factors = interaction.visibleFactors.slice();
         const start = Math.max(
             0,
-            interaction.periodIndex - concernedNeighbors
+            interaction.periodIndex - CONCERNED_NEIGHBORS
         );
         const end = Math.min(
             this.#periods.length - 1,
-            interaction.periodIndex + concernedNeighbors
+            interaction.periodIndex + CONCERNED_NEIGHBORS
         );
 
         for (let index = start; index <= end; index += 1) {
             const offset = index - interaction.periodIndex;
             const distance = Math.abs(offset);
-            const influence = revealInfluenceFor(
-                distance,
-                revealInfluences
-            );
+            const influence = distance === 0
+                ? 1
+                : influenceForDistance(distance);
             const force = directionalChangeFor(
                 offset,
                 directionalBias,
@@ -491,30 +494,45 @@ function influenceForDistance(distance) {
     return 1 - distance / (CONCERNED_NEIGHBORS + 1);
 }
 
-function revealInfluenceFor(distance, revealInfluences) {
-    return revealInfluences
-        ? revealInfluences[distance]
-        : distance === 0
-            ? 1
-            : influenceForDistance(distance);
-}
+function localDeformationFor(
+    interaction,
+    projectedDisplacement,
+    periodLength,
+    periodCount
+) {
+    const displacementInPeriods = projectedDisplacement / periodLength;
+    const grabbedRedistribution = displacementInPeriods
+        * GRABBED_PERIOD_PARTICIPATION;
+    const leftRedistribution = interaction.rightwardOnly
+        ? 0
+        : displacementInPeriods
+            - interaction.localPosition * grabbedRedistribution;
+    const rightRedistribution = interaction.rightwardOnly
+        ? -(displacementInPeriods - grabbedRedistribution)
+        : leftRedistribution + grabbedRedistribution;
+    const leftScale = interaction.leftInfluence === 0
+        ? 0
+        : leftRedistribution / interaction.leftInfluence;
+    const rightScale = interaction.rightInfluence === 0
+        ? 0
+        : rightRedistribution / interaction.rightInfluence;
+    const start = interaction.rightwardOnly
+        ? interaction.periodIndex
+        : Math.max(0, interaction.periodIndex - CONCERNED_NEIGHBORS);
+    const end = Math.min(
+        periodCount - 1,
+        interaction.periodIndex + CONCERNED_NEIGHBORS
+    );
+    const redistributions = new Array(periodCount).fill(0);
 
-function validateRevealInfluences(revealInfluences) {
-    if (revealInfluences === null) {
-        return;
+    for (let index = start; index <= end; index += 1) {
+        const offset = index - interaction.periodIndex;
+        redistributions[index] = offset === 0
+            ? grabbedRedistribution
+            : redistributionForNeighbor(offset, leftScale, rightScale);
     }
-    if (!Array.isArray(revealInfluences)
-        || revealInfluences.length === 0
-        || revealInfluences[0] !== 1
-        || revealInfluences.some(
-            (influence) => !Number.isFinite(influence)
-                || influence < 0
-                || influence > 1
-        )) {
-        throw new RangeError(
-            "Reveal influences must begin at 1 and remain between 0 and 1."
-        );
-    }
+
+    return { start, end, redistributions };
 }
 
 function redistributionForNeighbor(offset, leftScale, rightScale) {

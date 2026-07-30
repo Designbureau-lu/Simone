@@ -471,54 +471,37 @@ export class SimoneApplication {
         return this.beginLocalInteraction(targetX);
     }
 
-    beginTouchPinch(targetX) {
-        return this.beginLocalInteraction(targetX);
+    beginTouchPinch(firstTargetX, secondTargetX) {
+        const first = this.beginLocalInteraction(firstTargetX);
+        const second = this.beginLocalInteraction(secondTargetX);
+        return first && second
+            ? Object.freeze({ first, second })
+            : null;
     }
 
-    updateTouchPinch(interaction, reveal, revealInfluences) {
+    updateTouchPinch(
+        interaction,
+        firstDisplacement,
+        secondDisplacement
+    ) {
         if (!interaction
-            || !Number.isFinite(reveal)
-            || reveal < 0) {
+            || !Number.isFinite(firstDisplacement)
+            || !Number.isFinite(secondDisplacement)) {
             return false;
         }
 
-        this.sceneVisibleFactor = this.curtainField.applyTemporaryReveal(
-            interaction,
-            reveal,
-            0,
+        this.sceneVisibleFactor = this.curtainField.applyPinchDisplacement(
+            interaction.first,
+            firstDisplacement,
+            interaction.second,
+            secondDisplacement,
+            this.parameters.carrierDistance,
             this.parameters.minimumVisibleFactor,
-            this.parameters.maximumVisibleFactor,
-            revealInfluences
+            this.parameters.maximumVisibleFactor
         );
         this.curtainField.resolve(this.parameters);
         this.render();
         return this.sceneVisibleFactor;
-    }
-
-    settleTouchPinch(
-        interaction,
-        reveal,
-        revealRetention,
-        duration,
-        revealInfluences,
-        onFrame = null
-    ) {
-        return this.settleTouchExploration(
-            interaction,
-            reveal,
-            0,
-            0,
-            1,
-            0,
-            0,
-            1,
-            duration,
-            duration,
-            revealRetention,
-            onFrame,
-            false,
-            revealInfluences
-        );
     }
 
     enterExploreMode() {
@@ -649,9 +632,7 @@ export class SimoneApplication {
         duration,
         curtainDevelopmentDuration = duration,
         revealRetention = 0,
-        onFrame = null,
-        anchorViewport = true,
-        revealInfluences = null
+        onFrame = null
     ) {
         if (!interaction
             || !Number.isFinite(initialReveal)
@@ -673,8 +654,7 @@ export class SimoneApplication {
             || curtainDevelopmentDuration <= 0
             || !Number.isFinite(revealRetention)
             || revealRetention < 0
-            || revealRetention > 1
-            || typeof anchorViewport !== "boolean") {
+            || revealRetention > 1) {
             return false;
         }
 
@@ -691,14 +671,12 @@ export class SimoneApplication {
                 this.parameters.minimumVisibleFactor,
                 this.parameters.maximumVisibleFactor,
                 directionalResistance,
-                initialReveal * revealRetention,
-                revealInfluences
+                initialReveal * revealRetention
             );
         this.touchExplorationState = {
             interaction,
             retainedVisibleFactors,
-            viewportVelocity: initialViewportVelocity,
-            anchorViewport
+            viewportVelocity: initialViewportVelocity
         };
         let previousTimestamp = null;
         let inertiaStartedAt = null;
@@ -771,8 +749,7 @@ export class SimoneApplication {
 
             this.#applyTouchVisibleFactors(
                 interaction,
-                visibleFactors,
-                anchorViewport
+                visibleFactors
             );
             onFrame?.();
 
@@ -799,23 +776,17 @@ export class SimoneApplication {
 
         const {
             interaction,
-            retainedVisibleFactors,
-            anchorViewport
+            retainedVisibleFactors
         } = this.touchExplorationState;
         this.touchExplorationFrame = null;
         this.touchExplorationState = null;
         this.#applyTouchVisibleFactors(
             interaction,
-            retainedVisibleFactors,
-            anchorViewport
+            retainedVisibleFactors
         );
     }
 
-    #applyTouchVisibleFactors(
-        interaction,
-        visibleFactors,
-        anchorViewport = true
-    ) {
+    #applyTouchVisibleFactors(interaction, visibleFactors) {
         const previousAnchor = this.curtainField
             .projectedXForInteraction(interaction);
         this.curtainField.setVisibleFactors(visibleFactors);
@@ -824,9 +795,7 @@ export class SimoneApplication {
         const currentAnchor = this.curtainField
             .projectedXForInteraction(interaction);
 
-        if (anchorViewport) {
-            this.viewport.shiftProjectedOffset(currentAnchor - previousAnchor);
-        }
+        this.viewport.shiftProjectedOffset(currentAnchor - previousAnchor);
         this.render();
     }
 

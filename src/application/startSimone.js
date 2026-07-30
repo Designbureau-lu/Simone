@@ -518,18 +518,23 @@ export function bindCurtainDragging(
     };
 
     const beginTouchPinch = () => {
-        const pointers = Array.from(touchPointers.values());
+        const pointers = Array.from(touchPointers.values()).sort(
+            (first, second) => first.clientX - second.clientX
+        );
         const width = canvas.clientWidth;
         if (pointers.length !== 2 || width <= 0) {
             return false;
         }
 
         const bounds = canvas.getBoundingClientRect();
-        const midpointX = (pointers[0].clientX + pointers[1].clientX) / 2;
-        const targetX = (
-            midpointX - bounds.left - canvas.clientLeft
-        ) * canvas.width / width;
-        const interaction = application.beginTouchPinch(targetX);
+        const canvasScale = canvas.width / width;
+        const targetXFor = (pointer) => (
+            pointer.clientX - bounds.left - canvas.clientLeft
+        ) * canvasScale;
+        const interaction = application.beginTouchPinch(
+            targetXFor(pointers[0]),
+            targetXFor(pointers[1])
+        );
         if (!interaction) {
             return false;
         }
@@ -537,9 +542,11 @@ export function bindCurtainDragging(
         touchExploration = null;
         touchPinch = {
             interaction,
-            initialDistance: touchDistance(pointers[0], pointers[1]),
-            presentationWidth: width,
-            reveal: 0
+            firstPointerId: pointers[0].pointerId,
+            secondPointerId: pointers[1].pointerId,
+            firstStartX: pointers[0].clientX,
+            secondStartX: pointers[1].clientX,
+            displacementScale: application.interactionDisplacementScale(width)
         };
         return true;
     };
@@ -611,21 +618,19 @@ export function bindCurtainDragging(
             && touchPointers.has(event.pointerId)) {
             touchPointers.set(event.pointerId, touchPointerFrom(event));
             if (touchPinch) {
-                const pointers = Array.from(touchPointers.values());
-                if (pointers.length === 2) {
-                    const distanceChange = (
-                        touchDistance(pointers[0], pointers[1])
-                            - touchPinch.initialDistance
-                    ) / touchPinch.presentationWidth;
-                    touchPinch.reveal = clamp(
-                        distanceChange * TOUCH_CURTAIN_PINCH_SENSITIVITY,
-                        0,
-                        TOUCH_CURTAIN_MAXIMUM_TEMPORARY_REVEAL
-                    );
+                const first = touchPointers.get(
+                    touchPinch.firstPointerId
+                );
+                const second = touchPointers.get(
+                    touchPinch.secondPointerId
+                );
+                if (first && second) {
                     application.updateTouchPinch(
                         touchPinch.interaction,
-                        touchPinch.reveal,
-                        TOUCH_CURTAIN_PINCH_REVEAL_INFLUENCES
+                        (first.clientX - touchPinch.firstStartX)
+                            * touchPinch.displacementScale,
+                        (second.clientX - touchPinch.secondStartX)
+                            * touchPinch.displacementScale
                     );
                 }
                 event.preventDefault();
@@ -828,14 +833,6 @@ export function bindCurtainDragging(
             if (canvas.hasPointerCapture(event.pointerId)) {
                 canvas.releasePointerCapture(event.pointerId);
             }
-            application.settleTouchPinch(
-                touchPinch.interaction,
-                touchPinch.reveal,
-                TOUCH_CURTAIN_REVEAL_RETENTION,
-                TOUCH_CURTAIN_SETTLE_DURATION,
-                TOUCH_CURTAIN_PINCH_REVEAL_INFLUENCES,
-                synchronizeViewportControl
-            );
             touchPinch = null;
             if (touchPointers.size === 1) {
                 beginTouchExploration(
@@ -1114,12 +1111,6 @@ const TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS = 0.10;
 const TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 1.00;
 const TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE = 3.00;
 const TOUCH_CURTAIN_REVEAL_RETENTION = 0.60;
-const TOUCH_CURTAIN_PINCH_SENSITIVITY = 1.00;
-const TOUCH_CURTAIN_PINCH_REVEAL_INFLUENCES = Object.freeze([
-    1.00,
-    0.40,
-    0.10
-]);
 const VIEWPORT_INERTIA_GAIN = 1.75;
 const VIEWPORT_INERTIA_DAMPING = 4.00;
 const TOUCH_CURTAIN_SETTLE_DURATION = 360;
@@ -1157,11 +1148,4 @@ function touchPointerFrom(event) {
         clientY: event.clientY,
         timeStamp: event.timeStamp
     });
-}
-
-function touchDistance(first, second) {
-    return Math.hypot(
-        second.clientX - first.clientX,
-        second.clientY - first.clientY
-    );
 }

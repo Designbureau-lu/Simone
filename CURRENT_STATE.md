@@ -4,18 +4,15 @@ Updated: 2026-07-30
 
 ## Today's work
 
-- Added two-finger direct-touch Pinch as a local reading reveal. The pinch
-  midpoint begins a normal CurtainField local interaction; finger separation,
-  normalized by presentation width and
-  `TOUCH_CURTAIN_PINCH_SENSITIVITY = 1.00`, drives its symmetric reveal. The
-  Pinch-only influence profile is `[1.00, 0.40, 0.10]`: the center Period and
-  two neighbors on each side participate, while everything beyond that
-  five-Period span remains unchanged. This is roughly 24–25% of the 20–21
-  Periods normally visible on an iPhone. Release uses the existing 60% reveal
-  retention and 360 ms cubic settlement without moving the Viewport. A second
-  touch changes Pan into Pinch; lifting either pinch touch immediately begins a
-  fresh Pan from the remaining finger. Existing `touch-action: none` prevents
-  browser page scaling.
+- Replaced the field-like Pinch reveal with direct two-finger fabric
+  manipulation. Each finger captures a normal local CurtainField interaction;
+  its horizontal movement uses the established drag redistribution, and both
+  contributions are added over the same captured Period factors. Pulling
+  outward therefore opens the fabric between the grabs and gathers it outside;
+  moving both fingers back restores the captured state exactly. Lifting while
+  apart leaves the directly manipulated curtain where the fingers placed it.
+  No reveal radius, falloff profile, generated amplitude, zoom, or Viewport
+  movement remains. Pan-to-Pinch and Pinch-to-Pan ownership is unchanged.
 - Replaced the curtain-only momentum experiment with bounded Viewport inertia.
   A fast direct-touch release continues the finger-derived camera movement with
   `velocity * VIEWPORT_INERTIA_GAIN * elapsed`, damping velocity through
@@ -222,7 +219,7 @@ predefined step, or post-gesture reframe. The secondary curtain contribution
 is computed over a captured persistent base state, follows through a bounded
 first-order delay, and settles without bounce or oscillation. Camera inertia
 continues the same velocity-derived response after a fast release. Two-finger
-Pinch creates a midpoint-centered local reading reveal and never zooms the
+Pinch directly grabs the curtain at both finger positions and never zooms the
 artwork or moves the camera.
 
 A local click/Moses helper is implemented exclusively for EXPLORE. A click
