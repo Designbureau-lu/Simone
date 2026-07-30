@@ -469,7 +469,7 @@ export function bindDebugPanel(panel, reopen) {
     });
 }
 
-function bindCurtainDragging(
+export function bindCurtainDragging(
     canvas,
     application,
     synchronizeViewportControl,
@@ -477,6 +477,61 @@ function bindCurtainDragging(
 ) {
     let drag = null;
     let touchExploration = null;
+    let touchPinch = null;
+    const touchPointers = new Map();
+
+    const beginTouchExploration = (pointer, clickRevealAllowed = true) => {
+        const bounds = canvas.getBoundingClientRect();
+        const width = canvas.clientWidth;
+        if (width <= 0) {
+            return false;
+        }
+
+        const canvasScale = canvas.width / width;
+        const targetX = (
+            pointer.clientX - bounds.left - canvas.clientLeft
+        ) * canvasScale;
+        const interaction = application.beginTouchExploration(targetX);
+        if (!interaction) {
+            return false;
+        }
+
+        touchExploration = {
+            pointerId: pointer.pointerId,
+            startX: pointer.clientX,
+            startY: pointer.clientY,
+            lastX: pointer.clientX,
+            lastTimestamp: pointer.timeStamp,
+            displacementScale: application.interactionDisplacementScale(
+                width
+            ),
+            interaction,
+            project: application.projectAtPresentationX(targetX),
+            smoothedVelocity: 0,
+            temporaryReveal: 0,
+            temporaryDirectionalBias: 0,
+            dragLearned: false,
+            clickRevealAllowed
+        };
+        canvas.classList.add("is-dragging");
+        return true;
+    };
+
+    const beginTouchPinch = () => {
+        const pointers = Array.from(touchPointers.values());
+        const interaction = application.beginTouchPinch();
+        if (pointers.length !== 2 || !interaction) {
+            return false;
+        }
+
+        touchExploration = null;
+        touchPinch = {
+            interaction,
+            initialDistance: touchDistance(pointers[0], pointers[1]),
+            presentationWidth: canvas.clientWidth
+        };
+        return touchPinch.presentationWidth > 0;
+    };
 
     canvas.addEventListener("pointerdown", (event) => {
         if (event.button !== 0) {
@@ -497,40 +552,28 @@ function bindCurtainDragging(
             event.clientX - bounds.left - canvas.clientLeft
         ) / width;
         const isDirectTouch = event.pointerType === "touch";
-        if (isDirectTouch && touchExploration) {
+        if (isDirectTouch) {
+            if (touchPointers.size >= 2) {
+                event.preventDefault();
+                return;
+            }
+
+            const pointer = touchPointerFrom(event);
+            touchPointers.set(event.pointerId, pointer);
+            canvas.setPointerCapture(event.pointerId);
+            if (touchPointers.size === 1) {
+                beginTouchExploration(pointer);
+            } else {
+                beginTouchPinch();
+            }
             event.preventDefault();
             return;
         }
 
-        const interaction = isDirectTouch
-            ? application.beginTouchExploration(targetX)
-            : application.beginLocalInteraction(targetX);
+        const interaction = application.beginLocalInteraction(targetX);
         const project = application.projectAtPresentationX(targetX);
 
         if (!interaction) {
-            return;
-        }
-
-        if (isDirectTouch) {
-            touchExploration = {
-                pointerId: event.pointerId,
-                startX: event.clientX,
-                startY: event.clientY,
-                lastX: event.clientX,
-                lastTimestamp: event.timeStamp,
-                displacementScale: application.interactionDisplacementScale(
-                    width
-                ),
-                interaction,
-                project,
-                smoothedVelocity: 0,
-                temporaryReveal: 0,
-                temporaryDirectionalBias: 0,
-                dragLearned: false
-            };
-            canvas.setPointerCapture(event.pointerId);
-            canvas.classList.add("is-dragging");
-            event.preventDefault();
             return;
         }
 
@@ -553,6 +596,27 @@ function bindCurtainDragging(
     });
 
     canvas.addEventListener("pointermove", (event) => {
+        if (event.pointerType === "touch"
+            && touchPointers.has(event.pointerId)) {
+            touchPointers.set(event.pointerId, touchPointerFrom(event));
+            if (touchPinch) {
+                const pointers = Array.from(touchPointers.values());
+                if (pointers.length === 2) {
+                    const distanceChange = (
+                        touchDistance(pointers[0], pointers[1])
+                            - touchPinch.initialDistance
+                    ) / touchPinch.presentationWidth;
+                    application.updateTouchPinch(
+                        touchPinch.interaction,
+                        distanceChange,
+                        TOUCH_CURTAIN_PINCH_SENSITIVITY
+                    );
+                }
+                event.preventDefault();
+                return;
+            }
+        }
+
         if (touchExploration
             && event.pointerId === touchExploration.pointerId) {
             const horizontalMovement = event.clientX
@@ -692,10 +756,12 @@ function bindCurtainDragging(
         }
 
         const completed = touchExploration;
-        const clickReveal = allowClickReveal && isCurtainClick(
-            event.clientX - completed.startX,
-            event.clientY - completed.startY
-        );
+        const clickReveal = allowClickReveal
+            && completed.clickRevealAllowed
+            && isCurtainClick(
+                event.clientX - completed.startX,
+                event.clientY - completed.startY
+            );
         touchExploration = null;
         canvas.classList.remove("is-dragging");
 
@@ -736,16 +802,42 @@ function bindCurtainDragging(
         }
     };
 
+    const finishTouchPointer = (event, allowClickReveal) => {
+        if (!touchPointers.has(event.pointerId)) {
+            return;
+        }
+
+        touchPointers.delete(event.pointerId);
+        if (touchPinch) {
+            if (canvas.hasPointerCapture(event.pointerId)) {
+                canvas.releasePointerCapture(event.pointerId);
+            }
+            touchPinch = null;
+            if (touchPointers.size === 1) {
+                beginTouchExploration(
+                    Array.from(touchPointers.values())[0],
+                    false
+                );
+            } else {
+                touchExploration = null;
+                canvas.classList.remove("is-dragging");
+            }
+            return;
+        }
+
+        finishTouchExploration(event, allowClickReveal);
+    };
+
     canvas.addEventListener("pointerup", (event) => {
         if (event.pointerType === "touch") {
-            finishTouchExploration(event, true);
+            finishTouchPointer(event, true);
             return;
         }
         finishDragging(event, true);
     });
     canvas.addEventListener("pointercancel", (event) => {
         if (event.pointerType === "touch") {
-            finishTouchExploration(event, false);
+            finishTouchPointer(event, false);
             return;
         }
         finishDragging(event, false);
@@ -998,6 +1090,7 @@ const TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS = 0.10;
 const TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 1.00;
 const TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE = 3.00;
 const TOUCH_CURTAIN_REVEAL_RETENTION = 0.60;
+const TOUCH_CURTAIN_PINCH_SENSITIVITY = 1.00;
 const VIEWPORT_INERTIA_GAIN = 1.75;
 const VIEWPORT_INERTIA_DAMPING = 4.00;
 const TOUCH_CURTAIN_SETTLE_DURATION = 360;
@@ -1026,4 +1119,20 @@ export function horizontalReframeDirection(
 
 function clamp(value, minimum, maximum) {
     return Math.min(Math.max(value, minimum), maximum);
+}
+
+function touchPointerFrom(event) {
+    return Object.freeze({
+        pointerId: event.pointerId,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        timeStamp: event.timeStamp
+    });
+}
+
+function touchDistance(first, second) {
+    return Math.hypot(
+        second.clientX - first.clientX,
+        second.clientY - first.clientY
+    );
 }

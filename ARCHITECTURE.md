@@ -377,10 +377,13 @@ with a mouse or pen is primary curtain manipulation. Direct touch uses a
 different input language over the same Viewport, CurtainField, geometry, and
 renderer: one finger owns continuous bounded camera movement, while a small
 velocity-derived local Visible Factor contribution lets the curtain accompany
-exploration. The contribution is evaluated from a captured base state and
-settles exactly back to it, so one-finger exploration never changes persistent
-openness. Momentum and two-finger persistent openness are not part of the first
-touch iteration.
+exploration. The contribution is evaluated from a captured base state, retains
+part of its local reveal and directional redistribution, and develops
+continuously through camera inertia and settlement. Two fingers own a separate
+persistent global-openness scalar. Pinch distance changes that baseline
+uniformly while preserving the captured local per-Period deformation; it never
+zooms artwork or moves the Viewport. Returning to one finger immediately starts
+a fresh pan from the remaining touch position.
 
 Projects are secondary in EXPLORE. The local click/Moses opening is assistance
 around a physical click position, not project navigation or semantic project

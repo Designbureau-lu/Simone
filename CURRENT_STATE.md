@@ -4,6 +4,15 @@ Updated: 2026-07-30
 
 ## Today's work
 
+- Added two-finger direct-touch Pinch as persistent global curtain openness.
+  `touchCurtainGlobalOpenness` stores the baseline independently from the
+  existing per-Period local deformation. Pinch applies one clamped uniform
+  delta to a captured factor snapshot, so opening or closing preserves local
+  directional differences and never changes Viewport position or artwork
+  scale. `TOUCH_CURTAIN_PINCH_SENSITIVITY = 1.00` maps a full presentation-width
+  distance change to one Visible Factor. A second touch changes Pan into Pinch;
+  lifting either pinch touch immediately begins a fresh Pan from the remaining
+  finger. Existing `touch-action: none` prevents browser page scaling.
 - Replaced the curtain-only momentum experiment with bounded Viewport inertia.
   A fast direct-touch release continues the finger-derived camera movement with
   `velocity * VIEWPORT_INERTIA_GAIN * elapsed`, damping velocity through
@@ -15,7 +24,7 @@ Updated: 2026-07-30
   unchanged cubic settlement then finishes continuously and exactly. The
   diagnostic settings are gain `1.75`, damping `4.00`, and curtain development
   duration `160` ms. No separate curtain force survives the camera, and there
-  is no bounce, rubber-banding, oscillation, pinch, or desktop-path change.
+  is no bounce, rubber-banding, oscillation, or desktop-path change.
 - Retained touch settlement now keeps
   `TOUCH_CURTAIN_REVEAL_RETENTION = 0.60` of the symmetric local opening in
   addition to the existing retained directional redistribution. The remaining
@@ -42,17 +51,16 @@ Updated: 2026-07-30
   touched Period remains open; a leftward gesture temporarily compresses the
   left side and opens the right, while a rightward gesture mirrors that bias.
   Both components use the existing local influence falloff, anchor compensation,
-  and cubic settlement back to the exact captured persistent state. Directional
-  strength is isolated in `TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS`.
+  and cubic settlement. Directional strength is isolated in
+  `TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS`.
 - Introduced the first distinct direct-touch EXPLORE interaction. Mouse and pen
   retain the established desktop curtain drag, while one touch now moves the
   existing projected Viewport continuously and immediately with no threshold,
-  steps, delayed reframing, or momentum. A small velocity-smoothed local reveal
+  steps, or delayed reframing. A small velocity-smoothed local reveal
   follows the movement with a bounded low-pass delay, remains anchored so its
-  geometry change cannot pull the artwork away from the finger, and settles
-  exactly to the captured persistent Period factors after release. This
-  temporary contribution never changes persistent curtain openness. Pinch and
-  inertia remain deliberately unimplemented for later mobile iterations.
+  geometry change cannot pull the artwork away from the finger. Later
+  iterations added camera inertia, retained deformation, and global Pinch
+  without changing this direct finger attachment.
 - Replaced the giant artwork assembly canvas with a continuous virtual artwork
   coordinate system over the ordered decoded source images. Global column
   coordinates, semantic project mapping, viewport navigation, and scrolling
@@ -209,9 +217,10 @@ secondary to free discovery in both cases.
 The touch camera is attached to every finger delta without a threshold,
 predefined step, or post-gesture reframe. The secondary curtain contribution
 is computed over a captured persistent base state, follows through a bounded
-first-order delay, and settles without bounce or oscillation. It does not
-overwrite persistent openness. Momentum and two-finger persistent openness are
-reserved for later iterations.
+first-order delay, and settles without bounce or oscillation. Camera inertia
+continues the same velocity-derived response after a fast release. Two-finger
+Pinch changes a separate global openness baseline while preserving local
+deformation, and never zooms the artwork or moves the camera.
 
 A local click/Moses helper is implemented exclusively for EXPLORE. A click
 within a 5 CSS-pixel movement tolerance and on a semantic project starts a

@@ -39,6 +39,7 @@ export class SimoneApplication {
         this.logicalArtworkWidth = 0;
         this.logicalImageWidth = 0;
         this.sceneVisibleFactor = curtainField.resetCurtainState;
+        this.touchCurtainGlobalOpenness = curtainField.resetCurtainState;
         this.horizontalReframeFrame = null;
         this.resetCurtainFrame = null;
         this.localRevealFrame = null;
@@ -86,6 +87,7 @@ export class SimoneApplication {
             constrainedResetCurtainState
         );
         this.sceneVisibleFactor = constrainedResetCurtainState;
+        this.touchCurtainGlobalOpenness = constrainedResetCurtainState;
 
         if (this.artwork) {
             this.#configureCurtainField();
@@ -116,6 +118,7 @@ export class SimoneApplication {
         if (!this.artwork || this.curtainField.periods.length === 0) {
             this.curtainField.setResetCurtainState(target);
             this.sceneVisibleFactor = target;
+            this.touchCurtainGlobalOpenness = target;
             return false;
         }
 
@@ -123,6 +126,7 @@ export class SimoneApplication {
             this.curtainField.periods.map((period) => period.visibleFactor)
         );
         const startingSceneFactor = this.sceneVisibleFactor;
+        const startingGlobalOpenness = this.touchCurtainGlobalOpenness;
         let startedAt = null;
         const reset = (timestamp) => {
             startedAt ??= timestamp;
@@ -140,9 +144,12 @@ export class SimoneApplication {
                 );
                 this.sceneVisibleFactor = startingSceneFactor
                     + (target - startingSceneFactor) * easedProgress;
+                this.touchCurtainGlobalOpenness = startingGlobalOpenness
+                    + (target - startingGlobalOpenness) * easedProgress;
             } else {
                 this.curtainField.setResetCurtainState(target);
                 this.sceneVisibleFactor = target;
+                this.touchCurtainGlobalOpenness = target;
             }
 
             this.render();
@@ -469,6 +476,57 @@ export class SimoneApplication {
 
     beginTouchExploration(targetX) {
         return this.beginLocalInteraction(targetX);
+    }
+
+    beginTouchPinch() {
+        if (!this.artwork) {
+            return null;
+        }
+
+        this.enterExploreMode();
+        this.cancelLocalReveal();
+        this.cancelHorizontalReframe();
+        this.cancelResetCurtainAnimation();
+
+        return Object.freeze({
+            globalOpenness: this.touchCurtainGlobalOpenness,
+            visibleFactors: Object.freeze(this.curtainField.periods.map(
+                (period) => period.visibleFactor
+            ))
+        });
+    }
+
+    updateTouchPinch(interaction, distanceChange, sensitivity) {
+        if (!interaction
+            || !Number.isFinite(distanceChange)
+            || !Number.isFinite(sensitivity)
+            || sensitivity <= 0) {
+            return false;
+        }
+
+        const minimum = this.parameters.minimumVisibleFactor;
+        const maximum = this.parameters.maximumVisibleFactor;
+        const target = Math.min(
+            maximum,
+            Math.max(
+                minimum,
+                interaction.globalOpenness + distanceChange * sensitivity
+            )
+        );
+        const globalChange = target - interaction.globalOpenness;
+        const visibleFactors = interaction.visibleFactors.map(
+            (visibleFactor) => Math.min(
+                maximum,
+                Math.max(minimum, visibleFactor + globalChange)
+            )
+        );
+
+        this.touchCurtainGlobalOpenness = target;
+        this.sceneVisibleFactor = target;
+        this.curtainField.setVisibleFactors(visibleFactors);
+        this.curtainField.resolve(this.parameters);
+        this.render();
+        return target;
     }
 
     enterExploreMode() {

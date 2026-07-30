@@ -1,5 +1,6 @@
 import { SimoneApplication } from "../src/application/SimoneApplication.js";
 import {
+    bindCurtainDragging,
     horizontalReframeDirection,
     isCurtainClick,
     lowPass
@@ -42,6 +43,130 @@ test("touch response smoothing follows without overshoot", () => {
     assert(first < 1);
     assert(second > first);
     assert(second < 1);
+});
+
+test("pinch changes global openness while preserving local deformation", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const application = new SimoneApplication({
+        artworkLoader: null,
+        parameters: new SurfaceParameters(),
+        curtainField: field,
+        viewport: createViewport(300),
+        phaseResolver: null,
+        surfaces: null,
+        shading: null,
+        renderer: null
+    });
+    application.artwork = {};
+    application.render = () => {};
+    field.configureFor(2000, 100);
+    field.resolve(application.parameters);
+    const localInteraction = field.beginLocalInteraction(800);
+    field.applyTemporaryReveal(
+        localInteraction,
+        0.05,
+        -0.03,
+        0.2,
+        1
+    );
+    field.resolve(application.parameters);
+    const leftIndex = localInteraction.periodIndex - 1;
+    const rightIndex = localInteraction.periodIndex + 1;
+    const localDifference = field.periods[rightIndex].visibleFactor
+        - field.periods[leftIndex].visibleFactor;
+    const viewportOffset = application.viewport.projectedOffset;
+
+    const openingPinch = application.beginTouchPinch();
+    closeTo(application.updateTouchPinch(openingPinch, 0.2, 1), 0.7);
+    closeTo(application.touchCurtainGlobalOpenness, 0.7);
+    closeTo(
+        field.periods[rightIndex].visibleFactor
+            - field.periods[leftIndex].visibleFactor,
+        localDifference
+    );
+    closeTo(application.viewport.projectedOffset, viewportOffset);
+
+    const closingPinch = application.beginTouchPinch();
+    closeTo(application.updateTouchPinch(closingPinch, -0.3, 1), 0.4);
+    closeTo(application.touchCurtainGlobalOpenness, 0.4);
+    closeTo(
+        field.periods[rightIndex].visibleFactor
+            - field.periods[leftIndex].visibleFactor,
+        localDifference
+    );
+
+    const minimumPinch = application.beginTouchPinch();
+    closeTo(application.updateTouchPinch(minimumPinch, -10, 1), 0.2);
+    field.periods.forEach((period) => {
+        assert(period.visibleFactor >= 0.2);
+        assert(period.visibleFactor <= 1);
+    });
+    const maximumPinch = application.beginTouchPinch();
+    closeTo(application.updateTouchPinch(maximumPinch, 10, 1), 1);
+    field.periods.forEach((period) => {
+        assert(period.visibleFactor >= 0.2);
+        assert(period.visibleFactor <= 1);
+    });
+});
+
+test("touch input transitions directly between pan and pinch", () => {
+    const canvas = createTouchCanvas();
+    const calls = [];
+    const application = {
+        viewport: { projectedExtent: 400 },
+        beginTouchExploration(targetX) {
+            calls.push(["begin-pan", targetX]);
+            return { visibleFactors: [0.5] };
+        },
+        beginTouchPinch() {
+            calls.push(["begin-pinch"]);
+            return { globalOpenness: 0.5, visibleFactors: [0.5] };
+        },
+        updateTouchPinch(interaction, distanceChange, sensitivity) {
+            calls.push(["pinch", distanceChange, sensitivity]);
+            return 0.5 + distanceChange * sensitivity;
+        },
+        interactionDisplacementScale: () => 1,
+        projectAtPresentationX: () => null,
+        updateTouchExploration() {
+            calls.push(["pan"]);
+            return true;
+        },
+        settleTouchExploration() {
+            calls.push(["settle"]);
+            return true;
+        },
+        revealLocalInteraction: () => false
+    };
+    const conversation = {
+        markDragLearned() {},
+        showDragHint() {}
+    };
+    bindCurtainDragging(canvas, application, () => {}, conversation);
+
+    canvas.dispatchEvent(touchEvent("pointerdown", 1, 100, 100, 0));
+    canvas.dispatchEvent(touchEvent("pointermove", 1, 120, 100, 16));
+    canvas.dispatchEvent(touchEvent("pointerdown", 2, 200, 100, 20));
+    const panCallsBeforePinch = calls.filter(
+        ([name]) => name === "pan"
+    ).length;
+    canvas.dispatchEvent(touchEvent("pointermove", 2, 260, 100, 36));
+    equal(
+        calls.filter(([name]) => name === "pan").length,
+        panCallsBeforePinch
+    );
+    assert(calls.some(([name]) => name === "pinch"));
+
+    canvas.dispatchEvent(touchEvent("pointerup", 2, 260, 100, 40));
+    canvas.dispatchEvent(touchEvent("pointermove", 1, 140, 100, 56));
+    assert(
+        calls.filter(([name]) => name === "begin-pan").length === 2
+    );
+    assert(
+        calls.filter(([name]) => name === "pan").length
+            > panCallsBeforePinch
+    );
+    canvas.dispatchEvent(touchEvent("pointerup", 1, 140, 100, 60));
 });
 
 test("temporary touch reveal is symmetric and restores its base state", () => {
@@ -1197,6 +1322,33 @@ function createApplication(viewport, grabbedProjectedX = 400) {
     });
     application.artwork = {};
     return application;
+}
+
+function createTouchCanvas() {
+    const canvas = new EventTarget();
+    canvas.width = 400;
+    canvas.clientWidth = 400;
+    canvas.clientLeft = 0;
+    canvas.classList = document.createElement("div").classList;
+    canvas.getBoundingClientRect = () => ({ left: 0 });
+    const captures = new Set();
+    canvas.setPointerCapture = (pointerId) => captures.add(pointerId);
+    canvas.hasPointerCapture = (pointerId) => captures.has(pointerId);
+    canvas.releasePointerCapture = (pointerId) => captures.delete(pointerId);
+    return canvas;
+}
+
+function touchEvent(type, pointerId, clientX, clientY, timeStamp) {
+    const event = new Event(type, { cancelable: true });
+    Object.defineProperties(event, {
+        button: { value: 0 },
+        pointerType: { value: "touch" },
+        pointerId: { value: pointerId },
+        clientX: { value: clientX },
+        clientY: { value: clientY },
+        timeStamp: { value: timeStamp }
+    });
+    return event;
 }
 
 function captureAnimationFrames() {
