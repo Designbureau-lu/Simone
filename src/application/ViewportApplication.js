@@ -8,6 +8,7 @@ export class ViewportApplication extends SimoneApplication {
     #logicalSourceArtwork = null;
     #logicalSourceImageWidth = null;
     #currentSurface = null;
+    #sampledSourceRange = null;
 
     constructor({ viewingSurface, ...dependencies }) {
         super(dependencies);
@@ -86,6 +87,7 @@ export class ViewportApplication extends SimoneApplication {
         const sampledSourceRange = this.#sourceRangeForSampling(
             periodSamplingRange
         );
+        this.#sampledSourceRange = sampledSourceRange;
         const viewportDiscoveryTime = performance.now()
             - viewportDiscoveryStartedAt;
         const columnProjectionStartedAt = performance.now();
@@ -117,6 +119,9 @@ export class ViewportApplication extends SimoneApplication {
             sourceX += 1
         ) {
             const column = this.artwork.columnAt(sourceX);
+            if (!column) {
+                continue;
+            }
             const projectedColumn = sampledProjectedColumns[sourceX];
             const placement = projectedColumn.placement;
             const destinationWidth = this.viewport.presentationWidthBetween(
@@ -184,6 +189,20 @@ export class ViewportApplication extends SimoneApplication {
         });
         this.performanceOverview?.update(report);
         return report;
+    }
+
+    requiredSegmentIndicesForCurrentViewport() {
+        if (!this.artwork || !this.#sampledSourceRange) {
+            return Object.freeze([]);
+        }
+        return this.artwork.segmentIndicesForSourceRange(
+            this.#sampledSourceRange.start,
+            this.#sampledSourceRange.end
+        );
+    }
+
+    segmentIntersectsCurrentViewport(index) {
+        return this.requiredSegmentIndicesForCurrentViewport().includes(index);
     }
 
     projectedColumnAt(sourceX) {

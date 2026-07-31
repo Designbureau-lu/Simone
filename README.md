@@ -21,6 +21,10 @@ one scene:
 - A sampled column uses the same arc equations, source pixels, shading, and
   destination coordinates as a full-artwork calculation, so rendered output
   is unchanged.
+- Ordered dimensions in `public/artwork.json` establish the complete virtual
+  artwork before decoding. Only segments required by the initial viewport and
+  guard region block the first curtain; remaining segments load through the
+  same metadata-backed artwork in the background.
 
 See [SIMONE.md](SIMONE.md) for the design philosophy, architecture, geometry and
 rendering pipelines, intentional approximations, limitations, and research

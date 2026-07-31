@@ -94,17 +94,22 @@ Canvas
 
 **Responsibilities**
 
-- Decode ordered production-segment image files.
-- Load startup segment order from `public/images.txt`.
-- Present separate decoded sources through one continuous immutable coordinate
-  system without assembling a giant intermediate canvas.
+- Parse ordered source dimensions from `public/artwork.json` before decoding.
+- Establish the complete virtual-artwork coordinate system from metadata.
+- Load and decode viewport-critical segments through a bounded priority queue,
+  then continue remaining segments in the background.
+- Present decoded sources through that stable coordinate system without
+  assembling a giant intermediate canvas.
 - Expose exact one-pixel-wide vertical source columns.
 
 **Public contract**
 
-- `loadArtwork(files)` resolves one `ImmutableArtwork`.
+- `ImmutableArtwork.fromMetadata()` establishes global coordinates before
+  source pixels are available.
+- `ArtworkSegmentScheduler` owns bounded request/decode state and priority.
+- `loadArtwork(files)` remains the all-at-once local-import rollback path.
 - `ImmutableArtwork.columnAt(sourceX)` returns an immutable source-column
-  reference.
+  reference when its segment is decoded, otherwise `null`.
 
 **Must not know**
 

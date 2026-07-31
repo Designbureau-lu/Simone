@@ -48,10 +48,22 @@ export class SimoneApplication {
     }
 
     async importArtwork(files) {
+        const artwork = await this.artworkLoader(files);
+        this.initializeArtwork(artwork);
+    }
+
+    initializeArtwork(artwork) {
+        if (!artwork
+            || !Number.isSafeInteger(artwork.width)
+            || artwork.width <= 0
+            || !Number.isSafeInteger(artwork.height)
+            || artwork.height <= 0) {
+            throw new TypeError("SIMONE requires valid artwork metadata.");
+        }
         this.attentionMode = ATTENTION_MODE_EXPLORE;
         this.projectNavigation = null;
         this.currentProjectIndex = null;
-        this.artwork = await this.artworkLoader(files);
+        this.artwork = artwork;
         this.imageCount = this.artwork.imageCount;
         const layout = resolveArtworkLayout(artworkLayout);
         this.logicalImageWidth = layout.repetitionsPerImage * layout.unitWidth;

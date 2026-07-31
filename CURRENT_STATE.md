@@ -4,6 +4,16 @@ Updated: 2026-07-31
 
 ## Today's work
 
+- Replaced the production all-images startup barrier with viewport-first
+  segmented loading. `public/artwork.json` now establishes ordered dimensions
+  and stable global coordinates before decoding. A deterministic scheduler
+  bounds network requests at three and decodes at two, gives the initial
+  viewport plus the existing four-Period guard priority, renders after those
+  segments settle, and loads the rest in the background. Missing or failed
+  segments retain their exact global span and do not block later segments.
+  The existing `loadArtwork()` path remains available for local import and
+  rollback. In fresh local Firefox, three of twelve image requests block first
+  draw; presentation measured 389 ms versus the previous 436 ms local trace.
 - Reduced `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN` from `2.00` to `1.50`
   after real-device evaluation. This is a 25% strength adjustment only; the
   continuous Period interpolation, center, affected region, redistribution,

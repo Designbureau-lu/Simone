@@ -1,4 +1,13 @@
 import { loadArtwork } from "../artwork/loadArtwork.js";
+import { ImmutableArtwork } from "../artwork/ImmutableArtwork.js";
+import {
+    artworkSegmentsFromManifest
+} from "../artwork/ArtworkManifest.js";
+import {
+    ArtworkSegmentScheduler,
+    SegmentLoadState,
+    SegmentPriority
+} from "../artwork/ArtworkSegmentScheduler.js";
 import { CircularFoldSurface } from "../geometry/CircularFoldSurface.js";
 import {
     OperatingPhase,
@@ -165,7 +174,7 @@ function bindViewingSurfaceResize(
 
 export async function loadManifestArtwork(application, onNavigation = null) {
     const manifestUrl = manifestUrlFor(
-        "public/images.txt",
+        "public/artwork.json",
         document.baseURI
     );
 
@@ -177,23 +186,40 @@ export async function loadManifestArtwork(application, onNavigation = null) {
             );
         }
 
-        const filenames = imageFilenamesFromManifest(await response.text());
-        console.info([
-            "Loaded images.txt",
-            `Loaded at: ${manifestLoadTime()}`,
-            `Images: ${filenames.length}`
-        ].join("\n"));
-        if (filenames.length === 0) {
-            console.warn("SIMONE image manifest contains no image filenames.");
-            return;
-        }
-
-        const sources = imageSourcesForFilenames(
-            filenames,
+        const segments = artworkSegmentsFromManifest(
+            await response.text(),
             document.baseURI
         );
-        await application.importArtwork(sources);
-        await loadProjectNavigation(application, onNavigation);
+        console.info([
+            "Loaded artwork.json",
+            `Loaded at: ${manifestLoadTime()}`,
+            `Images: ${segments.length}`
+        ].join("\n"));
+        const artwork = ImmutableArtwork.fromMetadata(segments);
+        application.initializeArtwork(artwork);
+        const initialSegments = application
+            .requiredSegmentIndicesForCurrentViewport();
+        const scheduler = new ArtworkSegmentScheduler({ artwork });
+        let initialCurtainPresented = false;
+        scheduler.onStateChange(({ index, state }) => {
+            if (initialCurtainPresented
+                && state === SegmentLoadState.DECODED
+                && application.segmentIntersectsCurrentViewport(index)) {
+                application.render();
+            }
+        });
+        const navigation = loadProjectNavigation(
+            application,
+            onNavigation
+        );
+        await scheduler.request(
+            initialSegments,
+            SegmentPriority.INITIAL_VIEWPORT
+        );
+        application.render();
+        initialCurtainPresented = true;
+        await navigation;
+        scheduler.requestRemaining(SegmentPriority.BACKGROUND);
     } catch (error) {
         console.error("SIMONE could not load its image manifest.", error);
     }

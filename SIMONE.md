@@ -32,18 +32,20 @@ a general cloth simulator.
 
 ### Artwork
 
-`ImmutableArtwork` owns one continuous virtual coordinate system across
-ordered decoded sources and exposes immutable one-pixel-wide vertical columns.
-`loadArtwork` keeps the decoded sources separate; each virtual column resolves
-to its owning source image and local sampling coordinate.
-At startup, `public/images.txt` supplies one filename per line in display
-order; blank lines and comments beginning with `#` are ignored. The referenced
-files live in `public/images/`.
+`ImmutableArtwork` owns one continuous virtual coordinate system across ordered
+source segments and exposes immutable one-pixel-wide vertical columns as those
+segments become available. `public/artwork.json` supplies the ordered filename,
+pixel dimensions, and optional compressed byte size before image decoding, so
+global artwork, curtain, camera, and semantic coordinates are final from the
+first frame. Startup requests only segments intersecting the initial viewport
+and its existing guard region; a bounded scheduler loads the remainder in the
+background. `loadArtwork` remains the all-at-once local-import rollback path.
+The referenced files live in `public/images/`.
 
 Semantic project ranges are defined in `public/projects.txt`. They are measured
 in logical Gutter|Column units, not inferred from image dimensions. The current
 central layout configuration uses a 40 px gutter, a 400 px artwork column, and
-10 repetitions per successfully loaded image.
+10 repetitions per manifest segment.
 
 ### Parameters
 

@@ -357,3 +357,16 @@ measured frames in Firefox headless.
 The crest adds one gradient and one `fillRect()` per visible front fold region.
 It does not change source-column `drawImage()` calls or measured rendering time;
 its cost appears in the shading/overlay phase.
+
+## Viewport-first cold startup
+
+The production manifest now supplies dimensions before decoding, allowing the
+global curtain and artwork coordinates to exist while source segments remain
+unavailable. In a fresh local Firefox profile, the initial guarded desktop
+viewport requested three of twelve 5000 × 2500 JPEG segments before first
+`drawImage()`. Remaining requests began only after the first synchronous render
+completed. The first presentation opportunity measured 389 ms, compared with
+436 ms in the preceding all-images local trace. Localhost understates the real
+network benefit; the architectural reduction is from 10.9 MB across twelve
+startup images to 2.9 MB across three for this viewport. No physical iPhone
+measurement was available during implementation.
