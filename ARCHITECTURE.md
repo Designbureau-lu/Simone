@@ -399,7 +399,7 @@ boundaries. Their contributions are added over the captured state.
 Increasing separation therefore expands the affected fabric as it opens;
 restoring the original separation restores the captured state. Pinch never
 zooms artwork or moves the Viewport. The current exploration build multiplies
-separation movement by `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 2.00`.
+separation movement by `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 1.50`.
 Returning to one finger immediately starts a fresh pan.
 
 Projects are secondary in EXPLORE. The local click/Moses opening is assistance

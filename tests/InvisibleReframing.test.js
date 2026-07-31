@@ -213,7 +213,7 @@ test("touch input transitions directly between pan and pinch", () => {
     );
     const pinchUpdate = calls.find(([name]) => name === "pinch");
     assert(pinchUpdate);
-    closeTo(pinchUpdate[1], 60);
+    closeTo(pinchUpdate[1], 45);
 
     canvas.dispatchEvent(touchEvent("pointerup", 2, 260, 100, 40));
     canvas.dispatchEvent(touchEvent("pointermove", 1, 140, 100, 56));

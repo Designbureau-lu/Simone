@@ -4,6 +4,10 @@ Updated: 2026-07-31
 
 ## Today's work
 
+- Reduced `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN` from `2.00` to `1.50`
+  after real-device evaluation. This is a 25% strength adjustment only; the
+  continuous Period interpolation, center, affected region, redistribution,
+  limits, and all other interactions are unchanged.
 - Removed Pinch's discrete moving-grab handoff between Periods. Each virtual
   grab now evaluates the existing redistribution model at its two adjacent
   Period anchors and linearly blends the complete results using its fractional
