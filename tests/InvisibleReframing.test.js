@@ -138,8 +138,8 @@ test("touch input transitions directly between pan and pinch", () => {
     canvas.dispatchEvent(touchEvent("pointermove", 1, 120, 100, 16));
     canvas.dispatchEvent(touchEvent("pointerdown", 2, 200, 100, 20));
     const pinchStart = calls.find(([name]) => name === "begin-pinch");
-    closeTo(pinchStart[1], 120);
-    closeTo(pinchStart[2], 200);
+    closeTo(pinchStart[1], 100);
+    closeTo(pinchStart[2], 220);
     closeTo((pinchStart[1] + pinchStart[2]) / 2, 160);
     const panCallsBeforePinch = calls.filter(
         ([name]) => name === "pan"
@@ -171,8 +171,8 @@ test("touch input transitions directly between pan and pinch", () => {
     const verticalPinchStart = calls.filter(
         ([name]) => name === "begin-pinch"
     ).at(-1);
-    closeTo(verticalPinchStart[1], 120);
-    closeTo(verticalPinchStart[2], 200);
+    closeTo(verticalPinchStart[1], 100);
+    closeTo(verticalPinchStart[2], 220);
     closeTo(
         (verticalPinchStart[1] + verticalPinchStart[2]) / 2,
         160
@@ -185,6 +185,22 @@ test("touch input transitions directly between pan and pinch", () => {
     closeTo(verticalPinchUpdate[2], pinchUpdate[2]);
     canvas.dispatchEvent(touchEvent("pointerup", 4, 160, 200, 94));
     canvas.dispatchEvent(touchEvent("pointerup", 3, 160, 60, 98));
+
+    canvas.dispatchEvent(touchEvent("pointerdown", 5, 150, 100, 110));
+    canvas.dispatchEvent(touchEvent("pointerdown", 6, 170, 100, 114));
+    const nearTouchPinchStart = calls.filter(
+        ([name]) => name === "begin-pinch"
+    ).at(-1);
+    closeTo(nearTouchPinchStart[1], pinchStart[1]);
+    closeTo(nearTouchPinchStart[2], pinchStart[2]);
+    canvas.dispatchEvent(touchEvent("pointermove", 6, 230, 100, 130));
+    const nearTouchPinchUpdate = calls.filter(
+        ([name]) => name === "pinch"
+    ).at(-1);
+    closeTo(nearTouchPinchUpdate[1], pinchUpdate[1]);
+    closeTo(nearTouchPinchUpdate[2], pinchUpdate[2]);
+    canvas.dispatchEvent(touchEvent("pointerup", 6, 230, 100, 134));
+    canvas.dispatchEvent(touchEvent("pointerup", 5, 150, 100, 138));
 });
 
 test("temporary touch reveal is symmetric and restores its base state", () => {

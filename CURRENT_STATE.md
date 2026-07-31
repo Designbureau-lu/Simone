@@ -4,6 +4,13 @@ Updated: 2026-07-31
 
 ## Today's work
 
+- Decoupled Pinch reach from the initial distance between the touches. The
+  midpoint now centers a fixed `TOUCH_CURTAIN_PINCH_GRAB_SPAN = 120` CSS-pixel
+  virtual grab span, while opening displacement remains proportional to
+  `currentDistance - initialDistance`. Equal separation changes therefore
+  produce equal openings whether the gesture begins nearly closed or already
+  apart; Pan, Tap, camera behavior, and the curtain redistribution model are
+  unchanged.
 - Removed the unreferenced legacy full-destination `CanvasColumnRenderer` and
   the unconnected experimental `ColumnVisibility` contract. The active
   `ViewportCanvasColumnRenderer`, viewport selection, historical Model C
@@ -32,11 +39,11 @@ Updated: 2026-07-31
   into mirrored left/right grab displacement. The virtual grabs remain exactly
   centered on the touch midpoint; no centering compensation was introduced.
 - Replaced the field-like Pinch reveal with direct two-finger fabric
-  manipulation. The pinch midpoint locates two virtual horizontal grabs whose
-  initial span equals the Euclidean distance between the touches. Only the
-  change in that scalar distance drives the curtain: half moves each grab
-  outward or inward, so horizontal, vertical, and diagonal pinches with equal
-  separation changes produce identical deformation. Both grabs use the
+  manipulation. The pinch midpoint locates two virtual horizontal grabs at a
+  fixed span independent of initial finger spacing. Only the change in scalar
+  distance drives the curtain: half moves each grab outward or inward, so
+  horizontal, vertical, and diagonal pinches with equal separation changes
+  produce identical deformation. Both grabs use the
   established drag redistribution over the same captured Period factors.
   Increasing separation opens between them and gathers outside; returning to
   the original separation restores the captured state exactly. No reveal
