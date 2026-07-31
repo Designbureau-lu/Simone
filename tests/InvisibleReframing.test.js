@@ -69,14 +69,17 @@ test("pinch moves two curtain grabs outward from its center", () => {
     const fixedCenter = pinch.pinchCenterProjectedX;
 
     application.updateTouchPinch(pinch, 120);
-    assert(field.periods[center].visibleFactor > 0.5);
-    assert(field.periods[center - 3].visibleFactor < 0.5);
-    assert(field.periods[center + 3].visibleFactor < 0.5);
     assert(
-        Math.abs(
-            field.periods[center - 1].visibleFactor
-                - field.periods[center + 1].visibleFactor
-        ) < 0.005
+        field.periods[center].visibleFactor > 0.5,
+        `Expected center to open, got ${field.periods[center].visibleFactor}`
+    );
+    assert(
+        field.periods[center - 10].visibleFactor < 0.5,
+        `Expected left outside to gather, got ${field.periods[center - 10].visibleFactor}`
+    );
+    assert(
+        field.periods[center + 10].visibleFactor < 0.5,
+        `Expected right outside to gather, got ${field.periods[center + 10].visibleFactor}`
     );
     closeTo(pinch.pinchCenterProjectedX, fixedCenter);
     const strongInsideOpening = field.periods[center].visibleFactor;
@@ -126,6 +129,38 @@ test("pinch center and redistribution remain stable for unchanged input", () => 
 
     closeTo(pinch.pinchCenterProjectedX, fixedCenter);
     closeTo(maximumFactorDifference(firstFactors, secondFactors), 0);
+});
+
+test("pinch deformation crosses Period boundaries continuously", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const application = new SimoneApplication({
+        artworkLoader: null,
+        parameters: new SurfaceParameters(),
+        curtainField: field,
+        viewport: createViewport(300),
+        phaseResolver: null,
+        surfaces: null,
+        shading: null,
+        renderer: null
+    });
+    application.artwork = {};
+    application.render = () => {};
+    field.configureFor(10000, 100);
+    field.resolve(application.parameters);
+    const pinch = application.beginTouchPinch(570);
+    const rightEdge = pinch.pinchProjectedPeriodWidths
+        .slice(0, pinch.periodIndex + 1)
+        .reduce((total, width) => total + width, 0);
+    const boundaryDisplacement = rightEdge
+        - pinch.pinchCenterProjectedX;
+    const epsilon = 0.000001;
+
+    application.updateTouchPinch(pinch, boundaryDisplacement - epsilon);
+    const before = field.periods.map((period) => period.visibleFactor);
+    application.updateTouchPinch(pinch, boundaryDisplacement + epsilon);
+    const after = field.periods.map((period) => period.visibleFactor);
+
+    assert(maximumFactorDifference(before, after) < 0.000001);
 });
 
 test("touch input transitions directly between pan and pinch", () => {

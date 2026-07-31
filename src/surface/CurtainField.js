@@ -258,13 +258,13 @@ export class CurtainField {
             interaction.visibleFactors,
             interaction.pinchProjectedPeriodWidths
         );
-        const first = localDeformationFor(
+        const first = interpolatedPinchDeformationFor(
             firstInteraction,
             firstDisplacement,
             periodLength,
             this.#periods.length
         );
-        const second = localDeformationFor(
+        const second = interpolatedPinchDeformationFor(
             secondInteraction,
             secondDisplacement,
             periodLength,
@@ -598,6 +598,52 @@ function localDeformationFor(
     }
 
     return { start, end, redistributions };
+}
+
+function interpolatedPinchDeformationFor(
+    interaction,
+    projectedDisplacement,
+    periodLength,
+    periodCount
+) {
+    const firstIndex = interaction.periodIndex;
+    const secondIndex = Math.min(firstIndex + 1, periodCount - 1);
+    const first = localDeformationFor(
+        periodCenteredInteraction(firstIndex, periodCount),
+        projectedDisplacement,
+        periodLength,
+        periodCount
+    );
+    if (secondIndex === firstIndex) {
+        return first;
+    }
+
+    const second = localDeformationFor(
+        periodCenteredInteraction(secondIndex, periodCount),
+        projectedDisplacement,
+        periodLength,
+        periodCount
+    );
+    const secondWeight = interaction.localPosition;
+    const firstWeight = 1 - secondWeight;
+
+    return {
+        start: Math.min(first.start, second.start),
+        end: Math.max(first.end, second.end),
+        redistributions: first.redistributions.map(
+            (redistribution, index) => redistribution * firstWeight
+                + second.redistributions[index] * secondWeight
+        )
+    };
+}
+
+function periodCenteredInteraction(periodIndex, periodCount) {
+    return {
+        periodIndex,
+        localPosition: 0.5,
+        leftInfluence: influenceTotalFor(periodIndex, -1, periodCount),
+        rightInfluence: influenceTotalFor(periodIndex, 1, periodCount)
+    };
 }
 
 function redistributionForNeighbor(offset, leftScale, rightScale) {

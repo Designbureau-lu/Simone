@@ -392,8 +392,10 @@ used to locate the moving grabs is captured with it, so deformation cannot feed
 back into grab selection. Their outward positions grow with the absolute change in
 Euclidean finger separation. The same signed separation change drives their
 equal-and-opposite displacement, regardless of finger angle or initial touch
-spacing. Both moving grabs run through the desktop
-redistribution model and their contributions are added over the captured state.
+spacing. Each moving grab evaluates the established redistribution model at
+its two adjacent Period anchors and blends those complete results by its
+fractional position, avoiding a discrete deformation handoff at Period
+boundaries. Their contributions are added over the captured state.
 Increasing separation therefore expands the affected fabric as it opens;
 restoring the original separation restores the captured state. Pinch never
 zooms artwork or moves the Viewport. The current exploration build multiplies

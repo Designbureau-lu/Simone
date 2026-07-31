@@ -4,6 +4,12 @@ Updated: 2026-07-31
 
 ## Today's work
 
+- Removed Pinch's discrete moving-grab handoff between Periods. Each virtual
+  grab now evaluates the existing redistribution model at its two adjacent
+  Period anchors and linearly blends the complete results using its fractional
+  position. Direct deformation and neighboring redistribution therefore travel
+  continuously across Period boundaries. The 50-Period influence, clamps, Pan,
+  Tap, camera, and desktop deformation path are unchanged.
 - Calibrated direct two-finger manipulation after real-device testing. Pinch
   displacement gain is reduced from `4.00` to `2.00`. When the second finger
   lands, the Period under the initial midpoint is selected and its fold centre
