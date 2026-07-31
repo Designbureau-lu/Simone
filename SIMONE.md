@@ -86,7 +86,7 @@ calculating transition progress.
 
 ### Rendering
 
-`CanvasColumnRenderer` draws exact source columns at geometry-provided
+`ViewportCanvasColumnRenderer` draws exact source columns at geometry-provided
 destinations. It performs no curve solving. Fold appearance is added after the
 artwork with a small number of batched Canvas 2D compositing operations and
 gradients.
@@ -108,7 +108,7 @@ UI configuration
     -> camera Period discovery
     -> guarded artwork-column placements
     -> SurfaceShading appearance
-    -> CanvasColumnRenderer
+    -> ViewportCanvasColumnRenderer
     -> canvas image
 ```
 

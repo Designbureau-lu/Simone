@@ -35,7 +35,7 @@ Guarded placement objects
 SurfaceShading
              |
              v
-CanvasColumnRenderer
+ViewportCanvasColumnRenderer
              |
              v
 Canvas
@@ -61,8 +61,8 @@ Canvas
 - **`SurfaceShading`** supplies local branch brightness from each Period's
   resolved parameters and global appearance tuning. It does not alter geometry
   or artwork.
-- **`CanvasColumnRenderer`** draws source columns and applies lightweight,
-  batched appearance cues.
+- **`ViewportCanvasColumnRenderer`** draws source columns and applies
+  lightweight, batched appearance cues.
 - **Canvas** is the final browser presentation surface.
 
 ---
@@ -233,33 +233,10 @@ curtain interactions.
 - Circular-arc implementation details.
 - Canvas rendering and appearance gradients.
 
-### `visibility/`
-
-This folder contains an experimental visibility contract that is not currently
-connected by the composition root.
-
-**Responsibilities**
-
-- Represent a possible independent column-visibility policy.
-
-**Public contract**
-
-- `ColumnVisibility.isVisible(column, placement)` evaluates visibility.
-- `ColumnVisibility.appearanceFor(column, placement)` returns visibility
-  appearance metadata.
-
-**Must not know**
-
-- How artwork pixels are generated or edited.
-- How surface placements are calculated.
-- How a renderer realizes visibility.
-
----
-
 ## Placement Contract
 
 `CircularFoldSurface.mapColumn()` produces one immutable placement for each
-immutable artwork column.
+requested globally indexed artwork column.
 
 | Field | Producer | Consumer | Meaning |
 | --- | --- | --- | --- |

@@ -4,6 +4,10 @@ Updated: 2026-07-31
 
 ## Today's work
 
+- Removed the unreferenced legacy full-destination `CanvasColumnRenderer` and
+  the unconnected experimental `ColumnVisibility` contract. The active
+  `ViewportCanvasColumnRenderer`, viewport selection, historical Model C
+  comparison, and runtime behavior are unchanged.
 - Separated the global curtain model from fine-resolution artwork sampling.
   Every Period and cumulative projected Period position still resolves on every
   frame. The camera now discovers intersecting Periods from that global table,
