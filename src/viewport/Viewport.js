@@ -118,9 +118,23 @@ export class Viewport {
             : this.#projectedOffset - this.#contentStart;
     }
 
-    sourceRangeFor(projectedColumns) {
+    sourceRangeFor(
+        projectedColumns,
+        searchRange = null
+    ) {
         if (!Array.isArray(projectedColumns)) {
             throw new TypeError("Viewport requires projected columns.");
+        }
+        searchRange ??= {
+            start: 0,
+            end: projectedColumns.length
+        };
+        if (!Number.isInteger(searchRange.start)
+            || !Number.isInteger(searchRange.end)
+            || searchRange.start < 0
+            || searchRange.end < searchRange.start
+            || searchRange.end > projectedColumns.length) {
+            throw new RangeError("Projected-column search range is invalid.");
         }
 
         const windowStart = this.#projectedOffset;
@@ -128,7 +142,11 @@ export class Viewport {
         let start = null;
         let end = null;
 
-        for (let sourceX = 0; sourceX < projectedColumns.length; sourceX += 1) {
+        for (
+            let sourceX = searchRange.start;
+            sourceX < searchRange.end;
+            sourceX += 1
+        ) {
             const { placement, width } = projectedColumns[sourceX];
             const left = Math.min(
                 placement.targetX,

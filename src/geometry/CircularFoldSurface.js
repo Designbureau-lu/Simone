@@ -85,6 +85,52 @@ export class CircularFoldSurface extends PeriodicSurface {
             arc.chordLength
         );
     }
+
+    samplingRangeForProjectedWindow(start, end, guardPeriods = 0) {
+        if (!Number.isFinite(start)
+            || !Number.isFinite(end)
+            || end < start
+            || !Number.isInteger(guardPeriods)
+            || guardPeriods < 0) {
+            throw new RangeError("Projected sampling window is invalid.");
+        }
+
+        let first = null;
+        let last = null;
+        for (let index = 0; index < this.periods.length; index += 1) {
+            const period = this.periods[index];
+            const periodStart = period.horizontalOffset
+                + period.projectedOffset;
+            const periodEnd = periodStart + period.projectedWidth;
+            if (periodEnd > start && periodStart < end) {
+                first ??= index;
+                last = index;
+            }
+        }
+
+        if (first === null) {
+            return Object.freeze({
+                periodStart: 0,
+                periodEnd: 0,
+                logicalStart: 0,
+                logicalEnd: 0
+            });
+        }
+
+        const periodStart = Math.max(0, first - guardPeriods);
+        const periodEnd = Math.min(
+            this.periods.length,
+            last + guardPeriods + 1
+        );
+        const periodLength = this.periods[0].artworkPeriodLength;
+
+        return Object.freeze({
+            periodStart,
+            periodEnd,
+            logicalStart: periodStart * periodLength,
+            logicalEnd: periodEnd * periodLength
+        });
+    }
 }
 
 function resolvePeriod(parameters) {

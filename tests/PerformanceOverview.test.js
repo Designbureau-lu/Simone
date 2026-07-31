@@ -11,7 +11,11 @@ test("meter reports active frame measurements", () => {
     overview.update(report());
     assert(element.querySelector("[data-performance-output]")
         .textContent.includes("Frame (ms)"));
+    assert(element.textContent.includes("Period layout (ms)"));
+    assert(element.textContent.includes("Viewport discovery"));
+    assert(element.textContent.includes("Column projection"));
     assert(element.textContent.includes("Selected cols"));
+    assert(element.textContent.includes("Projected cols"));
 });
 
 test("reset samples keeps the active report visible", () => {
@@ -37,6 +41,9 @@ function report() {
     return {
         totalTime: 10,
         geometryTime: 1,
+        periodGeometryTime: 0.2,
+        viewportDiscoveryTime: 0.1,
+        columnProjectionTime: 0.7,
         viewportTime: 1,
         canvasResetTime: 1,
         renderingTime: 4,
@@ -48,6 +55,7 @@ function report() {
         destinationPixelCount: 500000,
         drawImageCalls: 100,
         visibleColumns: 100,
+        projectedColumns: 200,
         totalColumns: 1000,
         periodCount: 10
     };

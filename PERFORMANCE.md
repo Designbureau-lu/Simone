@@ -3,6 +3,61 @@
 This document records controlled performance observations. It does not define
 optimization decisions.
 
+## Demand-driven artwork-column projection
+
+The curtain/artwork separation was verified against the active circular-fold
+model. `CircularFoldSurface.frameFor()` still resolves every global Period,
+including its cumulative projected offset, arcs, width, and depth.
+`samplingRangeForProjectedWindow()` uses only that complete Period table to
+locate the camera and adds four whole guard Periods on each side. Exact
+per-column arc sampling is then performed only for the corresponding global
+source range. Columns retain their original virtual-artwork coordinates.
+
+Semantic navigation can request a project outside the current sampled range.
+`ViewportApplication.projectedColumnAt()` handles that case by mapping the
+requested global source coordinate directly through the already-resolved
+global Period table. It does not create a viewport-relative coordinate or
+populate the intervening archive.
+
+A controlled production drag in clean headless Firefox profiles compared
+commit `d1acc79` (allocation improvements but full projection) with the guarded
+pipeline. Both used the 60,000-column production manifest.
+
+| Metric | Full projection | Guarded projection |
+| --- | ---: | ---: |
+| Projected artwork columns | 60,000 | 12,955 |
+| Projected-column reduction | — | 78.4% |
+| Column projection median / p95 | approximately 11 / — ms | 3 / 6 ms |
+| Global Period layout median / p95 | included above | 0 / 1 ms |
+| Viewport-region discovery median / p95 | <1 / <1 ms | 0 / 0 ms |
+| Rendering median / p95 | 14 / 21 ms | 15 / 29 ms |
+| Complete frame median / p95 | 34 / 44 ms | 26 / 40 ms |
+| Frame gaps over 50 ms | 2 | 1 |
+
+The old pipeline recorded Period layout, full column projection, bounds, and
+viewing-surface work together as Geometry. Its column-projection value above is
+the approximate residual after subtracting the unchanged sub-millisecond
+Period and viewport work. The new instrumentation records Period layout,
+viewport discovery, and column projection independently.
+
+The task-specific improvement is approximately 73% in column-projection time
+and 24% in complete median frame time. Combined with the preceding allocation
+pass, the controlled median has moved from 52 ms to 26 ms. These are Firefox
+desktop controls rather than iPhone Safari measurements.
+
+The complete curtain model remains the same size and is resolved every frame.
+Tests compare guarded discovery with full camera selection and compare directly
+sampled global `targetX`, `targetY`, and slope values with full projection.
+Rendering still draws every selected source column and uses the existing
+crest, valley, Rear, and shading paths.
+
+The principal remaining cost in this trace is Canvas rendering at roughly
+15 ms median. Column projection is now about 3 ms, and global Period layout and
+viewport discovery are below the timer's 1 ms resolution. On a narrow mobile
+viewport the sampled proportion should be smaller still, but a real Safari
+device trace is required before drawing conclusions about mobile compositor
+cost.
+
 ## Interaction-frame allocation and Canvas-state pass
 
 A controlled production interaction trace in a clean headless Firefox profile

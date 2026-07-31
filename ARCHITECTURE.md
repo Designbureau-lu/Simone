@@ -360,9 +360,20 @@ continuity take precedence over exact visible material length.
 
 Decoded source-column descriptors are immutable and cached for the lifetime of
 an imported artwork. Their logical virtual coordinates are likewise cached for
-the active artwork layout. Production frames reuse both inputs while continuing
-to recompute the same curtain projection; caching changes allocation lifecycle,
-not artwork sampling or geometry.
+the active artwork layout. Production frames reuse both inputs while computing
+the same requested curtain samples; caching changes allocation lifecycle, not
+artwork sampling or geometry.
+
+The physical curtain and its printed artwork now have explicit resolution
+boundaries. Every frame resolves the complete ordered Period table and its
+global cumulative projected positions. The camera is located against those
+global Period intervals. Exact artwork-column projection is demand-driven:
+only columns belonging to intersecting Periods plus four guard Periods on each
+side are sampled through `mapColumn()`. Each sample retains its original global
+logical coordinate and Period index. Semantic navigation may sample a distant
+column directly from the same global table before the camera arrives. No
+viewport-local curtain, approximate fold, or alternate coordinate system is
+introduced.
 
 ### Lightweight shading
 

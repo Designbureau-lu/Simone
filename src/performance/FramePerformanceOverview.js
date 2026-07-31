@@ -3,6 +3,9 @@ const FRAME_BUDGET_MS = 1000 / 60;
 const TIME_KEYS = Object.freeze([
     ["Frame", "totalTime"],
     ["Geometry", "geometryTime"],
+    ["Period layout", "periodGeometryTime"],
+    ["Viewport discovery", "viewportDiscoveryTime"],
+    ["Column projection", "columnProjectionTime"],
     ["Selection", "viewportTime"],
     ["Canvas reset", "canvasResetTime"],
     ["Rendering", "renderingTime"],
@@ -71,6 +74,7 @@ export class FramePerformanceOverview {
             valueRow("Destination px", integer(current.destinationPixelCount)),
             valueRow("Draw calls", integer(current.drawImageCalls)),
             valueRow("Selected cols", integer(current.visibleColumns)),
+            valueRow("Projected cols", integer(current.projectedColumns)),
             valueRow("Artwork cols", integer(current.totalColumns)),
             valueRow("Periods", integer(current.periodCount))
         ];

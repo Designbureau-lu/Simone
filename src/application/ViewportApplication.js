@@ -1,10 +1,13 @@
 import { SimoneApplication } from "./SimoneApplication.js";
 
+const VIEWPORT_SAMPLING_GUARD_PERIODS = 4;
+
 /** SIMONE application using virtual geometry and viewing-space output. */
 export class ViewportApplication extends SimoneApplication {
     #logicalSourceXs = null;
     #logicalSourceArtwork = null;
     #logicalSourceImageWidth = null;
+    #currentSurface = null;
 
     constructor({ viewingSurface, ...dependencies }) {
         super(dependencies);
@@ -34,7 +37,9 @@ export class ViewportApplication extends SimoneApplication {
         const geometryStartedAt = performance.now();
         const phase = this.phaseResolver.resolve(parameters);
         const surface = this.surfaces[phase];
+        this.#currentSurface = surface;
         const appearance = this.shading.appearanceFor();
+        const periodGeometryStartedAt = performance.now();
         const virtualFrame = surface.frameFor(
             {
                 width: this.logicalArtworkWidth,
@@ -42,13 +47,10 @@ export class ViewportApplication extends SimoneApplication {
             },
             this.curtainField
         );
-        const projectedColumns = this.#projectGeometry(surface);
-        this.projectedColumns = Object.freeze(projectedColumns);
-        const contentBounds = boundsFor(
-            projectedColumns,
-            0,
-            projectedColumns.length
-        );
+        const periodGeometryTime = performance.now()
+            - periodGeometryStartedAt;
+        const viewportDiscoveryStartedAt = performance.now();
+        const contentBounds = this.#projectedContentBounds(surface);
         this.projectedContentBounds = contentBounds;
         const viewing = this.viewingSurface.resolve(
             virtualFrame,
@@ -76,10 +78,30 @@ export class ViewportApplication extends SimoneApplication {
             appearance,
             viewing.scaleX
         );
+        const samplingRange = surface.samplingRangeForProjectedWindow(
+            this.viewport.projectedOffset,
+            this.viewport.projectedOffset + this.viewport.projectedExtent,
+            VIEWPORT_SAMPLING_GUARD_PERIODS
+        );
+        const sourceRange = this.#sourceRangeForSampling(samplingRange);
+        const viewportDiscoveryTime = performance.now()
+            - viewportDiscoveryStartedAt;
+        const columnProjectionStartedAt = performance.now();
+        const projectedColumns = this.#projectGeometry(
+            surface,
+            sourceRange.start,
+            sourceRange.end
+        );
+        this.projectedColumns = Object.freeze(projectedColumns);
+        const columnProjectionTime = performance.now()
+            - columnProjectionStartedAt;
         const geometryTime = performance.now() - geometryStartedAt;
 
         const selectionStartedAt = performance.now();
-        const artworkRange = this.viewport.sourceRangeFor(projectedColumns);
+        const artworkRange = this.viewport.sourceRangeFor(
+            projectedColumns,
+            sourceRange
+        );
         const viewportTime = performance.now() - selectionStartedAt;
 
         const canvasResetStartedAt = performance.now();
@@ -137,12 +159,16 @@ export class ViewportApplication extends SimoneApplication {
             totalTime,
             curtainFieldTime,
             geometryTime,
+            periodGeometryTime,
+            viewportDiscoveryTime,
+            columnProjectionTime,
             viewportTime,
             renderingTime,
             overlayTime,
             canvasResetTime,
             totalColumns: this.artwork.width,
             visibleColumns: artworkRange.end - artworkRange.start,
+            projectedColumns: sourceRange.end - sourceRange.start,
             periodCount: this.curtainField.periods.length,
             projectedExtent: this.viewport.projectedExtent,
             imageCount: this.imageCount,
@@ -157,23 +183,35 @@ export class ViewportApplication extends SimoneApplication {
         return report;
     }
 
-    #projectGeometry(surface) {
-        const placements = new Array(this.artwork.width);
-        const logicalSourceXs = this.#logicalSourceXsForArtwork();
-        const geometryColumn = { sourceX: 0 };
+    projectedColumnAt(sourceX) {
+        const existing = super.projectedColumnAt(sourceX);
+        if (existing || !this.#currentSurface || !this.artwork) {
+            return existing;
+        }
 
-        for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
-            geometryColumn.sourceX = logicalSourceXs[sourceX];
-            placements[sourceX] = surface.mapColumn(
-                geometryColumn,
-                this.curtainField
-            );
+        const placement = this.#placementAt(this.#currentSurface, sourceX);
+        const nextPlacement = sourceX + 1 < this.artwork.width
+            ? this.#placementAt(this.#currentSurface, sourceX + 1)
+            : null;
+        const width = nextPlacement
+            && nextPlacement.branch === placement.branch
+            ? nextPlacement.targetX - placement.targetX
+            : 1;
+
+        return Object.freeze({ placement, width });
+    }
+
+    #projectGeometry(surface, start, end) {
+        const placements = new Array(this.artwork.width);
+
+        for (let sourceX = start; sourceX < end; sourceX += 1) {
+            placements[sourceX] = this.#placementAt(surface, sourceX);
         }
 
         const projectedColumns = new Array(placements.length);
         let lastWidth = 1;
 
-        for (let sourceX = 0; sourceX < placements.length; sourceX += 1) {
+        for (let sourceX = start; sourceX < end; sourceX += 1) {
             const placement = placements[sourceX];
             const nextPlacement = placements[sourceX + 1];
             const width = nextPlacement
@@ -189,6 +227,79 @@ export class ViewportApplication extends SimoneApplication {
         }
 
         return projectedColumns;
+    }
+
+    #placementAt(surface, sourceX) {
+        const logicalSourceXs = this.#logicalSourceXsForArtwork();
+        return surface.mapColumn(
+            { sourceX: logicalSourceXs[sourceX] },
+            this.curtainField
+        );
+    }
+
+    #sourceRangeForSampling(samplingRange) {
+        if (samplingRange.periodEnd === samplingRange.periodStart) {
+            return Object.freeze({ start: 0, end: 0 });
+        }
+
+        const logicalStart = Math.min(
+            samplingRange.logicalStart,
+            this.logicalArtworkWidth
+        );
+        const logicalEnd = Math.min(
+            samplingRange.logicalEnd,
+            this.logicalArtworkWidth
+        );
+        const start = this.artwork.sourceXForLogicalX(
+            logicalStart,
+            this.logicalImageWidth
+        );
+        const end = logicalEnd === this.logicalArtworkWidth
+            ? this.artwork.width
+            : this.artwork.sourceXForLogicalX(
+                logicalEnd,
+                this.logicalImageWidth
+            );
+
+        return Object.freeze({
+            start: Math.max(0, start - 1),
+            end: Math.min(this.artwork.width, end + 1)
+        });
+    }
+
+    #projectedContentBounds(surface) {
+        const first = this.#placementAt(surface, 0);
+        const second = this.artwork.width > 1
+            ? this.#placementAt(surface, 1)
+            : null;
+        const firstWidth = second && second.branch === first.branch
+            ? second.targetX - first.targetX
+            : 1;
+        const lastSourceX = this.artwork.width - 1;
+        const last = this.#placementAt(surface, lastSourceX);
+        let lastWidth = 1;
+        let current = last;
+
+        for (
+            let sourceX = lastSourceX - 1;
+            sourceX >= 0;
+            sourceX -= 1
+        ) {
+            const previous = this.#placementAt(surface, sourceX);
+            const width = current.branch === previous.branch
+                ? current.targetX - previous.targetX
+                : 0;
+            if (width !== 0) {
+                lastWidth = width;
+                break;
+            }
+            current = previous;
+        }
+
+        return Object.freeze({
+            start: Math.min(first.targetX, first.targetX + firstWidth),
+            end: Math.max(last.targetX, last.targetX + lastWidth)
+        });
     }
 
     #logicalSourceXsForArtwork() {
@@ -209,21 +320,4 @@ export class ViewportApplication extends SimoneApplication {
         this.#logicalSourceImageWidth = this.logicalImageWidth;
         return logicalSourceXs;
     }
-}
-
-function boundsFor(projectedColumns, start, end) {
-    let minimum = Infinity;
-    let maximum = -Infinity;
-
-    for (let sourceX = start; sourceX < end; sourceX += 1) {
-        const { placement, width } = projectedColumns[sourceX];
-        minimum = Math.min(minimum, placement.targetX, placement.targetX + width);
-        maximum = Math.max(maximum, placement.targetX, placement.targetX + width);
-    }
-
-    if (!Number.isFinite(minimum) || !Number.isFinite(maximum)) {
-        throw new RangeError("Projected geometry has no visible bounds.");
-    }
-
-    return Object.freeze({ start: minimum, end: maximum });
 }

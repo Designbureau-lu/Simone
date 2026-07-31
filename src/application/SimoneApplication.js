@@ -340,7 +340,7 @@ export class SimoneApplication {
         );
         const scaleFactor = actualAssembledArtworkWidth
             / logicalArtworkWidth;
-        const projectedColumn = this.projectedColumns[sourceX];
+        const projectedColumn = this.projectedColumnAt(sourceX);
         if (!projectedColumn) {
             return null;
         }
@@ -357,7 +357,7 @@ export class SimoneApplication {
             : null;
         const centerProjectedColumn = centerSourceX === null
             ? null
-            : this.projectedColumns[centerSourceX];
+            : this.projectedColumnAt(centerSourceX);
         const requestedCenteredTarget = centerProjectedColumn
             ? centerProjectedColumn.placement.targetX
                 - this.viewport.projectedExtent / 2
@@ -548,6 +548,10 @@ export class SimoneApplication {
             );
             return sourceX >= start && sourceX < end;
         }) ?? null;
+    }
+
+    projectedColumnAt(sourceX) {
+        return this.projectedColumns[sourceX] ?? null;
     }
 
     updateLocalInteraction(interaction, horizontalDisplacement) {
@@ -900,7 +904,7 @@ export class SimoneApplication {
             project.artworkStart,
             this.logicalImageWidth
         );
-        const grabColumn = this.projectedColumns[grabSourceX];
+        const grabColumn = this.projectedColumnAt(grabSourceX);
         if (!grabColumn) {
             return null;
         }
@@ -967,9 +971,9 @@ export class SimoneApplication {
             project.artworkEnd - 1,
             this.logicalImageWidth
         );
-        const firstPeriodIndex = this.projectedColumns[firstSourceX]
+        const firstPeriodIndex = this.projectedColumnAt(firstSourceX)
             ?.placement.periodIndex;
-        const lastPeriodIndex = this.projectedColumns[lastSourceX]
+        const lastPeriodIndex = this.projectedColumnAt(lastSourceX)
             ?.placement.periodIndex;
         if (!Number.isInteger(firstPeriodIndex)
             || !Number.isInteger(lastPeriodIndex)) {

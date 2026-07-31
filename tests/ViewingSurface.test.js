@@ -2,6 +2,10 @@ import { ViewingSurface } from "../src/viewport/ViewingSurface.js";
 import {
     ViewportCanvasColumnRenderer
 } from "../src/rendering/ViewportCanvasColumnRenderer.js";
+import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
+import { CurtainField } from "../src/surface/CurtainField.js";
+import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
+import { Viewport } from "../src/viewport/Viewport.js";
 
 const tests = [];
 
@@ -63,6 +67,115 @@ test("renderer preserves an unchanged canvas backing store", () => {
     assert(first.backingStoreResized);
     assert(!second.backingStoreResized);
     assert(canvas.width === 400 && canvas.height === 200);
+});
+
+test("viewport sampling keeps the complete global Period model", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const parameters = new SurfaceParameters();
+    const surface = new CircularFoldSurface();
+    field.configureFor(1200, 120);
+    field.setVisibleFactorRange(4, 5, 0.8);
+    field.resolve(parameters);
+    surface.frameFor({ width: 1200, height: 400 }, field);
+    const period = surface.periods[4];
+    const windowStart = period.horizontalOffset + period.projectedOffset;
+    const range = surface.samplingRangeForProjectedWindow(
+        windowStart,
+        windowStart + period.projectedWidth,
+        2
+    );
+
+    assert(surface.periods.length === 10, "global Period count changed");
+    assert(
+        range.periodStart <= 2,
+        `guarded start ${range.periodStart} excluded an expected Period`
+    );
+    assert(
+        range.periodEnd >= 7,
+        `guarded end ${range.periodEnd} excluded an expected Period`
+    );
+    assert(
+        range.logicalStart === range.periodStart * 120,
+        "logical sampling start lost its global Period coordinate"
+    );
+    assert(
+        range.logicalEnd === range.periodEnd * 120,
+        "logical sampling end lost its global Period coordinate"
+    );
+});
+
+test("guarded sampling contains every column selected by the camera", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const parameters = new SurfaceParameters();
+    const surface = new CircularFoldSurface();
+    field.configureFor(1200, 120);
+    field.setVisibleFactorRange(4, 5, 0.8);
+    field.resolve(parameters);
+    surface.frameFor({ width: 1200, height: 400 }, field);
+    const placements = Array.from({ length: 1200 }, (_, sourceX) =>
+        surface.mapColumn({ sourceX }, field)
+    );
+    let fullLastWidth = 1;
+    const projectedColumns = placements.map((placement, sourceX) => {
+        const next = placements[sourceX + 1];
+        const width = next && next.branch === placement.branch
+            ? next.targetX - placement.targetX
+            : fullLastWidth;
+        if (width !== 0) {
+            fullLastWidth = width;
+        }
+        return {
+            placement,
+            width
+        };
+    });
+    const period = surface.periods[4];
+    const windowStart = period.horizontalOffset + period.projectedOffset;
+    const viewport = new Viewport({
+        projectedOffset: windowStart,
+        projectedExtent: period.projectedWidth,
+        presentationExtent: 400
+    });
+    viewport.setProjectedContentRange(0, 2000);
+    const selected = viewport.sourceRangeFor(projectedColumns);
+    const sampling = surface.samplingRangeForProjectedWindow(
+        windowStart,
+        windowStart + period.projectedWidth,
+        2
+    );
+    const guardedStart = Math.max(0, sampling.logicalStart - 1);
+    const guardedEnd = Math.min(placements.length, sampling.logicalEnd + 1);
+    const guardedColumns = new Array(placements.length);
+    let lastWidth = 1;
+    for (let sourceX = guardedStart; sourceX < guardedEnd; sourceX += 1) {
+        const placement = surface.mapColumn({ sourceX }, field);
+        const next = sourceX + 1 < guardedEnd
+            ? surface.mapColumn({ sourceX: sourceX + 1 }, field)
+            : null;
+        const width = next && next.branch === placement.branch
+            ? next.targetX - placement.targetX
+            : lastWidth;
+        if (width !== 0) {
+            lastWidth = width;
+        }
+        guardedColumns[sourceX] = { placement, width };
+    }
+
+    assert(selected.start >= sampling.logicalStart);
+    assert(selected.end <= sampling.logicalEnd);
+    for (let sourceX = selected.start; sourceX < selected.end; sourceX += 1) {
+        const direct = surface.mapColumn({ sourceX }, field);
+        closeTo(direct.targetX, projectedColumns[sourceX].placement.targetX);
+        closeTo(direct.targetY, projectedColumns[sourceX].placement.targetY);
+        closeTo(
+            direct.localSlope,
+            projectedColumns[sourceX].placement.localSlope
+        );
+        closeTo(
+            guardedColumns[sourceX].width,
+            projectedColumns[sourceX].width
+        );
+    }
 });
 
 function createViewingSurface(width, height) {

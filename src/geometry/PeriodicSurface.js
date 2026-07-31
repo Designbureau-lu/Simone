@@ -54,4 +54,14 @@ export class PeriodicSurface {
         void curtainField;
         throw new Error("PeriodicSurface.mapColumn() must be implemented.");
     }
+
+    samplingRangeForProjectedWindow(start, end, guardPeriods = 0) {
+        void start;
+        void end;
+        void guardPeriods;
+        throw new Error(
+            "PeriodicSurface.samplingRangeForProjectedWindow() "
+                + "must be implemented."
+        );
+    }
 }

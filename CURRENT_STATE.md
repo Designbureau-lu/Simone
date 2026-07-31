@@ -4,6 +4,15 @@ Updated: 2026-07-30
 
 ## Today's work
 
+- Separated the global curtain model from fine-resolution artwork sampling.
+  Every Period and cumulative projected Period position still resolves on every
+  frame. The camera now discovers intersecting Periods from that global table,
+  adds four guard Periods on each side, and projects only their globally indexed
+  artwork columns. Distant semantic-navigation targets are projected exactly
+  on demand from the same Period table. In the controlled 60,000-column desktop
+  trace, projected columns fell to 12,955 (78.4% fewer), column projection to
+  approximately 3 ms, and median frame time from 34 ms to 26 ms. Rendering,
+  shading, camera behavior, and interaction timing are unchanged.
 - Profiled the active segmented renderer under a controlled production drag and
   removed behavior-neutral frame churn. Immutable source-column descriptors and
   logical source coordinates are now reused instead of rebuilt for every one of
