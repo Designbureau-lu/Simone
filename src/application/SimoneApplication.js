@@ -472,15 +472,22 @@ export class SimoneApplication {
     }
 
     beginTouchPinch(midpointTargetX) {
-        const interaction = this.beginLocalInteraction(midpointTargetX);
-        if (!interaction) {
+        if (!this.artwork) {
             return null;
         }
 
-        return Object.freeze({
-            ...interaction,
-            localPosition: 0.5
-        });
+        this.enterExploreMode();
+        this.cancelTouchExplorationResponse();
+        this.cancelLocalReveal();
+        this.cancelHorizontalReframe();
+        this.cancelResetCurtainAnimation();
+        const projectedX = this.viewport.toProjectedX(midpointTargetX);
+        const fieldX = Math.max(
+            0,
+            projectedX - this.parameters.carrierDistance / (2 * Math.PI)
+        );
+
+        return this.curtainField.beginPinchInteraction(fieldX);
     }
 
     updateTouchPinch(
@@ -488,13 +495,12 @@ export class SimoneApplication {
         halfSeparationDisplacement
     ) {
         if (!interaction
+            || !Number.isFinite(interaction.pinchCenterProjectedX)
             || !Number.isFinite(halfSeparationDisplacement)) {
             return false;
         }
 
-        const fieldMidpoint = this.curtainField.projectedXForInteraction(
-            interaction
-        );
+        const fieldMidpoint = interaction.pinchCenterProjectedX;
         const halfSpan = Math.abs(halfSeparationDisplacement);
 
         this.sceneVisibleFactor = this.curtainField.applyPinchDisplacement(

@@ -7,9 +7,13 @@ Updated: 2026-07-31
 - Calibrated direct two-finger manipulation after real-device testing. Pinch
   displacement gain is reduced from `4.00` to `2.00`. When the second finger
   lands, the Period under the initial midpoint is selected and its fold centre
-  remains the fixed opening centre until the pinch ends; subsequent pointer
-  movement contributes separation only and cannot continuously recenter the
-  opening. Pan, Tap, camera behavior, and curtain redistribution are unchanged.
+  and projected centre coordinate are captured. That coordinate remains fixed
+  until the pinch ends; it is not remapped through the deformation produced by
+  each preceding frame. The Period-width map used to locate both moving grabs
+  is captured at the same time, preventing each frame's deformation from
+  changing the next frame's grab selection or redistribution target.
+  Subsequent pointer movement contributes separation only. Pan, Tap, camera
+  behavior, and curtain redistribution are unchanged.
 - Replaced the fixed Pinch grab span with moving virtual grab origins. The live
   selected fold remains the opening center; `currentDistance - initialDistance`
   moves both origins outward and supplies their equal-and-opposite displacement

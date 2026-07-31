@@ -66,6 +66,7 @@ test("pinch moves two curtain grabs outward from its center", () => {
     const center = pinch.periodIndex;
     const baseFactors = [...pinch.visibleFactors];
     closeTo(pinch.localPosition, 0.5);
+    const fixedCenter = pinch.pinchCenterProjectedX;
 
     application.updateTouchPinch(pinch, 120);
     assert(field.periods[center].visibleFactor > 0.5);
@@ -77,6 +78,7 @@ test("pinch moves two curtain grabs outward from its center", () => {
                 - field.periods[center + 1].visibleFactor
         ) < 0.005
     );
+    closeTo(pinch.pinchCenterProjectedX, fixedCenter);
     const strongInsideOpening = field.periods[center].visibleFactor;
     closeTo(application.viewport.projectedOffset, viewportOffset);
 
@@ -96,6 +98,34 @@ test("pinch moves two curtain grabs outward from its center", () => {
         assert(period.visibleFactor >= 0.2);
         assert(period.visibleFactor <= 1);
     });
+});
+
+test("pinch center and redistribution remain stable for unchanged input", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const application = new SimoneApplication({
+        artworkLoader: null,
+        parameters: new SurfaceParameters(),
+        curtainField: field,
+        viewport: createViewport(300),
+        phaseResolver: null,
+        surfaces: null,
+        shading: null,
+        renderer: null
+    });
+    application.artwork = {};
+    application.render = () => {};
+    field.configureFor(10000, 100);
+    field.resolve(application.parameters);
+    const pinch = application.beginTouchPinch(570);
+    const fixedCenter = pinch.pinchCenterProjectedX;
+
+    application.updateTouchPinch(pinch, 120);
+    const firstFactors = field.periods.map((period) => period.visibleFactor);
+    application.updateTouchPinch(pinch, 120);
+    const secondFactors = field.periods.map((period) => period.visibleFactor);
+
+    closeTo(pinch.pinchCenterProjectedX, fixedCenter);
+    closeTo(maximumFactorDifference(firstFactors, secondFactors), 0);
 });
 
 test("touch input transitions directly between pan and pinch", () => {

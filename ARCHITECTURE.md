@@ -385,8 +385,11 @@ continuously through camera inertia and settlement. Two fingers own a separate
 direct curtain manipulation. Each finger captures its own local CurtainField
 interaction from one captured base state. On each update, the live midpoint
 is no longer sampled: the Period under the midpoint at second-finger touchdown
-is selected, and its fold centre anchors two virtual horizontal grabs for the
-entire gesture. Their outward positions grow with the absolute change in
+is selected, and its fold-centre projected coordinate is captured once to
+anchor two virtual horizontal grabs for the entire gesture. It is not remapped
+through the changing geometry on later frames. The Period-width coordinate map
+used to locate the moving grabs is captured with it, so deformation cannot feed
+back into grab selection. Their outward positions grow with the absolute change in
 Euclidean finger separation. The same signed separation change drives their
 equal-and-opposite displacement, regardless of finger angle or initial touch
 spacing. Both moving grabs run through the desktop

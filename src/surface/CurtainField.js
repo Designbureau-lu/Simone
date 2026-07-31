@@ -103,12 +103,47 @@ export class CurtainField {
         );
     }
 
-    #localInteractionAt(projectedX, visibleFactors) {
+    beginPinchInteraction(projectedX) {
+        const projectedPeriodWidths = Object.freeze(
+            this.#resolvedParameters.map(
+                (parameters) => parameters.projectedCarrierSpacing
+            )
+        );
+        const interaction = this.#localInteractionAt(
+            projectedX,
+            Object.freeze(this.#periods.map(
+                (period) => period.visibleFactor
+            )),
+            projectedPeriodWidths
+        );
+        const centeredInteraction = {
+            ...interaction,
+            localPosition: 0.5
+        };
+
+        return Object.freeze({
+            ...centeredInteraction,
+            pinchCenterProjectedX: projectedXForInteraction(
+                centeredInteraction,
+                projectedPeriodWidths
+            ),
+            pinchProjectedPeriodWidths: projectedPeriodWidths
+        });
+    }
+
+    #localInteractionAt(
+        projectedX,
+        visibleFactors,
+        projectedPeriodWidths = null
+    ) {
         if (!Number.isFinite(projectedX)) {
             throw new RangeError("Projected interaction position must be finite.");
         }
 
-        const location = this.#periodAt(projectedX);
+        const location = this.#periodAt(
+            projectedX,
+            projectedPeriodWidths
+        );
         const periodIndex = location.periodIndex;
         const localPosition = location.width === 0
             ? 0.5
@@ -215,11 +250,13 @@ export class CurtainField {
     ) {
         const firstInteraction = this.#localInteractionAt(
             firstProjectedX,
-            interaction.visibleFactors
+            interaction.visibleFactors,
+            interaction.pinchProjectedPeriodWidths
         );
         const secondInteraction = this.#localInteractionAt(
             secondProjectedX,
-            interaction.visibleFactors
+            interaction.visibleFactors,
+            interaction.pinchProjectedPeriodWidths
         );
         const first = localDeformationFor(
             firstInteraction,
@@ -416,17 +453,19 @@ export class CurtainField {
         );
     }
 
-    #periodAt(projectedX) {
+    #periodAt(projectedX, projectedPeriodWidths = null) {
         if (this.#periods.length === 0
             || this.#resolvedParameters.length !== this.#periods.length) {
             throw new Error("CurtainField must be resolved before interaction.");
         }
 
+        const widthAt = (index) => projectedPeriodWidths?.[index]
+            ?? this.#resolvedParameters[index].projectedCarrierSpacing;
+
         let leftEdge = 0;
 
         for (let index = 0; index < this.#periods.length; index += 1) {
-            const width = this.#resolvedParameters[index]
-                .projectedCarrierSpacing;
+            const width = widthAt(index);
             const rightEdge = leftEdge + width;
 
             if (projectedX < rightEdge) {
@@ -437,8 +476,7 @@ export class CurtainField {
         }
 
         const periodIndex = this.#periods.length - 1;
-        const width = this.#resolvedParameters[periodIndex]
-            .projectedCarrierSpacing;
+        const width = widthAt(periodIndex);
 
         return {
             periodIndex,
@@ -446,6 +484,17 @@ export class CurtainField {
             width
         };
     }
+}
+
+function projectedXForInteraction(interaction, projectedPeriodWidths) {
+    let projectedX = 0;
+    for (let index = 0; index < interaction.periodIndex; index += 1) {
+        projectedX += projectedPeriodWidths[index];
+    }
+
+    return projectedX
+        + interaction.localPosition
+            * projectedPeriodWidths[interaction.periodIndex];
 }
 
 function logDisplacementChanges(label, grabbedPeriodIndex, changes) {
