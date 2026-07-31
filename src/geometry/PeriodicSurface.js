@@ -30,8 +30,9 @@
  *
  * Geometry-only contract for periodic surface implementations.
  *
- * A surface computes frame bounds and the placement of immutable artwork
- * columns. It has no knowledge of rendering, shading, visibility, or the UI.
+ * A surface resolves the global Period layout, locates Periods intersecting a
+ * projected window, and maps requested globally indexed artwork columns. It
+ * has no knowledge of rendering, shading, visibility, or the UI.
  *
  * Planned implementations: LinearGather, RoundedFold, FigureEightFold, and
  * MeasuredSurface. They remain names only until their geometry is specified.

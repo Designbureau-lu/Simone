@@ -1,6 +1,6 @@
 # SIMONE Current State
 
-Updated: 2026-07-30
+Updated: 2026-07-31
 
 ## Today's work
 
@@ -20,8 +20,8 @@ Updated: 2026-07-30
   a full save/restore around every pixel-column draw and no longer reassigns an
   unchanged backing-store size. The same Firefox trace improved from 52 ms to
   34 ms median frame time and from 64 ms to 44 ms p95 without changing input,
-  geometry, shading, or animation timing. Full virtual geometry mapping remains
-  the principal future target.
+  geometry, shading, or animation timing. The subsequent demand-driven
+  projection work addressed the remaining full-artwork geometry pass.
 - Exaggerated direct two-finger curtain manipulation for calibration. The
   scalar change in finger separation now passes through
   `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 4.00` before being divided equally
@@ -83,8 +83,8 @@ Updated: 2026-07-30
   steps, or delayed reframing. A small velocity-smoothed local reveal
   follows the movement with a bounded low-pass delay, remains anchored so its
   geometry change cannot pull the artwork away from the finger. Later
-  iterations added camera inertia, retained deformation, and global Pinch
-  without changing this direct finger attachment.
+  iterations added camera inertia, retained deformation, and direct
+  two-finger curtain manipulation without changing this attachment.
 - Replaced the giant artwork assembly canvas with a continuous virtual artwork
   coordinate system over the ordered decoded source images. Global column
   coordinates, semantic project mapping, viewport navigation, and scrolling
@@ -98,18 +98,18 @@ Updated: 2026-07-30
   continuity, semantic navigation, and slider synchronization are preserved
   across container, orientation, and `visualViewport` size changes. The
   curtain height uses dynamic viewport units with the existing `vh` fallback.
-- Consolidated `?debug=1` tools into one fixed, scrollable bottom-right
-  development panel. Its single-column order is the five canonical surface
-  controls, Viewport information, and permanently visible Performance
+- Consolidated the development tools into one fixed, scrollable bottom-right
+  panel on the normal page. Its single-column order is the five canonical
+  surface controls, Viewport information, and permanently visible Performance
   information. Reset Curtain State remains the original frequently used slider
-  and no separate Reset control is present. Closing leaves only a small Debug
-  reopen control; both remain completely absent from layout and hit-testing
-  without debug mode. Temporary NEXT/PREVIOUS markup remains hidden for
-  compatibility and is no longer part of the panel.
+  and no separate Reset control is present. Closing leaves only a small Dev
+  reopen control; neither element participates in normal page layout.
+  Temporary NEXT/PREVIOUS markup remains hidden for compatibility and is no
+  longer part of the panel.
 - Established the current tuning as SIMONE's canonical startup and full-Reset
   defaults: 20% minimum visibility, 100% maximum visibility, 50% Reset Curtain
-  State, 120 mm carrier distance, and 50% model transition. The hidden debug
-  controls expose the same initial values through `?debug=1`.
+  State, 120 mm carrier distance, and 50% model transition. The development
+  controls expose those same initial values.
 - Fixed crest highlights disappearing after the first genuine drag. The drag
   correctly changed local Period geometry but also left the grabbed Period's
   Visible Factor in the frame-wide `sceneVisibleFactor`; reaching the open
@@ -270,11 +270,12 @@ pipeline. It closes with its × trigger, Escape, or selection and restores
 trigger focus after an explicit close. Its state controller is independent of
 the current desktop top-edge CSS so a later breakpoint can relocate it.
 
-Normal presentation hides all technical controls through one `?debug=1`
-switch. The curtain fills the remaining viewport beneath the bar without its
-former border or demo framing. Beginning any curtain interaction explicitly
-returns the application from READ to EXPLORE; this clears the stale mode state
-that previously caused later semantic Moses clicks to be rejected.
+The development panel floats outside normal layout and can collapse to its
+small fixed Dev control. The curtain fills the remaining viewport beneath the
+bar without its former border or demo framing. Beginning any curtain
+interaction explicitly returns the application from READ to EXPLORE; this
+clears the stale mode state that previously caused later semantic Moses clicks
+to be rejected.
 
 ### READ
 

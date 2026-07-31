@@ -68,8 +68,9 @@ final frame; direct dragging redistributes local Period values.
 
 `PeriodicSurface` documents the geometry contract.
 `CircularFoldSurface` is the active concrete implementation. It resolves the
-period, Front/Rear allocation, circular arcs, analytical slopes, and destination
-placement for every artwork column.
+complete ordered Period model: Front/Rear allocation, circular arcs, analytical
+surface definitions, projected widths, and cumulative global positions. Exact
+destination placement is evaluated when an artwork column is sampled.
 
 `OperatingPhaseResolver` classifies the current frame as pre-transition,
 transition, or post-transition. The current composition uses the same
@@ -103,7 +104,9 @@ UI configuration
     + CurtainField runtime input
     -> per-Period SurfaceParameters.resolve()
     -> OperatingPhaseResolver
-    -> CircularFoldSurface frame and placements
+    -> global CircularFoldSurface Period layout
+    -> camera Period discovery
+    -> guarded artwork-column placements
     -> SurfaceShading appearance
     -> CanvasColumnRenderer
     -> canvas image
@@ -120,11 +123,14 @@ For each render:
 5. `foldProgress` determines Front/Rear allocation on the pre-transition
    timeline.
 6. `OperatingPhaseResolver` identifies the current operating phase.
-7. `CircularFoldSurface.frameFor()` resolves the current periods and frame
-   bounds.
-8. Every immutable artwork column is assigned to the Front or Rear branch and
-   mapped onto its circular arc.
-9. The resulting placements are passed through shading to the renderer.
+7. `CircularFoldSurface.frameFor()` resolves every Period and its cumulative
+   position in the global curtain.
+8. The global camera window identifies intersecting Periods and includes a
+   conservative guard on both sides.
+9. Immutable artwork columns belonging to that guarded region are assigned to
+   the Front or Rear branch and mapped onto their circular arcs using their
+   original global artwork coordinates.
+10. Camera-visible placements are passed through shading to the renderer.
 
 ### Front and Rear branches
 
@@ -155,7 +161,7 @@ The phase names describe operating state, not separate surface classes.
 
 ### Placement contract
 
-Geometry produces one immutable placement per artwork column:
+Geometry produces one immutable placement for each requested artwork column:
 
 - `sourceX`: source-column coordinate.
 - `targetX`, `targetY`: destination coordinates.
@@ -165,7 +171,9 @@ Geometry produces one immutable placement per artwork column:
 - `allocatedWidth`: projected chord width associated with the branch.
 
 The application derives destination column width from adjacent `targetX`
-values, without crossing branch boundaries.
+values, without crossing branch boundaries. Requesting only a guarded region
+does not change the placement calculation: Period state, artwork coordinates,
+and camera coordinates remain global.
 
 ### Shading responsibilities
 

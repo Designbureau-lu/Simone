@@ -98,7 +98,11 @@ crest/valley overlays remain the next visible costs. Further work should begin
 with a Safari device trace before introducing incremental or region-based
 geometry updates.
 
-## Cold-start interaction trace
+## Historical cold-start interaction trace
+
+This section records the former assembly-canvas/full-column pipeline. It is
+retained for browser-history context and does not describe current projection
+scope.
 
 A clean headless Firefox process and profile loaded the production manifest,
 then recorded an idle interval, a 20-step first drag, and an equivalent second

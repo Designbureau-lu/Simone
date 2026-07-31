@@ -78,29 +78,31 @@ export class ViewportApplication extends SimoneApplication {
             appearance,
             viewing.scaleX
         );
-        const samplingRange = surface.samplingRangeForProjectedWindow(
+        const periodSamplingRange = surface.samplingRangeForProjectedWindow(
             this.viewport.projectedOffset,
             this.viewport.projectedOffset + this.viewport.projectedExtent,
             VIEWPORT_SAMPLING_GUARD_PERIODS
         );
-        const sourceRange = this.#sourceRangeForSampling(samplingRange);
+        const sampledSourceRange = this.#sourceRangeForSampling(
+            periodSamplingRange
+        );
         const viewportDiscoveryTime = performance.now()
             - viewportDiscoveryStartedAt;
         const columnProjectionStartedAt = performance.now();
-        const projectedColumns = this.#projectGeometry(
+        const sampledProjectedColumns = this.#projectSampledGeometry(
             surface,
-            sourceRange.start,
-            sourceRange.end
+            sampledSourceRange.start,
+            sampledSourceRange.end
         );
-        this.projectedColumns = Object.freeze(projectedColumns);
+        this.projectedColumns = Object.freeze(sampledProjectedColumns);
         const columnProjectionTime = performance.now()
             - columnProjectionStartedAt;
         const geometryTime = performance.now() - geometryStartedAt;
 
         const selectionStartedAt = performance.now();
         const artworkRange = this.viewport.sourceRangeFor(
-            projectedColumns,
-            sourceRange
+            sampledProjectedColumns,
+            sampledSourceRange
         );
         const viewportTime = performance.now() - selectionStartedAt;
 
@@ -115,7 +117,7 @@ export class ViewportApplication extends SimoneApplication {
             sourceX += 1
         ) {
             const column = this.artwork.columnAt(sourceX);
-            const projectedColumn = projectedColumns[sourceX];
+            const projectedColumn = sampledProjectedColumns[sourceX];
             const placement = projectedColumn.placement;
             const destinationWidth = this.viewport.presentationWidthBetween(
                 placement.targetX,
@@ -168,7 +170,8 @@ export class ViewportApplication extends SimoneApplication {
             canvasResetTime,
             totalColumns: this.artwork.width,
             visibleColumns: artworkRange.end - artworkRange.start,
-            projectedColumns: sourceRange.end - sourceRange.start,
+            projectedColumns:
+                sampledSourceRange.end - sampledSourceRange.start,
             periodCount: this.curtainField.periods.length,
             projectedExtent: this.viewport.projectedExtent,
             imageCount: this.imageCount,
@@ -201,7 +204,7 @@ export class ViewportApplication extends SimoneApplication {
         return Object.freeze({ placement, width });
     }
 
-    #projectGeometry(surface, start, end) {
+    #projectSampledGeometry(surface, start, end) {
         const placements = new Array(this.artwork.width);
 
         for (let sourceX = start; sourceX < end; sourceX += 1) {
@@ -237,17 +240,18 @@ export class ViewportApplication extends SimoneApplication {
         );
     }
 
-    #sourceRangeForSampling(samplingRange) {
-        if (samplingRange.periodEnd === samplingRange.periodStart) {
+    #sourceRangeForSampling(periodSamplingRange) {
+        if (periodSamplingRange.periodEnd
+            === periodSamplingRange.periodStart) {
             return Object.freeze({ start: 0, end: 0 });
         }
 
         const logicalStart = Math.min(
-            samplingRange.logicalStart,
+            periodSamplingRange.logicalStart,
             this.logicalArtworkWidth
         );
         const logicalEnd = Math.min(
-            samplingRange.logicalEnd,
+            periodSamplingRange.logicalEnd,
             this.logicalArtworkWidth
         );
         const start = this.artwork.sourceXForLogicalX(

@@ -20,13 +20,16 @@ Resolved frame parameters
 OperatingPhaseResolver
              |
              v
-PeriodicSurface contract
+Global PeriodicSurface layout
              |
              v
 CircularFoldSurface
              |
              v
-Placement objects
+Viewport Period discovery
+             |
+             v
+Guarded placement objects
              |
              v
 SurfaceShading
@@ -47,12 +50,14 @@ Canvas
 - **`OperatingPhaseResolver`** classifies the frame as pre-transition,
   transition, or post-transition. It selects an operating phase, not a curve
   family.
-- **`PeriodicSurface`** defines the geometry contract: frame bounds and one
-  placement per immutable artwork column.
+- **`PeriodicSurface`** defines the geometry contract: global Period layout,
+  frame bounds, guarded camera-region discovery, and exact placement of a
+  requested immutable artwork column.
 - **`CircularFoldSurface`** implements that contract with periodic circular
   Front and Rear folds.
-- **Placement objects** are immutable geometry results. The application derives
-  raster width from adjacent placements without changing their meaning.
+- **Placement objects** are immutable geometry results for globally indexed
+  columns in the guarded camera region. The application derives raster width
+  from adjacent placements without changing their meaning.
 - **`SurfaceShading`** supplies local branch brightness from each Period's
   resolved parameters and global appearance tuning. It does not alter geometry
   or artwork.
@@ -141,8 +146,11 @@ curtain interactions.
 
 **Public contract**
 
-- `PeriodicSurface.frameFor(artwork, parameters)` returns frame dimensions.
-- `PeriodicSurface.mapColumn(column, parameters)` returns a placement.
+- `PeriodicSurface.frameFor(artwork, curtainField)` resolves the global Period
+  layout and returns frame dimensions.
+- `PeriodicSurface.samplingRangeForProjectedWindow(...)` locates a guarded
+  global artwork range from the complete Period table.
+- `PeriodicSurface.mapColumn(column, curtainField)` returns an exact placement.
 - `OperatingPhaseResolver.resolve(parameters)` returns an `OperatingPhase`.
 - `CircularFoldSurface` is the active `PeriodicSurface` implementation.
 

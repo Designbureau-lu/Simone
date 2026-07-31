@@ -1,4 +1,4 @@
-/** Prototype-only copy of the renderer with viewing-space destination height. */
+/** Canvas 2D renderer for globally placed columns in the guarded region. */
 export class ViewportCanvasColumnRenderer {
     #canvas;
     #context;
