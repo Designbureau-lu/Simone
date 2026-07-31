@@ -383,18 +383,18 @@ exploration. The contribution is evaluated from a captured base state, retains
 part of its local reveal and directional redistribution, and develops
 continuously through camera inertia and settlement. Two fingers own a separate
 direct curtain manipulation. Each finger captures its own local CurtainField
-interaction at one of two virtual horizontal grabs separated by a fixed
-120 CSS-pixel span and centered on the pinch midpoint. Only the scalar change
-in Euclidean finger separation is used: half moves the left grab outward and
-half moves the right grab outward, regardless of finger angle or initial touch
-spacing. Both grabs run through the desktop redistribution model and their
-contributions are added over one captured base state. Increasing separation
-opens the folds between them and gathers fabric outside; restoring the original
-separation restores the captured state. Pinch never zooms artwork or moves the
-Viewport. The current exploration build multiplies separation movement by
-`TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 4.00`; this deliberately exaggerates
-the direct manipulation without shifting its midpoint. Returning
-to one finger immediately starts a fresh pan.
+interaction from one captured base state. On each update, the live midpoint
+centers two virtual horizontal grabs whose outward positions grow with the
+absolute change in Euclidean finger separation. The same signed separation
+change drives their equal-and-opposite displacement, regardless of finger
+angle or initial touch spacing. Both moving grabs run through the desktop
+redistribution model and their contributions are added over the captured state.
+Increasing separation therefore expands the affected fabric as it opens;
+restoring the original separation restores the captured state. Pinch never
+zooms artwork or moves the Viewport. The current exploration build multiplies
+separation movement by `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 4.00`; this
+deliberately exaggerates the direct manipulation without shifting its midpoint.
+Returning to one finger immediately starts a fresh pan.
 
 Projects are secondary in EXPLORE. The local click/Moses opening is assistance
 around a physical click position, not project navigation or semantic project

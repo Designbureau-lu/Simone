@@ -45,7 +45,7 @@ test("touch response smoothing follows without overshoot", () => {
     assert(second < 1);
 });
 
-test("pinch directly combines two finger-driven curtain grabs", () => {
+test("pinch moves two curtain grabs outward from its center", () => {
     const field = new CurtainField({ resetCurtainState: 0.5 });
     const application = new SimoneApplication({
         artworkLoader: null,
@@ -62,34 +62,35 @@ test("pinch directly combines two finger-driven curtain grabs", () => {
     field.configureFor(10000, 100);
     field.resolve(application.parameters);
     const viewportOffset = application.viewport.projectedOffset;
-    const pinch = application.beginTouchPinch(420, 720);
-    const leftGrab = pinch.first.periodIndex;
-    const rightGrab = pinch.second.periodIndex;
-    const baseFactors = [...pinch.first.visibleFactors];
+    const pinch = application.beginTouchPinch(570);
+    const center = pinch.periodIndex;
+    const baseFactors = [...pinch.visibleFactors];
 
-    application.updateTouchPinch(pinch, -120, 120);
-    assert(field.periods[leftGrab + 1].visibleFactor > 0.5);
-    assert(field.periods[rightGrab - 1].visibleFactor > 0.5);
-    assert(field.periods[leftGrab - 1].visibleFactor < 0.5);
-    assert(field.periods[rightGrab + 1].visibleFactor < 0.5);
-    const strongInsideOpening = field.periods[
-        leftGrab + 1
-    ].visibleFactor;
+    application.updateTouchPinch(pinch, 570, 120);
+    assert(field.periods[center].visibleFactor > 0.5);
+    assert(field.periods[center - 3].visibleFactor < 0.5);
+    assert(field.periods[center + 3].visibleFactor < 0.5);
+    assert(
+        Math.abs(
+            field.periods[center - 1].visibleFactor
+                - field.periods[center + 1].visibleFactor
+        ) < 0.005
+    );
+    const strongInsideOpening = field.periods[center].visibleFactor;
     closeTo(application.viewport.projectedOffset, viewportOffset);
 
-    application.updateTouchPinch(pinch, -40, 40);
+    application.updateTouchPinch(pinch, 570, 40);
     assert(
-        field.periods[leftGrab + 1].visibleFactor
-            < strongInsideOpening
+        field.periods[center].visibleFactor < strongInsideOpening
     );
 
-    application.updateTouchPinch(pinch, 0, 0);
+    application.updateTouchPinch(pinch, 570, 0);
     field.periods.forEach((period, index) => {
         closeTo(period.visibleFactor, baseFactors[index]);
     });
     closeTo(application.viewport.projectedOffset, viewportOffset);
 
-    application.updateTouchPinch(pinch, -10000, 10000);
+    application.updateTouchPinch(pinch, 570, 10000);
     field.periods.forEach((period) => {
         assert(period.visibleFactor >= 0.2);
         assert(period.visibleFactor <= 1);
@@ -105,15 +106,12 @@ test("touch input transitions directly between pan and pinch", () => {
             calls.push(["begin-pan", targetX]);
             return { visibleFactors: [0.5] };
         },
-        beginTouchPinch(firstTargetX, secondTargetX) {
-            calls.push(["begin-pinch", firstTargetX, secondTargetX]);
-            return {
-                first: { visibleFactors: [0.5] },
-                second: { visibleFactors: [0.5] }
-            };
+        beginTouchPinch(midpointTargetX) {
+            calls.push(["begin-pinch", midpointTargetX]);
+            return { visibleFactors: [0.5] };
         },
-        updateTouchPinch(interaction, firstDisplacement, secondDisplacement) {
-            calls.push(["pinch", firstDisplacement, secondDisplacement]);
+        updateTouchPinch(interaction, midpointTargetX, displacement) {
+            calls.push(["pinch", midpointTargetX, displacement]);
             return true;
         },
         interactionDisplacementScale: () => 1,
@@ -138,9 +136,7 @@ test("touch input transitions directly between pan and pinch", () => {
     canvas.dispatchEvent(touchEvent("pointermove", 1, 120, 100, 16));
     canvas.dispatchEvent(touchEvent("pointerdown", 2, 200, 100, 20));
     const pinchStart = calls.find(([name]) => name === "begin-pinch");
-    closeTo(pinchStart[1], 100);
-    closeTo(pinchStart[2], 220);
-    closeTo((pinchStart[1] + pinchStart[2]) / 2, 160);
+    closeTo(pinchStart[1], 160);
     const panCallsBeforePinch = calls.filter(
         ([name]) => name === "pan"
     ).length;
@@ -151,9 +147,8 @@ test("touch input transitions directly between pan and pinch", () => {
     );
     const pinchUpdate = calls.find(([name]) => name === "pinch");
     assert(pinchUpdate);
-    closeTo(pinchUpdate[1], -120);
+    closeTo(pinchUpdate[1], 190);
     closeTo(pinchUpdate[2], 120);
-    closeTo((pinchUpdate[1] + pinchUpdate[2]) / 2, 0);
 
     canvas.dispatchEvent(touchEvent("pointerup", 2, 260, 100, 40));
     canvas.dispatchEvent(touchEvent("pointermove", 1, 140, 100, 56));
@@ -171,17 +166,12 @@ test("touch input transitions directly between pan and pinch", () => {
     const verticalPinchStart = calls.filter(
         ([name]) => name === "begin-pinch"
     ).at(-1);
-    closeTo(verticalPinchStart[1], 100);
-    closeTo(verticalPinchStart[2], 220);
-    closeTo(
-        (verticalPinchStart[1] + verticalPinchStart[2]) / 2,
-        160
-    );
+    closeTo(verticalPinchStart[1], 160);
     canvas.dispatchEvent(touchEvent("pointermove", 4, 160, 200, 90));
     const verticalPinchUpdate = calls.filter(
         ([name]) => name === "pinch"
     ).at(-1);
-    closeTo(verticalPinchUpdate[1], pinchUpdate[1]);
+    closeTo(verticalPinchUpdate[1], 160);
     closeTo(verticalPinchUpdate[2], pinchUpdate[2]);
     canvas.dispatchEvent(touchEvent("pointerup", 4, 160, 200, 94));
     canvas.dispatchEvent(touchEvent("pointerup", 3, 160, 60, 98));
@@ -192,7 +182,6 @@ test("touch input transitions directly between pan and pinch", () => {
         ([name]) => name === "begin-pinch"
     ).at(-1);
     closeTo(nearTouchPinchStart[1], pinchStart[1]);
-    closeTo(nearTouchPinchStart[2], pinchStart[2]);
     canvas.dispatchEvent(touchEvent("pointermove", 6, 230, 100, 130));
     const nearTouchPinchUpdate = calls.filter(
         ([name]) => name === "pinch"

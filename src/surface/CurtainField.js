@@ -95,6 +95,15 @@ export class CurtainField {
     }
 
     beginLocalInteraction(projectedX) {
+        return this.#localInteractionAt(
+            projectedX,
+            Object.freeze(this.#periods.map(
+                (period) => period.visibleFactor
+            ))
+        );
+    }
+
+    #localInteractionAt(projectedX, visibleFactors) {
         if (!Number.isFinite(projectedX)) {
             throw new RangeError("Projected interaction position must be finite.");
         }
@@ -122,9 +131,7 @@ export class CurtainField {
                 1,
                 this.#periods.length
             ),
-            visibleFactors: Object.freeze(this.#periods.map(
-                (period) => period.visibleFactor
-            ))
+            visibleFactors
         });
     }
 
@@ -197,14 +204,23 @@ export class CurtainField {
     }
 
     applyPinchDisplacement(
-        firstInteraction,
+        interaction,
+        firstProjectedX,
         firstDisplacement,
-        secondInteraction,
+        secondProjectedX,
         secondDisplacement,
         periodLength,
         minimumVisibleFactor,
         maximumVisibleFactor
     ) {
+        const firstInteraction = this.#localInteractionAt(
+            firstProjectedX,
+            interaction.visibleFactors
+        );
+        const secondInteraction = this.#localInteractionAt(
+            secondProjectedX,
+            interaction.visibleFactors
+        );
         const first = localDeformationFor(
             firstInteraction,
             firstDisplacement,
@@ -217,7 +233,7 @@ export class CurtainField {
             periodLength,
             this.#periods.length
         );
-        const visibleFactors = firstInteraction.visibleFactors.map(
+        const visibleFactors = interaction.visibleFactors.map(
             (visibleFactor, index) => clamp(
                 visibleFactor
                     + first.redistributions[index]

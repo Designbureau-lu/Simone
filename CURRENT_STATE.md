@@ -4,13 +4,13 @@ Updated: 2026-07-31
 
 ## Today's work
 
-- Decoupled Pinch reach from the initial distance between the touches. The
-  midpoint now centers a fixed `TOUCH_CURTAIN_PINCH_GRAB_SPAN = 120` CSS-pixel
-  virtual grab span, while opening displacement remains proportional to
-  `currentDistance - initialDistance`. Equal separation changes therefore
-  produce equal openings whether the gesture begins nearly closed or already
-  apart; Pan, Tap, camera behavior, and the curtain redistribution model are
-  unchanged.
+- Replaced the fixed Pinch grab span with moving virtual grab origins. The live
+  midpoint remains the opening center; `currentDistance - initialDistance`
+  moves both origins outward and supplies their equal-and-opposite displacement
+  through the unchanged redistribution model. The affected region therefore
+  expands with the gesture, and equal separation changes produce equal openings
+  whether the fingers begin nearly closed or already apart. Pan, Tap, and
+  camera behavior are unchanged.
 - Removed the unreferenced legacy full-destination `CanvasColumnRenderer` and
   the unconnected experimental `ColumnVisibility` contract. The active
   `ViewportCanvasColumnRenderer`, viewport selection, historical Model C
@@ -39,9 +39,9 @@ Updated: 2026-07-31
   into mirrored left/right grab displacement. The virtual grabs remain exactly
   centered on the touch midpoint; no centering compensation was introduced.
 - Replaced the field-like Pinch reveal with direct two-finger fabric
-  manipulation. The pinch midpoint locates two virtual horizontal grabs at a
-  fixed span independent of initial finger spacing. Only the change in scalar
-  distance drives the curtain: half moves each grab outward or inward, so
+  manipulation. The pinch midpoint locates two moving virtual horizontal grabs
+  whose span follows the change in finger separation rather than the initial
+  spacing. The same scalar change moves each grab outward or inward, so
   horizontal, vertical, and diagonal pinches with equal separation changes
   produce identical deformation. Both grabs use the
   established drag redistribution over the same captured Period factors.
@@ -254,8 +254,8 @@ predefined step, or post-gesture reframe. The secondary curtain contribution
 is computed over a captured persistent base state, follows through a bounded
 first-order delay, and settles without bounce or oscillation. Camera inertia
 continues the same velocity-derived response after a fast release. Two-finger
-Pinch directly grabs the curtain at both finger positions and never zooms the
-artwork or moves the camera.
+Pinch uses two moving curtain grabs centered on the live midpoint and never
+zooms the artwork or moves the camera.
 
 A local click/Moses helper is implemented exclusively for EXPLORE. A click
 within a 5 CSS-pixel movement tolerance and on a semantic project starts a

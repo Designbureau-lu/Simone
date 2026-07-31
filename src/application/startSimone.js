@@ -532,12 +532,7 @@ export function bindCurtainDragging(
             clientX - bounds.left - canvas.clientLeft
         ) * canvasScale;
         const interaction = application.beginTouchPinch(
-            targetXFor(
-                midpointX - TOUCH_CURTAIN_PINCH_GRAB_SPAN / 2
-            ),
-            targetXFor(
-                midpointX + TOUCH_CURTAIN_PINCH_GRAB_SPAN / 2
-            )
+            targetXFor(midpointX)
         );
         if (!interaction) {
             return false;
@@ -628,6 +623,11 @@ export function bindCurtainDragging(
                     touchPinch.secondPointerId
                 );
                 if (first && second) {
+                    const bounds = canvas.getBoundingClientRect();
+                    const canvasScale = canvas.width / canvas.clientWidth;
+                    const midpointX = (
+                        first.clientX + second.clientX
+                    ) / 2;
                     const separationDisplacement = (
                         touchDistance(first, second)
                             - touchPinch.initialDistance
@@ -635,7 +635,9 @@ export function bindCurtainDragging(
                         * TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN / 2;
                     application.updateTouchPinch(
                         touchPinch.interaction,
-                        -separationDisplacement,
+                        (
+                            midpointX - bounds.left - canvas.clientLeft
+                        ) * canvasScale,
                         separationDisplacement
                     );
                 }
@@ -1117,7 +1119,6 @@ const TOUCH_CURTAIN_VELOCITY_TO_DIRECTIONAL_BIAS = 0.10;
 const TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 1.00;
 const TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE = 3.00;
 const TOUCH_CURTAIN_REVEAL_RETENTION = 0.60;
-const TOUCH_CURTAIN_PINCH_GRAB_SPAN = 120;
 const TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 4.00;
 const VIEWPORT_INERTIA_GAIN = 1.75;
 const VIEWPORT_INERTIA_DAMPING = 4.00;
