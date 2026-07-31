@@ -4,8 +4,14 @@ Updated: 2026-07-31
 
 ## Today's work
 
+- Calibrated direct two-finger manipulation after real-device testing. Pinch
+  displacement gain is reduced from `4.00` to `2.00`. When the second finger
+  lands, the Period under the initial midpoint is selected and its fold centre
+  remains the fixed opening centre until the pinch ends; subsequent pointer
+  movement contributes separation only and cannot continuously recenter the
+  opening. Pan, Tap, camera behavior, and curtain redistribution are unchanged.
 - Replaced the fixed Pinch grab span with moving virtual grab origins. The live
-  midpoint remains the opening center; `currentDistance - initialDistance`
+  selected fold remains the opening center; `currentDistance - initialDistance`
   moves both origins outward and supplies their equal-and-opposite displacement
   through the unchanged redistribution model. The affected region therefore
   expands with the gesture, and equal separation changes produce equal openings
@@ -254,8 +260,8 @@ predefined step, or post-gesture reframe. The secondary curtain contribution
 is computed over a captured persistent base state, follows through a bounded
 first-order delay, and settles without bounce or oscillation. Camera inertia
 continues the same velocity-derived response after a fast release. Two-finger
-Pinch uses two moving curtain grabs centered on the live midpoint and never
-zooms the artwork or moves the camera.
+Pinch uses two moving curtain grabs anchored to the fold centre selected at
+second-finger touchdown and never zooms the artwork or moves the camera.
 
 A local click/Moses helper is implemented exclusively for EXPLORE. A click
 within a 5 CSS-pixel movement tolerance and on a semantic project starts a
