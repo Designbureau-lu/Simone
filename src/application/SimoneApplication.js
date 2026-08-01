@@ -47,6 +47,7 @@ export class SimoneApplication {
         this.localRevealState = null;
         this.touchExplorationFrame = null;
         this.touchExplorationState = null;
+        this.semanticRevealProgress = null;
     }
 
     async importArtwork(files) {
@@ -419,6 +420,28 @@ export class SimoneApplication {
     preservesViewportLeftDuringResize() {
         return this.useLeadingProjectAlignment
             && this.attentionMode === ATTENTION_MODE_READ;
+    }
+
+    blendMobileReadAlignmentDuringReveal() {
+        if (!this.preservesViewportLeftDuringResize()
+            || !Number.isFinite(this.semanticRevealProgress)
+            || this.currentProjectIndex === null) {
+            return 0;
+        }
+        const project = this.projectNavigation?.projects[
+            this.currentProjectIndex
+        ];
+        const projection = project
+            ? this.projectProjectionFor(project)
+            : null;
+        if (!projection) {
+            return 0;
+        }
+        const correction = projection.requestedNextTarget
+            - this.viewport.projectedOffset;
+        return this.viewport.shiftProjectedOffset(
+            correction * this.semanticRevealProgress
+        );
     }
 
     animateViewportToProjectedOffset(
@@ -998,7 +1021,7 @@ export class SimoneApplication {
                 this.parameters.minimumVisibleFactor,
                 this.parameters.maximumVisibleFactor
             );
-            this.render();
+            this.#renderSemanticReveal(progress);
 
             if (progress < 1) {
                 this.horizontalReframeFrame = requestAnimationFrame(drag);
@@ -1056,7 +1079,7 @@ export class SimoneApplication {
                 visibleFactor
             );
             this.sceneVisibleFactor = visibleFactor;
-            this.render();
+            this.#renderSemanticReveal(progress);
 
             if (progress < 1) {
                 this.horizontalReframeFrame = requestAnimationFrame(open);
@@ -1066,6 +1089,15 @@ export class SimoneApplication {
         };
 
         this.horizontalReframeFrame = requestAnimationFrame(open);
+    }
+
+    #renderSemanticReveal(progress) {
+        this.semanticRevealProgress = smoothstep(progress);
+        try {
+            this.render();
+        } finally {
+            this.semanticRevealProgress = null;
+        }
     }
 
     render() {

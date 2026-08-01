@@ -201,6 +201,7 @@ export class ViewportApplication extends SimoneApplication {
             contentBounds.start,
             contentBounds.end
         );
+        this.blendMobileReadAlignmentDuringReveal();
 
         this.viewport.presentationExtent = viewing.frame.width;
         const viewingAppearance = this.viewingSurface.appearanceFor(

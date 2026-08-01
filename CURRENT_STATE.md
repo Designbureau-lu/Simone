@@ -4,6 +4,12 @@ Updated: 2026-08-01
 
 ## Today's work
 
+- Integrated any residual responsive mobile READ alignment into the semantic
+  reveal itself. Only while a reveal frame is active, its eased progress blends
+  the current camera left edge toward the freshly projected `artworkStart`;
+  progress `1` reaches the invariant in the existing final reveal frame. No
+  correction runs after reveal completion, and exact alignment produces no
+  camera movement. Desktop and non-READ rendering are unaffected.
 - Made mobile leading-gutter landing deterministic within the original eased
   navigation. The semantic target was correct, but responsive extent changes
   preserved the camera centre and shifted its left edge. Mobile READ now keeps
