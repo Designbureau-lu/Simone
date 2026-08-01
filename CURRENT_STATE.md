@@ -1,9 +1,16 @@
 # SIMONE Current State
 
-Updated: 2026-07-31
+Updated: 2026-08-01
 
 ## Today's work
 
+- Made semantic project landing responsive to the primary input modality.
+  Desktop keeps the existing semantic-span center plus optical offset. On a
+  coarse primary pointer, Index and NEXT/PREVIOUS instead share the projected
+  `artworkStart` target, placing the project's leading gutter at the viewport's
+  left edge. Existing viewport bounds clamp the first and last projects;
+  gestures, manual camera movement, rendering, and loading priority are
+  unchanged.
 - Extended the viewport-first scheduler with movement-aware queued priority.
   The guarded visible range remains highest; signed Pan promotes one viewport
   ahead, inertia promotes the bounded corridor to the analytical exponential-

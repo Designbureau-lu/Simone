@@ -88,7 +88,10 @@ export function startSimone() {
         performanceOverview: new FramePerformanceOverview(
             performanceOverviewElement,
             currentBrowserName()
-        )
+        ),
+        useLeadingProjectAlignment: window.matchMedia?.(
+            "(pointer: coarse)"
+        ).matches === true
     });
 
     bindDebugPanel(debugPanelElement, debugReopenElement);

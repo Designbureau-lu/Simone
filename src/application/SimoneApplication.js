@@ -18,7 +18,8 @@ export class SimoneApplication {
         surfaces,
         shading,
         renderer,
-        performanceOverview = null
+        performanceOverview = null,
+        useLeadingProjectAlignment = false
     }) {
         this.artworkLoader = artworkLoader;
         this.parameters = parameters;
@@ -29,6 +30,7 @@ export class SimoneApplication {
         this.shading = shading;
         this.renderer = renderer;
         this.performanceOverview = performanceOverview;
+        this.useLeadingProjectAlignment = useLeadingProjectAlignment;
         this.artwork = null;
         this.attentionMode = ATTENTION_MODE_EXPLORE;
         this.projectNavigation = null;
@@ -306,9 +308,7 @@ export class SimoneApplication {
         });
 
         this.attentionMode = ATTENTION_MODE_READ;
-        const targetOffset = openingMode === PROJECT_OPENING_FLAT_SPAN
-            ? projection.requestedCenteredTarget
-            : projection.requestedNextTarget;
+        const targetOffset = projection.requestedNavigationTarget;
         this.prioritizeArtworkForDestination?.(targetOffset);
         this.animateViewportToProjectedOffset(
             targetOffset,
@@ -334,7 +334,7 @@ export class SimoneApplication {
             : null;
         if (projection) {
             this.prioritizeArtworkForDestination?.(
-                projection.requestedCenteredTarget
+                projection.requestedNavigationTarget
             );
         }
         return this.animateResetCurtainState(
@@ -385,6 +385,9 @@ export class SimoneApplication {
                 - this.viewport.projectedExtent / 2
                 + READ_CENTER_OFFSET
             : requestedNextTarget;
+        const requestedNavigationTarget = this.useLeadingProjectAlignment
+            ? requestedNextTarget
+            : requestedCenteredTarget;
         const renderedArtworkWidth = this.projectedContentBounds.end
             - this.projectedContentBounds.start;
         const viewportBounds = this.viewport.movementBounds;
@@ -401,6 +404,7 @@ export class SimoneApplication {
             sourceX,
             requestedNextTarget,
             requestedCenteredTarget,
+            requestedNavigationTarget,
             clampedNextTarget,
             viewportWidth: this.viewport.projectedExtent,
             viewportPosition: this.viewport.projectedOffset,

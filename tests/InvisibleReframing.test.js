@@ -1152,7 +1152,7 @@ test("Index selection prioritizes its destination before Reset", () => {
         projects: [{ title: "Selected" }]
     };
     application.projectProjectionFor = () => ({
-        requestedCenteredTarget: 720
+        requestedNavigationTarget: 720
     });
     application.prioritizeArtworkForDestination = (target) => {
         sequence.push(["priority", target]);
@@ -1166,6 +1166,88 @@ test("Index selection prioritizes its destination before Reset", () => {
     equal(sequence[0][0], "priority");
     equal(sequence[0][1], 720);
     equal(sequence[1][0], "reset");
+});
+
+test("desktop project landing remains centered for wide and narrow projects", () => {
+    const application = semanticNavigationApplication(false);
+    const wide = application.projectProjectionFor({
+        artworkStart: 300,
+        artworkEnd: 900
+    });
+    const narrow = application.projectProjectionFor({
+        artworkStart: 500,
+        artworkEnd: 700
+    });
+
+    closeTo(wide.requestedNavigationTarget, 440);
+    closeTo(narrow.requestedNavigationTarget, 440);
+    closeTo(wide.requestedNavigationTarget, wide.requestedCenteredTarget);
+    closeTo(narrow.requestedNavigationTarget, narrow.requestedCenteredTarget);
+});
+
+test("mobile project landing aligns its leading gutter for any project width", () => {
+    const application = semanticNavigationApplication(true);
+    const wide = application.projectProjectionFor({
+        artworkStart: 300,
+        artworkEnd: 900
+    });
+    const narrow = application.projectProjectionFor({
+        artworkStart: 500,
+        artworkEnd: 700
+    });
+
+    closeTo(wide.requestedNavigationTarget, 300);
+    closeTo(narrow.requestedNavigationTarget, 500);
+    closeTo(wide.requestedNavigationTarget, wide.requestedNextTarget);
+    closeTo(narrow.requestedNavigationTarget, narrow.requestedNextTarget);
+});
+
+test("NEXT and Index selection share the responsive project target", () => {
+    const application = semanticNavigationApplication(true);
+    const targets = [];
+    application.animateViewportToProjectedOffset = (target) => {
+        targets.push(target);
+        return true;
+    };
+    application.animateResetCurtainState = (values, onFrame, onComplete) => {
+        onComplete();
+        return true;
+    };
+    application.setProjectNavigation({
+        enabled: true,
+        projects: [
+            { title: "First", artworkStart: 0, artworkEnd: 200 },
+            { title: "Second", artworkStart: 300, artworkEnd: 900 }
+        ]
+    });
+
+    assert(application.navigateToNextProject());
+    application.currentProjectIndex = 0;
+    assert(application.resetAndNavigateToProject(1));
+    equal(targets.length, 2);
+    closeTo(targets[0], 300);
+    closeTo(targets[1], 300);
+});
+
+test("mobile project landing retains first and last archive bounds", () => {
+    const application = semanticNavigationApplication(true);
+    const first = application.projectProjectionFor({
+        artworkStart: 0,
+        artworkEnd: 200
+    });
+    const last = application.projectProjectionFor({
+        artworkStart: 1200,
+        artworkEnd: 1400
+    });
+
+    closeTo(application.viewport.projectedOffsetAfterShift(
+        first.requestedNavigationTarget
+            - application.viewport.projectedOffset
+    ), 0);
+    closeTo(application.viewport.projectedOffsetAfterShift(
+        last.requestedNavigationTarget
+            - application.viewport.projectedOffset
+    ), 1000);
 });
 
 test("selected project opens as one uniform semantic period span", () => {
@@ -1418,7 +1500,11 @@ function createViewport(offset, contentEnd = 1000) {
     return viewport;
 }
 
-function createApplication(viewport, grabbedProjectedX = 400) {
+function createApplication(
+    viewport,
+    grabbedProjectedX = 400,
+    useLeadingProjectAlignment = false
+) {
     const application = new SimoneApplication({
         artworkLoader: null,
         parameters: { carrierDistance: 0 },
@@ -1432,9 +1518,36 @@ function createApplication(viewport, grabbedProjectedX = 400) {
         phaseResolver: null,
         surfaces: null,
         shading: null,
-        renderer: null
+        renderer: null,
+        useLeadingProjectAlignment
     });
     application.artwork = {};
+    return application;
+}
+
+function semanticNavigationApplication(useLeadingProjectAlignment) {
+    const application = createApplication(
+        createViewport(100),
+        400,
+        useLeadingProjectAlignment
+    );
+    application.artwork = {
+        width: 1400,
+        sourceXForLogicalX: (logicalX) => logicalX
+    };
+    application.logicalArtworkWidth = 1400;
+    application.logicalImageWidth = 1400;
+    application.projectedContentBounds = { start: 0, end: 1000 };
+    application.projectedColumns = Array.from(
+        { length: 1401 },
+        (_, sourceX) => ({
+            placement: {
+                targetX: sourceX,
+                periodIndex: Math.floor(sourceX / 100)
+            },
+            width: 1
+        })
+    );
     return application;
 }
 
