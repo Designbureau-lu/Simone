@@ -3,6 +3,23 @@
 This document records controlled performance observations. It does not define
 optimization decisions.
 
+## Experimental depth-dependent column height
+
+The 25% depth-height projection was measured with the same production manifest,
+guarded geometry pipeline, clean headless Firefox profile, and 20-step drag
+used by the existing control. The added scalar factor does not add per-column
+object allocation in the production loop.
+
+| Metric | Previous guarded control | Depth-height experiment |
+| --- | ---: | ---: |
+| Rendering median / p95 | 15 / 29 ms | 14 / 17 ms |
+| Complete frame median / p95 | 26 / 40 ms | 24 / 30 ms |
+| Frame gaps over 50 ms | 1 | 1 |
+
+The run shows no measurable regression within normal headless-run variance.
+Real iPhone Safari remains the authority for visual quality and mobile frame
+pacing.
+
 ## Demand-driven artwork-column projection
 
 The curtain/artwork separation was verified against the active circular-fold

@@ -4,6 +4,14 @@ Updated: 2026-08-01
 
 ## Today's work
 
+- Added an isolated experimental depth-height projection. Circular geometry
+  now reports continuous normalized depth from each Period's actual front crest
+  to rear valley. Artwork columns retain their former lower edge while their
+  destination height decreases linearly to 75% at maximum depth, producing the
+  upper silhouette without another authored wave. Horizontal geometry,
+  shading, global coordinates, demand-driven sampling, and interactions are
+  unchanged; the 25% strength is centralized in
+  `DepthHeightProjection.js` for easy tuning or removal.
 - Replaced the heavy black conversation bar and Index with one white,
   exhibition-like title composition on mobile and desktop. The fixed-height
   clipped title line moves vertically between the public “Konschtpräis 2026”,

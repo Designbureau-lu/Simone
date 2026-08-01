@@ -171,6 +171,7 @@ Geometry produces one immutable placement for each requested artwork column:
 
 - `sourceX`: source-column coordinate.
 - `targetX`, `targetY`: destination coordinates.
+- `normalizedDepth`: continuous position from front crest to rear valley.
 - `localSlope`: analytical slope of the circular surface.
 - `branch`: `front` or `rear` identity.
 - `alpha`: branch visibility supplied to the renderer.
@@ -180,6 +181,11 @@ The application derives destination column width from adjacent `targetX`
 values, without crossing branch boundaries. Requesting only a guarded region
 does not change the placement calculation: Period state, artwork coordinates,
 and camera coordinates remain global.
+
+Column destination height is independently scaled from `normalizedDepth`.
+The former lower edge (`targetY + source height`) remains authoritative, so the
+new top silhouette is derived from height rather than authored as another
+wave.
 
 ### Shading responsibilities
 

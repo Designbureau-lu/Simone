@@ -2,6 +2,12 @@ import { ViewingSurface } from "../src/viewport/ViewingSurface.js";
 import {
     ViewportCanvasColumnRenderer
 } from "../src/rendering/ViewportCanvasColumnRenderer.js";
+import {
+    COLUMN_DEPTH_HEIGHT_STRENGTH,
+    depthAnchoredTop,
+    depthHeightFactor,
+    depthScaledHeight
+} from "../src/rendering/DepthHeightProjection.js";
 import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
 import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
@@ -181,6 +187,71 @@ test("guarded sampling contains every column selected by the camera", () => {
             projectedColumns[sourceX].width
         );
     }
+});
+
+test("fold depth continuously spans full-height crest to shortest valley", () => {
+    const field = new CurtainField({ resetCurtainState: 0.75 });
+    const parameters = new SurfaceParameters();
+    const surface = new CircularFoldSurface();
+    field.configureFor(240, 120);
+    field.resolve(parameters);
+    surface.frameFor({ width: 240, height: 400 }, field);
+    const placements = Array.from({ length: 120 }, (_, sourceX) => (
+        surface.mapColumn({ sourceX }, field)
+    ));
+    const crest = placements.reduce((closest, placement) => (
+        placement.normalizedDepth < closest.normalizedDepth
+            ? placement
+            : closest
+    ));
+    const valley = placements.reduce((deepest, placement) => (
+        placement.normalizedDepth > deepest.normalizedDepth
+            ? placement
+            : deepest
+    ));
+
+    closeTo(crest.normalizedDepth, 0);
+    closeTo(valley.normalizedDepth, 1);
+    closeTo(
+        depthHeightFactor(crest.normalizedDepth),
+        1
+    );
+    closeTo(
+        depthHeightFactor(valley.normalizedDepth),
+        1 - COLUMN_DEPTH_HEIGHT_STRENGTH
+    );
+    for (let index = 1; index < placements.length; index += 1) {
+        assert(
+            Math.abs(
+                placements[index].normalizedDepth
+                    - placements[index - 1].normalizedDepth
+            ) < 0.08,
+            `Depth jumped between columns ${index - 1} and ${index}`
+        );
+    }
+});
+
+test("depth scaling preserves bottom profile and derives the top from height", () => {
+    const frontHeight = depthScaledHeight(400, 0, 2);
+    const rearHeight = depthScaledHeight(400, 1, 2);
+    const frontTop = depthAnchoredTop(400, 20, frontHeight, 2);
+    const rearTop = depthAnchoredTop(400, 20, rearHeight, 2);
+
+    closeTo(frontTop + frontHeight, 840);
+    closeTo(rearTop + rearHeight, 840);
+    closeTo(frontHeight, 800);
+    closeTo(rearHeight, 600);
+    closeTo(frontTop, 840 - frontHeight);
+    closeTo(rearTop, 840 - rearHeight);
+});
+
+test("desktop and mobile scales use the same depth-height factor", () => {
+    const factor = depthHeightFactor(0.6);
+    const desktop = depthScaledHeight(400, 0.6, 1);
+    const mobile = depthScaledHeight(400, 0.6, 2.5);
+
+    closeTo(factor, 0.85);
+    closeTo(mobile, desktop * 2.5);
 });
 
 test("Pan priority corridor follows direction and reverses immediately", () => {

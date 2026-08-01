@@ -6,8 +6,10 @@
  *   application to select local resolved parameters for shading.
  * - `targetX`: geometry-owned horizontal destination coordinate; the
  *   application compares adjacent values to derive rasterized column width.
- * - `targetY`: geometry-owned vertical destination coordinate; consumed by
- *   the renderer without reinterpretation.
+ * - `targetY`: geometry-owned vertical fold offset. The application preserves
+ *   its former lower edge while applying the optional depth-height mapping.
+ * - `normalizedDepth`: continuous position from the current Period's
+ *   frontmost crest (`0`) to its deepest rear valley (`1`).
  * - `localSlope`: geometry-owned analytical surface slope; consumed by the
  *   renderer's fold-region/crest detection and available to shading models.
  * - `branch`: geometry-owned identity. `front` is the viewer-facing fold and

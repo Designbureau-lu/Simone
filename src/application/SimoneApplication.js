@@ -2,6 +2,10 @@ import {
     artworkLayout,
     resolveArtworkLayout
 } from "../navigation/ArtworkLayout.js";
+import {
+    depthAnchoredTop,
+    depthScaledHeight
+} from "../rendering/DepthHeightProjection.js";
 
 /**
  * Application layer: coordinates the domain pipeline and owns no pixel logic.
@@ -1132,13 +1136,22 @@ export class SimoneApplication {
                 placement,
                 localParameters
             );
+            const destinationHeight = depthScaledHeight(
+                column.height,
+                placement.normalizedDepth
+            );
 
             this.renderer.drawColumn(
                 column,
                 {
                     x: this.viewport.toPresentationX(placement.targetX),
-                    y: placement.targetY,
-                    width: destinationWidth
+                    y: depthAnchoredTop(
+                        column.height,
+                        placement.targetY,
+                        destinationHeight
+                    ),
+                    width: destinationWidth,
+                    height: destinationHeight
                 },
                 {
                     brightness,

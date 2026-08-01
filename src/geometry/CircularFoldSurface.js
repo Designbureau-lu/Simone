@@ -71,6 +71,11 @@ export class CircularFoldSurface extends PeriodicSurface {
             + foldOffset
             + placement.x;
         const targetY = period.depthExtent + placement.y;
+        const normalizedDepth = normalizedFoldDepth(
+            placement.y,
+            period.frontDepth,
+            period.rearDepth
+        );
         const branch = isFront ? "front" : "rear";
         const alpha = isFront ? 1 : period.rearAlpha;
 
@@ -82,7 +87,8 @@ export class CircularFoldSurface extends PeriodicSurface {
             placement.slope,
             branch,
             alpha,
-            arc.chordLength
+            arc.chordLength,
+            normalizedDepth
         );
     }
 
@@ -148,6 +154,8 @@ function resolvePeriod(parameters) {
     const rearArc = rearBalance === 0
         ? resolveHiddenArc(0)
         : resolveArc(rearMaterialLength, projectedWidth * rearBalance);
+    const frontDepth = arcDepth(frontArc);
+    const rearDepth = arcDepth(rearArc);
 
     return Object.freeze({
         foldMaterialLength,
@@ -157,6 +165,8 @@ function resolvePeriod(parameters) {
         projectedWidth,
         frontArc,
         rearArc,
+        frontDepth,
+        rearDepth,
         rearAlpha: progress < 1 ? 1 : 0,
         horizontalOffset: foldMaterialLength / (2 * Math.PI),
         depthExtent: foldMaterialLength / Math.PI
@@ -197,6 +207,20 @@ function resolveHiddenArc(materialLength) {
         radius: Infinity,
         hidden: true
     });
+}
+
+function arcDepth(arc) {
+    if (arc.hidden || arc.angle === 0) {
+        return 0;
+    }
+    return arc.radius * (1 - Math.cos(arc.angle / 2));
+}
+
+function normalizedFoldDepth(depth, frontDepth, rearDepth) {
+    const extent = frontDepth + rearDepth;
+    return extent === 0
+        ? 0
+        : clamp((depth + frontDepth) / extent, 0, 1);
 }
 
 function solveCentralAngle(chordRatio) {
@@ -255,7 +279,8 @@ export function createPlacement(
     localSlope,
     branch,
     alpha,
-    allocatedWidth
+    allocatedWidth,
+    normalizedDepth = 0
 ) {
     return Object.freeze({
         sourceX,
@@ -265,7 +290,8 @@ export function createPlacement(
         localSlope,
         branch,
         alpha,
-        allocatedWidth
+        allocatedWidth,
+        normalizedDepth
     });
 }
 
