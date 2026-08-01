@@ -186,12 +186,8 @@ export class ViewportApplication extends SimoneApplication {
         const projectedExtent = viewing.projectedExtent ?? previousExtent;
         const projectedOffset = previousExtent === 0
             ? contentBounds.start
-            : responsiveProjectedOffset(
-                this.viewport.projectedOffset,
-                previousExtent,
-                projectedExtent,
-                this.preservesViewportLeftDuringResize()
-            );
+            : this.viewport.projectedOffset
+                + (previousExtent - projectedExtent) / 2;
         this.viewport.setProjectedWindow(
             Math.max(contentBounds.start, projectedOffset),
             projectedExtent
@@ -201,7 +197,6 @@ export class ViewportApplication extends SimoneApplication {
             contentBounds.start,
             contentBounds.end
         );
-        this.blendMobileReadAlignmentDuringReveal();
 
         this.viewport.presentationExtent = viewing.frame.width;
         const viewingAppearance = this.viewingSurface.appearanceFor(
@@ -520,17 +515,6 @@ export function predictedInertialCameraTravel(
         throw new RangeError("Viewport inertia prediction is invalid.");
     }
     return -viewportVelocity * inertiaGain * 1000 / inertiaDamping;
-}
-
-export function responsiveProjectedOffset(
-    projectedOffset,
-    previousExtent,
-    projectedExtent,
-    preserveLeftEdge
-) {
-    return preserveLeftEdge
-        ? projectedOffset
-        : projectedOffset + (previousExtent - projectedExtent) / 2;
 }
 
 export function panPriorityCorridor(offset, extent, cameraDisplacement) {

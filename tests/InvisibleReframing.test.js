@@ -1250,42 +1250,14 @@ test("mobile project landing retains first and last archive bounds", () => {
     ), 1000);
 });
 
-test("mobile READ blends responsive displacement within reveal frames only", () => {
-    const application = semanticNavigationApplication(true);
-    application.setProjectNavigation({
-        enabled: true,
-        projects: [
-            { title: "First", artworkStart: 0, artworkEnd: 200 },
-            { title: "Second", artworkStart: 300, artworkEnd: 900 }
-        ]
-    });
-    application.currentProjectIndex = 1;
-    application.attentionMode = "read";
-    application.viewport.shiftProjectedOffset(240);
-    application.semanticRevealProgress = 0.25;
-
-    closeTo(application.blendMobileReadAlignmentDuringReveal(), -10);
-    closeTo(application.viewport.projectedOffset, 330);
-    application.semanticRevealProgress = 1;
-    closeTo(application.blendMobileReadAlignmentDuringReveal(), -30);
-    closeTo(application.viewport.projectedOffset, 300);
-    application.semanticRevealProgress = null;
-    application.viewport.shiftProjectedOffset(10);
-    closeTo(application.blendMobileReadAlignmentDuringReveal(), 0);
-    closeTo(application.viewport.projectedOffset, 310);
-});
-
 test("selected project opens as one uniform semantic period span", () => {
     const viewport = createViewport(0);
-    const application = createApplication(viewport, 400, true);
+    const application = createApplication(viewport);
     const animation = captureAnimationFrames();
     const field = new CurtainField({ resetCurtainState: 0.5 });
     field.configureFor(1000, 100);
     application.curtainField = field;
-    let renderedFrames = 0;
-    application.render = () => {
-        renderedFrames += 1;
-    };
+    application.render = () => {};
     application.artwork.width = 1000;
     application.artwork.sourceXForLogicalX = (logicalX) => logicalX;
     application.logicalArtworkWidth = 1000;
@@ -1318,10 +1290,10 @@ test("selected project opens as one uniform semantic period span", () => {
         null,
         "flat-semantic-span"
     ));
-    closeTo(prioritizedDestinations[0], 320);
+    closeTo(prioritizedDestinations[0], 340);
     animation.runNext(0);
     animation.runNext(450);
-    equal(viewport.projectedOffset, 320);
+    equal(viewport.projectedOffset, 340);
     animation.runNext(450);
     animation.runNext(950);
 
@@ -1337,14 +1309,6 @@ test("selected project opens as one uniform semantic period span", () => {
             index >= 3 && index <= 6 ? 0.9 : 0.5
         );
     }
-    equal(renderedFrames, 5);
-    closeTo(viewport.projectedOffset, 320);
-    closeTo(
-        application.projectProjectionFor(
-            application.projectNavigation.projects[1]
-        ).requestedNextTarget - viewport.projectedOffset,
-        0
-    );
     animation.restore();
 });
 
