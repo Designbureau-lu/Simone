@@ -9,7 +9,8 @@ import { Viewport } from "../src/viewport/Viewport.js";
 import {
     inertiaPriorityCorridor,
     panPriorityCorridor,
-    predictedInertialCameraTravel
+    predictedInertialCameraTravel,
+    responsiveProjectedOffset
 } from "../src/application/ViewportApplication.js";
 
 const tests = [];
@@ -52,6 +53,11 @@ test("camera extent follows a changed rendered container aspect", () => {
     closeTo(portrait.projectedExtent, 1_250);
     closeTo(landscape.projectedExtent, 5_000);
     fixture.remove();
+});
+
+test("responsive camera resize can preserve either center or left edge", () => {
+    closeTo(responsiveProjectedOffset(300, 400, 300, false), 350);
+    closeTo(responsiveProjectedOffset(300, 400, 300, true), 300);
 });
 
 test("renderer preserves an unchanged canvas backing store", () => {

@@ -416,27 +416,9 @@ export class SimoneApplication {
         });
     }
 
-    alignCurrentProjectLeadingGutter() {
-        if (!this.useLeadingProjectAlignment
-            || this.attentionMode !== ATTENTION_MODE_READ
-            || this.currentProjectIndex === null
-            || this.horizontalReframeFrame !== null
-            || this.resetCurtainFrame !== null) {
-            return 0;
-        }
-        const project = this.projectNavigation?.projects[
-            this.currentProjectIndex
-        ];
-        const projection = project
-            ? this.projectProjectionFor(project)
-            : null;
-        if (!projection) {
-            return 0;
-        }
-        return this.viewport.shiftProjectedOffset(
-            projection.requestedNextTarget
-                - this.viewport.projectedOffset
-        );
+    preservesViewportLeftDuringResize() {
+        return this.useLeadingProjectAlignment
+            && this.attentionMode === ATTENTION_MODE_READ;
     }
 
     animateViewportToProjectedOffset(
@@ -1022,9 +1004,6 @@ export class SimoneApplication {
                 this.horizontalReframeFrame = requestAnimationFrame(drag);
             } else {
                 this.horizontalReframeFrame = null;
-                if (this.alignCurrentProjectLeadingGutter() !== 0) {
-                    this.render();
-                }
             }
         };
 
@@ -1083,9 +1062,6 @@ export class SimoneApplication {
                 this.horizontalReframeFrame = requestAnimationFrame(open);
             } else {
                 this.horizontalReframeFrame = null;
-                if (this.alignCurrentProjectLeadingGutter() !== 0) {
-                    this.render();
-                }
             }
         };
 

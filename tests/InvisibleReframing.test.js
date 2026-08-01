@@ -1250,24 +1250,6 @@ test("mobile project landing retains first and last archive bounds", () => {
     ), 1000);
 });
 
-test("settled mobile READ realigns a displaced leading gutter exactly", () => {
-    const application = semanticNavigationApplication(true);
-    application.setProjectNavigation({
-        enabled: true,
-        projects: [
-            { title: "First", artworkStart: 0, artworkEnd: 200 },
-            { title: "Second", artworkStart: 300, artworkEnd: 900 }
-        ]
-    });
-    application.currentProjectIndex = 1;
-    application.attentionMode = "read";
-    application.viewport.shiftProjectedOffset(225);
-
-    closeTo(application.viewport.projectedOffset, 325);
-    closeTo(application.alignCurrentProjectLeadingGutter(), -25);
-    closeTo(application.viewport.projectedOffset, 300);
-});
-
 test("selected project opens as one uniform semantic period span", () => {
     const viewport = createViewport(0);
     const application = createApplication(viewport, 400, true);
@@ -1275,13 +1257,9 @@ test("selected project opens as one uniform semantic period span", () => {
     const field = new CurtainField({ resetCurtainState: 0.5 });
     field.configureFor(1000, 100);
     application.curtainField = field;
-    let finalFrameDisplaced = false;
+    let renderedFrames = 0;
     application.render = () => {
-        if (!finalFrameDisplaced
-            && field.periods[3].visibleFactor === 0.9) {
-            finalFrameDisplaced = true;
-            viewport.shiftProjectedOffset(12);
-        }
+        renderedFrames += 1;
     };
     application.artwork.width = 1000;
     application.artwork.sourceXForLogicalX = (logicalX) => logicalX;
@@ -1334,7 +1312,7 @@ test("selected project opens as one uniform semantic period span", () => {
             index >= 3 && index <= 6 ? 0.9 : 0.5
         );
     }
-    assert(finalFrameDisplaced);
+    equal(renderedFrames, 5);
     closeTo(viewport.projectedOffset, 320);
     closeTo(
         application.projectProjectionFor(
