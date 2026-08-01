@@ -1,6 +1,7 @@
 import {
     bindDebugPanel,
-    bindConversationInterface
+    bindConversationInterface,
+    createTitleTransition
 } from "../src/application/startSimone.js";
 
 const tests = [];
@@ -100,7 +101,7 @@ test("debug panel closes to a small reopen control and restores focus", () => {
     reopen.remove();
 });
 
-test("conversation title, drag hint, and menu remain separate states", () => {
+test("conversation title follows default, Explore, project, and inactive states", () => {
     const fixture = createFixture();
     const controller = bindConversationInterface(
         fixture.bar,
@@ -109,16 +110,62 @@ test("conversation title, drag hint, and menu remain separate states", () => {
         () => {}
     );
 
-    equal(fixture.output.value, "SIMONE");
+    equal(controller.title, "Konschtpräis 2026");
     controller.showDragHint();
-    equal(fixture.output.value, "Drag me");
-    controller.showProject(fixture.projects[2]);
-    equal(fixture.output.value, "Airbag");
-    controller.showDragHint();
-    equal(fixture.output.value, "Airbag");
+    equal(controller.title, "Konschtpräis 2026");
     controller.markDragLearned();
+    equal(controller.title, "Simone Decker");
+    controller.showProject(fixture.projects[2]);
+    equal(controller.title, "Airbag");
     controller.showDragHint();
-    equal(fixture.output.value, "Airbag");
+    equal(controller.title, "Airbag");
+    controller.markDragLearned();
+    equal(controller.title, "Simone Decker");
+    controller.markExplorationInactive();
+    equal(controller.title, "Konschtpräis 2026");
+});
+
+test("title transitions keep header height and reduced motion replaces immediately", () => {
+    const fixture = createFixture();
+    const controller = bindConversationInterface(
+        fixture.bar,
+        fixture.application,
+        () => {},
+        () => {}
+    );
+    const initialHeight = getComputedStyle(fixture.bar).height;
+    controller.markDragLearned();
+    equal(getComputedStyle(fixture.bar).height, initialHeight);
+
+    const output = document.createElement("output");
+    output.setAttribute("aria-label", "Konschtpräis 2026");
+    const transition = createTitleTransition(output, {
+        reducedMotion: true
+    });
+    transition.set("Simone Decker");
+    equal(output.children.length, 1);
+    equal(output.textContent, "Simone Decker");
+    assert(!output.firstElementChild.classList.contains("is-incoming"));
+});
+
+test("mobile and desktop title controllers use identical semantic states", () => {
+    const mobile = createFixture();
+    const desktop = createFixture();
+    const controllers = [mobile, desktop].map((fixture) => (
+        bindConversationInterface(
+            fixture.bar,
+            fixture.application,
+            () => {},
+            () => {}
+        )
+    ));
+
+    controllers.forEach((controller) => controller.markDragLearned());
+    equal(controllers[0].title, controllers[1].title);
+    controllers.forEach((controller) => controller.showProject(
+        mobile.projects[1]
+    ));
+    equal(controllers[0].title, controllers[1].title);
 });
 
 test("menu has no visible heading, highlights active project, and closes", () => {
@@ -136,8 +183,16 @@ test("menu has no visible heading, highlights active project, and closes", () =>
     assert(!fixture.panel.hidden);
     assert(!fixture.panel.querySelector("h1,h2,h3,h4,h5,h6"));
     equal(
-        fixture.list.querySelector('[aria-current="true"]').textContent,
+        fixture.list.querySelector(
+            '[aria-current="true"] .conversation-project-title'
+        ).textContent,
         "Bubles"
+    );
+    equal(
+        fixture.list.querySelector(
+            '[aria-current="true"] .conversation-project-year'
+        ).textContent,
+        "2024"
     );
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     assert(fixture.panel.hidden);
@@ -147,7 +202,7 @@ test("menu has no visible heading, highlights active project, and closes", () =>
 
 test("menu project selection uses the existing READ entry pipeline", () => {
     const fixture = createFixture();
-    bindConversationInterface(
+    const controller = bindConversationInterface(
         fixture.bar,
         fixture.application,
         fixture.synchronizeViewport,
@@ -162,24 +217,30 @@ test("menu project selection uses the existing READ entry pipeline", () => {
         fixture.selections[0].onFrame,
         fixture.synchronizeViewport
     );
-    equal(fixture.output.value, "Airbag");
+    equal(controller.title, "Airbag");
     assert(fixture.panel.hidden);
 });
 
 function createFixture() {
     const bar = document.createElement("header");
+    bar.className = "conversation-bar";
     bar.innerHTML = `
-        <output data-conversation-text>SIMONE</output>
-        <button type="button" data-conversation-menu-trigger>☰</button>
+        <output class="conversation-bar-text" data-conversation-text
+            aria-label="Konschtpräis 2026">
+            <span class="conversation-title-line"
+                data-conversation-title-line>Konschtpräis 2026</span>
+        </output>
+        <button class="conversation-menu-trigger" type="button"
+            data-conversation-menu-trigger>☰</button>
         <nav class="conversation-project-list" hidden>
             <ul data-conversation-projects></ul>
         </nav>
     `;
     document.body.append(bar);
     const projects = [
-        { title: "Blister" },
-        { title: "Bubles" },
-        { title: "Airbag" }
+        { title: "Blister", year: "2023" },
+        { title: "Bubles", year: "2024" },
+        { title: "Airbag", year: null }
     ];
     const selections = [];
     const application = {

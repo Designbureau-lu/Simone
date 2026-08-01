@@ -186,15 +186,19 @@ test("touch input transitions directly between pan and pinch", () => {
             calls.push(["pan"]);
             return true;
         },
-        settleTouchExploration() {
+        settleTouchExploration(...arguments_) {
             calls.push(["settle"]);
+            arguments_.at(-1)?.();
             return true;
         },
         revealLocalInteraction: () => false
     };
     const conversation = {
         markDragLearned() {},
-        showDragHint() {}
+        showDragHint() {},
+        markExplorationInactive() {
+            calls.push(["inactive"]);
+        }
     };
     bindCurtainDragging(canvas, application, () => {}, conversation);
 
@@ -225,6 +229,7 @@ test("touch input transitions directly between pan and pinch", () => {
             > panCallsBeforePinch
     );
     canvas.dispatchEvent(touchEvent("pointerup", 1, 140, 100, 60));
+    assert(calls.some(([name]) => name === "inactive"));
 
     canvas.dispatchEvent(touchEvent("pointerdown", 3, 160, 60, 70));
     canvas.dispatchEvent(touchEvent("pointerdown", 4, 160, 140, 74));

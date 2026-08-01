@@ -1,6 +1,6 @@
 body{
 
-    --conversation-bar-height:52px;
+    --conversation-bar-height:104px;
 
     margin:0;
 
@@ -123,7 +123,7 @@ body{
 
     display:flex;
 
-    min-height:var(--conversation-bar-height);
+    height:var(--conversation-bar-height);
 
     box-sizing:border-box;
 
@@ -131,19 +131,31 @@ body{
 
     justify-content:space-between;
 
+    gap:16px;
+
     width:100%;
 
-    padding:10px 16px;
+    padding:20px 18px;
 
-    background:#000000;
+    background:#ffffff;
 
-    color:#ffffff;
+    color:#000000;
 
-    font:16px/1 system-ui,sans-serif;
+    font:400 32px/1.05 system-ui,sans-serif;
 
 }
 
 .conversation-bar-text{
+
+    position:relative;
+
+    display:block;
+
+    height:1.08em;
+
+    min-width:0;
+
+    flex:1 1 auto;
 
     overflow:hidden;
 
@@ -155,11 +167,55 @@ body{
 
 }
 
+.conversation-title-line{
+
+    position:absolute;
+
+    inset:0;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+}
+
+.conversation-title-line.is-outgoing{
+
+    animation:conversation-title-out 200ms cubic-bezier(0.22,1,0.36,1) both;
+
+}
+
+.conversation-title-line.is-incoming{
+
+    animation:conversation-title-in 200ms cubic-bezier(0.22,1,0.36,1) both;
+
+}
+
+@keyframes conversation-title-out{
+
+    from{transform:translateY(0);}
+
+    to{transform:translateY(-10px);opacity:0;}
+
+}
+
+@keyframes conversation-title-in{
+
+    from{transform:translateY(10px);opacity:0;}
+
+    to{transform:translateY(0);opacity:1;}
+
+}
+
 .conversation-menu-trigger{
 
-    min-width:32px;
+    flex:0 0 52px;
 
-    min-height:32px;
+    width:52px;
+
+    height:52px;
 
     padding:0;
 
@@ -169,7 +225,7 @@ body{
 
     color:inherit;
 
-    font:24px/1 system-ui,sans-serif;
+    font:32px/1 system-ui,sans-serif;
 
     cursor:pointer;
 
@@ -185,19 +241,23 @@ body{
 
     z-index:1;
 
-    width:min(420px,100%);
+    width:100%;
 
     max-height:calc(100vh - var(--conversation-bar-height));
+
+    max-height:calc(100dvh - var(--conversation-bar-height));
 
     overflow:auto;
 
     box-sizing:border-box;
 
-    padding:10px 0 18px;
+    padding:8px 0 max(24px,env(safe-area-inset-bottom));
 
-    background:#000000;
+    background:#ffffff;
 
-    color:#ffffff;
+    color:#000000;
+
+    border-top:1px solid rgba(0,0,0,0.08);
 
 }
 
@@ -221,11 +281,19 @@ body{
 
     position:relative;
 
-    display:block;
+    display:grid;
+
+    grid-template-columns:minmax(0,1fr) auto;
+
+    gap:20px;
+
+    align-items:baseline;
 
     width:100%;
 
-    padding:8px 24px 8px 38px;
+    min-height:64px;
+
+    padding:16px 20px;
 
     border:0;
 
@@ -233,7 +301,7 @@ body{
 
     color:inherit;
 
-    font:15px/1.25 system-ui,sans-serif;
+    font:400 18px/1.25 system-ui,sans-serif;
 
     text-align:left;
 
@@ -241,11 +309,27 @@ body{
 
 }
 
+.conversation-project-title{
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+}
+
+.conversation-project-year{
+
+    font-variant-numeric:tabular-nums;
+
+}
+
 .conversation-project-list button[aria-current="true"]::before{
 
     position:absolute;
 
-    left:20px;
+    left:7px;
 
     content:"•";
 
@@ -254,15 +338,71 @@ body{
 .conversation-project-list button:hover,
 .conversation-project-list button:focus-visible{
 
-    background:rgba(255,255,255,0.12);
+    background:rgba(0,0,0,0.055);
 
     outline:0;
 
 }
 
-.conversation-bar.is-menu-open .conversation-bar-text{
+@media (min-width:768px){
 
-    visibility:hidden;
+    body{--conversation-bar-height:128px;}
+
+    .conversation-bar{
+
+        padding:28px 40px;
+
+        font-size:44px;
+
+    }
+
+    .conversation-menu-trigger{
+
+        flex-basis:56px;
+
+        width:56px;
+
+        height:56px;
+
+        font-size:36px;
+
+    }
+
+    .conversation-project-list{
+
+        width:min(620px,100%);
+
+        right:0;
+
+        padding-top:12px;
+
+    }
+
+    .conversation-project-list button{
+
+        min-height:72px;
+
+        padding:18px 32px;
+
+        font-size:20px;
+
+    }
+
+    .conversation-project-list button[aria-current="true"]::before{
+
+        left:17px;
+
+    }
+
+}
+
+@media (prefers-reduced-motion:reduce){
+
+    .conversation-title-line{
+
+        animation:none !important;
+
+    }
 
 }
 

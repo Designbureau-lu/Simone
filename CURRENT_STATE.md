@@ -4,6 +4,14 @@ Updated: 2026-08-01
 
 ## Today's work
 
+- Replaced the heavy black conversation bar and Index with one white,
+  exhibition-like title composition on mobile and desktop. The fixed-height
+  clipped title line moves vertically between the public “Konschtpräis 2026”,
+  exploration “Simone Decker”, and selected project title states; reduced
+  motion replaces text immediately. The existing genuine-drag threshold keeps
+  project titles stable through insignificant movement. Index rows retain
+  manifest order and the existing READ pipeline while presenting title and
+  optional year in separate columns.
 - Made semantic project landing responsive to the primary input modality.
   Desktop keeps the existing semantic-span center plus optical offset. On a
   coarse primary pointer, Index and NEXT/PREVIOUS instead share the projected
@@ -314,17 +322,17 @@ cancels an unfinished Moses response and restores that snapshot before direct
 manipulation begins.
 
 The temporary click-position bubbles, cartel, text timers, and “Read more”
-control have been removed. A persistent black conversation bar now sits
-independently above the curtain. It begins with “SIMONE”; a semantic click
-immediately replaces that with the real project title. A non-project click may
-show “Drag me” only before a project title has been presented and before the
-visitor has demonstrated a genuine drag. Project titles take priority.
+control have been removed. A persistent white title area now sits independently
+above the curtain. It begins with “Konschtpräis 2026”, changes to “Simone
+Decker” once exploration crosses the existing genuine-drag threshold, and
+shows the semantic project title after a click or READ selection. Ending an
+exploration returns to the public title; insignificant movement does not evict
+a presented project title.
 
-The bar's menu renders the semantic projects in manifest order, highlights the
-current project, and sends a selection through the existing Reset-and-READ
-pipeline. It closes with its × trigger, Escape, or selection and restores
-trigger focus after an explicit close. Its state controller is independent of
-the current desktop top-edge CSS so a later breakpoint can relocate it.
+The title area's white Index renders project titles and optional years in
+manifest order, highlights the current project, and sends a selection through
+the existing Reset-and-READ pipeline. It closes with its × trigger, Escape, or
+selection and restores trigger focus after an explicit close.
 
 The development panel floats outside normal layout and can collapse to its
 small fixed Dev control. The curtain fills the remaining viewport beneath the

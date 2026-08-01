@@ -774,6 +774,7 @@ export function bindCurtainDragging(
         );
         const grabbedInteraction = drag.interaction;
         const grabbedProject = drag.project;
+        const completedDrag = drag.dragLearned;
         const clickReveal = allowClickReveal && isCurtainClick(
             event.clientX - drag.startX,
             event.clientY - drag.startY
@@ -793,6 +794,9 @@ export function bindCurtainDragging(
                 grabbedInteraction,
                 synchronizeViewportControl
             );
+        }
+        if (!clickReveal && completedDrag) {
+            conversation.markExplorationInactive();
         }
     };
 
@@ -848,7 +852,8 @@ export function bindCurtainDragging(
                 TOUCH_CURTAIN_SETTLE_DURATION,
                 TOUCH_CURTAIN_INERTIA_DEVELOPMENT_DURATION,
                 TOUCH_CURTAIN_REVEAL_RETENTION,
-                synchronizeViewportControl
+                synchronizeViewportControl,
+                conversation.markExplorationInactive
             );
         }
     };
@@ -912,9 +917,8 @@ export function bindConversationInterface(
         throw new Error("Conversation interface is incomplete.");
     }
 
+    const title = createTitleTransition(conversation);
     let menuOpen = false;
-    let dragLearned = false;
-    let projectTitlePresented = false;
     let exploredProjectIndex = null;
     const closeMenu = ({ restoreFocus = true } = {}) => {
         menuOpen = false;
@@ -965,7 +969,13 @@ export function bindConversationInterface(
         list.replaceChildren(...projects.map((project, index) => {
             const button = document.createElement("button");
             button.type = "button";
-            button.textContent = project.title;
+            const projectTitle = document.createElement("span");
+            projectTitle.className = "conversation-project-title";
+            projectTitle.textContent = project.title;
+            const projectYear = document.createElement("span");
+            projectYear.className = "conversation-project-year";
+            projectYear.textContent = project.year ?? "";
+            button.append(projectTitle, projectYear);
             const activeIndex = application.attentionMode === "read"
                 ? application.currentProjectIndex
                 : exploredProjectIndex;
@@ -979,22 +989,22 @@ export function bindConversationInterface(
         }));
     };
     const showProject = (project) => {
-        projectTitlePresented = true;
         const projectIndex = application.projectNavigation?.projects
             .indexOf(project);
         exploredProjectIndex = Number.isInteger(projectIndex)
             && projectIndex >= 0
             ? projectIndex
             : null;
-        conversation.value = project.title;
+        title.set(project.title);
     };
     const showDragHint = () => {
-        if (!dragLearned && !projectTitlePresented) {
-            conversation.value = "Drag me";
-        }
+        // A click outside semantic content does not change visitor context.
     };
     const markDragLearned = () => {
-        dragLearned = true;
+        title.set(EXPLORATION_TITLE);
+    };
+    const markExplorationInactive = () => {
+        title.set(PUBLIC_TITLE);
     };
 
     trigger.addEventListener("click", () => {
@@ -1015,8 +1025,79 @@ export function bindConversationInterface(
         synchronizeProjects,
         showProject,
         showDragHint,
-        markDragLearned
+        markDragLearned,
+        markExplorationInactive,
+        get title() {
+            return title.value;
+        }
     });
+}
+
+export function createTitleTransition(
+    element,
+    {
+        reducedMotion = window.matchMedia?.(
+            "(prefers-reduced-motion: reduce)"
+        ).matches === true
+    } = {}
+) {
+    if (!(element instanceof HTMLOutputElement)) {
+        throw new TypeError("Title transition requires an output element.");
+    }
+
+    let value = element.getAttribute("aria-label")
+        ?? element.textContent.trim()
+        ?? PUBLIC_TITLE;
+    const settle = () => {
+        const line = titleLine(value);
+        element.replaceChildren(line);
+        element.setAttribute("aria-label", value);
+    };
+    const set = (nextValue) => {
+        if (typeof nextValue !== "string" || nextValue === "") {
+            throw new TypeError("Conversation title must be non-empty text.");
+        }
+        if (nextValue === value) {
+            return false;
+        }
+        settle();
+        const outgoing = element.firstElementChild;
+        value = nextValue;
+        element.setAttribute("aria-label", value);
+        if (reducedMotion) {
+            settle();
+            return true;
+        }
+
+        outgoing.classList.add("is-outgoing");
+        const incoming = titleLine(value);
+        incoming.classList.add("is-incoming");
+        element.append(incoming);
+        incoming.addEventListener("animationend", () => {
+            if (incoming.isConnected
+                && element.getAttribute("aria-label") === value) {
+                settle();
+            }
+        }, { once: true });
+        return true;
+    };
+
+    settle();
+    return Object.freeze({
+        set,
+        get value() {
+            return value;
+        }
+    });
+}
+
+function titleLine(value) {
+    const line = document.createElement("span");
+    line.className = "conversation-title-line";
+    line.dataset.conversationTitleLine = "";
+    line.setAttribute("aria-hidden", "true");
+    line.textContent = value;
+    return line;
 }
 
 export function isCurtainClick(horizontalMovement, verticalMovement) {
@@ -1146,6 +1227,8 @@ const VIEWPORT_INERTIA_GAIN = 1.75;
 const VIEWPORT_INERTIA_DAMPING = 4.00;
 const TOUCH_CURTAIN_SETTLE_DURATION = 360;
 const TOUCH_CURTAIN_INERTIA_DEVELOPMENT_DURATION = 160;
+const PUBLIC_TITLE = "Konschtpräis 2026";
+const EXPLORATION_TITLE = "Simone Decker";
 
 export function horizontalReframeDirection(
     startPointerPosition,

@@ -680,7 +680,8 @@ export class SimoneApplication {
         duration,
         curtainDevelopmentDuration = duration,
         revealRetention = 0,
-        onFrame = null
+        onFrame = null,
+        onComplete = null
     ) {
         if (!interaction
             || !Number.isFinite(initialReveal)
@@ -812,6 +813,7 @@ export class SimoneApplication {
                 this.touchExplorationFrame = null;
                 this.touchExplorationState = null;
                 this.prioritizeArtworkForIdle?.();
+                onComplete?.();
             }
         };
 
