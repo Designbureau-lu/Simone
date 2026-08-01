@@ -1145,6 +1145,29 @@ test("project selection resets before using shared indexed navigation", () => {
     equal(sequence[1][3], "flat-semantic-span");
 });
 
+test("Index selection prioritizes its destination before Reset", () => {
+    const application = createApplication(createViewport(0));
+    const sequence = [];
+    application.projectNavigation = {
+        projects: [{ title: "Selected" }]
+    };
+    application.projectProjectionFor = () => ({
+        requestedCenteredTarget: 720
+    });
+    application.prioritizeArtworkForDestination = (target) => {
+        sequence.push(["priority", target]);
+    };
+    application.animateResetCurtainState = () => {
+        sequence.push(["reset"]);
+        return true;
+    };
+
+    assert(application.resetAndNavigateToProject(0));
+    equal(sequence[0][0], "priority");
+    equal(sequence[0][1], 720);
+    equal(sequence[1][0], "reset");
+});
+
 test("selected project opens as one uniform semantic period span", () => {
     const viewport = createViewport(0);
     const application = createApplication(viewport);
@@ -1175,12 +1198,17 @@ test("selected project opens as one uniform semantic period span", () => {
             { title: "Second", artworkStart: 320, artworkEnd: 680 }
         ]
     });
+    const prioritizedDestinations = [];
+    application.prioritizeArtworkForDestination = (target) => {
+        prioritizedDestinations.push(target);
+    };
 
     assert(application.navigateToProject(
         1,
         null,
         "flat-semantic-span"
     ));
+    closeTo(prioritizedDestinations[0], 340);
     animation.runNext(0);
     animation.runNext(450);
     equal(viewport.projectedOffset, 340);

@@ -6,6 +6,11 @@ import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
 import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
 import { Viewport } from "../src/viewport/Viewport.js";
+import {
+    inertiaPriorityCorridor,
+    panPriorityCorridor,
+    predictedInertialCameraTravel
+} from "../src/application/ViewportApplication.js";
 
 const tests = [];
 
@@ -176,6 +181,30 @@ test("guarded sampling contains every column selected by the camera", () => {
             projectedColumns[sourceX].width
         );
     }
+});
+
+test("Pan priority corridor follows direction and reverses immediately", () => {
+    const right = panPriorityCorridor(1000, 400, 20);
+    const left = panPriorityCorridor(1000, 400, -20);
+
+    assert(right.start === 1000 && right.end === 1800);
+    assert(left.start === 600 && left.end === 1400);
+});
+
+test("inertia priority predicts the damped travel corridor", () => {
+    const travel = predictedInertialCameraTravel(-2, 1.75, 4);
+    const corridor = inertiaPriorityCorridor(1000, 400, travel, 2000);
+
+    closeTo(travel, 875);
+    closeTo(corridor.start, 1000);
+    closeTo(corridor.end, 2275);
+});
+
+test("inertia priority respects the existing camera travel bound", () => {
+    const corridor = inertiaPriorityCorridor(1000, 400, -2000, 300);
+
+    closeTo(corridor.start, 700);
+    closeTo(corridor.end, 1400);
 });
 
 function createViewingSurface(width, height) {

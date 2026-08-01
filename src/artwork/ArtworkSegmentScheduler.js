@@ -10,7 +10,11 @@ export const SegmentLoadState = Object.freeze({
 
 export const SegmentPriority = Object.freeze({
     BACKGROUND: 0,
-    INITIAL_VIEWPORT: 100
+    IDLE_NEARBY: 100,
+    MOVEMENT_AHEAD: 200,
+    DESTINATION: 300,
+    VISIBLE: 400,
+    INITIAL_VIEWPORT: 500
 });
 
 /** Bounded loader for independently available artwork segments. */
@@ -101,6 +105,38 @@ export class ArtworkSegmentScheduler {
             this.#segments.map(({ index }) => index),
             priority
         );
+    }
+
+    reprioritize(groups) {
+        if (!Array.isArray(groups)) {
+            throw new TypeError("Artwork priority groups must be an array.");
+        }
+        for (const segment of this.#segments) {
+            if (segment.state === SegmentLoadState.QUEUED
+                || segment.state === SegmentLoadState.LOADED) {
+                segment.priority = SegmentPriority.BACKGROUND;
+            }
+        }
+        for (const { indices, priority } of groups) {
+            const requested = uniqueIndices(indices, this.#segments.length);
+            for (const index of requested) {
+                const segment = this.#segments[index];
+                if (isTerminal(segment.state)
+                    || segment.state === SegmentLoadState.REQUESTED
+                    || segment.state === SegmentLoadState.DECODING) {
+                    continue;
+                }
+                segment.priority = Math.max(segment.priority, priority);
+                if (segment.state === SegmentLoadState.KNOWN) {
+                    segment.state = SegmentLoadState.QUEUED;
+                    segment.sequence = this.#sequence;
+                    this.#sequence += 1;
+                    this.#notify(segment);
+                }
+            }
+        }
+        this.#pumpRequests();
+        this.#pumpDecodes();
     }
 
     whenSettled(indices) {

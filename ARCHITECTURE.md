@@ -98,6 +98,9 @@ Canvas
 - Establish the complete virtual-artwork coordinate system from metadata.
 - Load and decode viewport-critical segments through a bounded priority queue,
   then continue remaining segments in the background.
+- Reprioritize queued segments from the current guarded viewport, signed Pan
+  direction, predicted inertia corridor, and semantic destination. Active
+  requests and decodes are never cancelled or restarted.
 - Present decoded sources through that stable coordinate system without
   assembling a giant intermediate canvas.
 - Expose exact one-pixel-wide vertical source columns.

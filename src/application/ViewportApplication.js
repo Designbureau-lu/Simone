@@ -1,4 +1,7 @@
 import { SimoneApplication } from "./SimoneApplication.js";
+import {
+    SegmentPriority
+} from "../artwork/ArtworkSegmentScheduler.js";
 
 const VIEWPORT_SAMPLING_GUARD_PERIODS = 4;
 
@@ -9,6 +12,7 @@ export class ViewportApplication extends SimoneApplication {
     #logicalSourceImageWidth = null;
     #currentSurface = null;
     #sampledSourceRange = null;
+    #artworkSegmentScheduler = null;
 
     constructor({ viewingSurface, ...dependencies }) {
         super(dependencies);
@@ -23,6 +27,126 @@ export class ViewportApplication extends SimoneApplication {
 
     setDestinationMode(mode) {
         this.viewingSurface.mode = mode;
+    }
+
+    setArtworkSegmentScheduler(scheduler) {
+        this.#artworkSegmentScheduler = scheduler;
+    }
+
+    startBackgroundArtworkLoading() {
+        if (!this.#artworkSegmentScheduler || !this.artwork) {
+            return;
+        }
+        this.#artworkSegmentScheduler.request(
+            this.#segmentsOutwardFromCurrentViewport(),
+            SegmentPriority.BACKGROUND
+        );
+        this.prioritizeArtworkForIdle();
+    }
+
+    prioritizeArtworkForPan(cameraDisplacement) {
+        if (!this.#artworkSegmentScheduler
+            || !Number.isFinite(cameraDisplacement)
+            || cameraDisplacement === 0) {
+            return;
+        }
+        const corridor = panPriorityCorridor(
+            this.viewport.projectedOffset,
+            this.viewport.projectedExtent,
+            cameraDisplacement
+        );
+        this.#reprioritizeArtwork([
+            {
+                indices: this.requiredSegmentIndicesForCurrentViewport(),
+                priority: SegmentPriority.VISIBLE
+            },
+            {
+                indices: this.#segmentIndicesForProjectedWindow(
+                    corridor.start,
+                    corridor.end
+                ),
+                priority: SegmentPriority.MOVEMENT_AHEAD
+            }
+        ]);
+    }
+
+    prioritizeArtworkForInertia(
+        viewportVelocity,
+        inertiaGain,
+        inertiaDamping
+    ) {
+        if (!this.#artworkSegmentScheduler
+            || !Number.isFinite(viewportVelocity)
+            || viewportVelocity === 0) {
+            return;
+        }
+        const predictedTravel = predictedInertialCameraTravel(
+            viewportVelocity,
+            inertiaGain,
+            inertiaDamping
+        );
+        if (predictedTravel === 0) {
+            this.prioritizeArtworkForIdle();
+            return;
+        }
+        const direction = Math.sign(predictedTravel);
+        const corridor = inertiaPriorityCorridor(
+            this.viewport.projectedOffset,
+            this.viewport.projectedExtent,
+            predictedTravel,
+            this.viewport.availableProjectedDisplacement(direction)
+        );
+        this.#reprioritizeArtwork([
+            {
+                indices: this.requiredSegmentIndicesForCurrentViewport(),
+                priority: SegmentPriority.VISIBLE
+            },
+            {
+                indices: this.#segmentIndicesForProjectedWindow(
+                    corridor.start,
+                    corridor.end
+                ),
+                priority: SegmentPriority.MOVEMENT_AHEAD
+            }
+        ]);
+    }
+
+    prioritizeArtworkForDestination(projectedOffset) {
+        if (!this.#artworkSegmentScheduler
+            || !Number.isFinite(projectedOffset)) {
+            return;
+        }
+        this.#reprioritizeArtwork([
+            {
+                indices: this.requiredSegmentIndicesForCurrentViewport(),
+                priority: SegmentPriority.VISIBLE
+            },
+            {
+                indices: this.#segmentIndicesForProjectedWindow(
+                    projectedOffset,
+                    projectedOffset + this.viewport.projectedExtent
+                ),
+                priority: SegmentPriority.DESTINATION
+            }
+        ]);
+    }
+
+    prioritizeArtworkForIdle() {
+        if (!this.#artworkSegmentScheduler || !this.artwork) {
+            return;
+        }
+        const visible = this.requiredSegmentIndicesForCurrentViewport();
+        const groups = [{
+            indices: visible,
+            priority: SegmentPriority.VISIBLE
+        }];
+        this.#segmentsOutwardFromCurrentViewport().forEach((index, order) => {
+            groups.push({
+                indices: [index],
+                priority: SegmentPriority.IDLE_NEARBY - order
+            });
+        });
+        this.#reprioritizeArtwork(groups);
     }
 
     render() {
@@ -205,6 +329,39 @@ export class ViewportApplication extends SimoneApplication {
         return this.requiredSegmentIndicesForCurrentViewport().includes(index);
     }
 
+    #segmentIndicesForProjectedWindow(start, end) {
+        if (!this.artwork || !this.#currentSurface) {
+            return Object.freeze([]);
+        }
+        const range = this.#currentSurface.samplingRangeForProjectedWindow(
+            start,
+            end,
+            VIEWPORT_SAMPLING_GUARD_PERIODS
+        );
+        const sourceRange = this.#sourceRangeForSampling(range);
+        return this.artwork.segmentIndicesForSourceRange(
+            sourceRange.start,
+            sourceRange.end
+        );
+    }
+
+    #segmentsOutwardFromCurrentViewport() {
+        const visible = this.requiredSegmentIndicesForCurrentViewport();
+        const first = visible[0] ?? 0;
+        const last = visible.at(-1) ?? first;
+        return Array.from({ length: this.artwork.imageCount }, (_, index) => (
+            index
+        )).sort((firstIndex, secondIndex) => (
+            distanceFromRange(firstIndex, first, last)
+                - distanceFromRange(secondIndex, first, last)
+            || firstIndex - secondIndex
+        ));
+    }
+
+    #reprioritizeArtwork(groups) {
+        this.#artworkSegmentScheduler?.reprioritize(groups);
+    }
+
     projectedColumnAt(sourceX) {
         const existing = super.projectedColumnAt(sourceX);
         if (existing || !this.#currentSurface || !this.artwork) {
@@ -343,4 +500,53 @@ export class ViewportApplication extends SimoneApplication {
         this.#logicalSourceImageWidth = this.logicalImageWidth;
         return logicalSourceXs;
     }
+}
+
+export function predictedInertialCameraTravel(
+    viewportVelocity,
+    inertiaGain,
+    inertiaDamping
+) {
+    if (!Number.isFinite(viewportVelocity)
+        || !Number.isFinite(inertiaGain)
+        || inertiaGain < 0
+        || !Number.isFinite(inertiaDamping)
+        || inertiaDamping <= 0) {
+        throw new RangeError("Viewport inertia prediction is invalid.");
+    }
+    return -viewportVelocity * inertiaGain * 1000 / inertiaDamping;
+}
+
+export function panPriorityCorridor(offset, extent, cameraDisplacement) {
+    return Object.freeze(cameraDisplacement > 0
+        ? { start: offset, end: offset + 2 * extent }
+        : { start: offset - extent, end: offset + extent });
+}
+
+export function inertiaPriorityCorridor(
+    offset,
+    extent,
+    predictedTravel,
+    availableTravel
+) {
+    const direction = Math.sign(predictedTravel);
+    const travel = direction * Math.min(
+        Math.abs(predictedTravel),
+        availableTravel
+    );
+    const target = offset + travel;
+    return Object.freeze({
+        start: Math.min(offset, target),
+        end: Math.max(offset + extent, target + extent)
+    });
+}
+
+function distanceFromRange(index, start, end) {
+    if (index < start) {
+        return start - index;
+    }
+    if (index > end) {
+        return index - end;
+    }
+    return 0;
 }

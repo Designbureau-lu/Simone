@@ -4,6 +4,14 @@ Updated: 2026-07-31
 
 ## Today's work
 
+- Extended the viewport-first scheduler with movement-aware queued priority.
+  The guarded visible range remains highest; signed Pan promotes one viewport
+  ahead, inertia promotes the bounded corridor to the analytical exponential-
+  damping destination, and Index plus semantic navigation promote their target
+  viewport before movement begins. Idle work proceeds outward from the current
+  viewport. Active requests and decodes are never cancelled; direction changes
+  only reorder queued or loaded-waiting-to-decode segments. Camera, interaction,
+  rendering, startup concurrency, and the empty-span fallback are unchanged.
 - Replaced the production all-images startup barrier with viewport-first
   segmented loading. `public/artwork.json` now establishes ordered dimensions
   and stable global coordinates before decoding. A deterministic scheduler

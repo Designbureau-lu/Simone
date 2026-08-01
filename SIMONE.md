@@ -39,7 +39,11 @@ pixel dimensions, and optional compressed byte size before image decoding, so
 global artwork, curtain, camera, and semantic coordinates are final from the
 first frame. Startup requests only segments intersecting the initial viewport
 and its existing guard region; a bounded scheduler loads the remainder in the
-background. `loadArtwork` remains the all-at-once local-import rollback path.
+background. During exploration, queued work follows the signed Pan direction
+and the corridor predicted from the existing inertia velocity, gain, damping,
+and camera bounds. Semantic destinations pre-empt background work through the
+same scheduler. Active requests continue normally. `loadArtwork` remains the
+all-at-once local-import rollback path.
 The referenced files live in `public/images/`.
 
 Semantic project ranges are defined in `public/projects.txt`. They are measured

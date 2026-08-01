@@ -309,6 +309,7 @@ export class SimoneApplication {
         const targetOffset = openingMode === PROJECT_OPENING_FLAT_SPAN
             ? projection.requestedCenteredTarget
             : projection.requestedNextTarget;
+        this.prioritizeArtworkForDestination?.(targetOffset);
         this.animateViewportToProjectedOffset(
             targetOffset,
             onFrame,
@@ -327,6 +328,15 @@ export class SimoneApplication {
         onSelection = null
     ) {
         this.attentionMode = ATTENTION_MODE_READ;
+        const project = this.projectNavigation?.projects[targetIndex];
+        const projection = project
+            ? this.projectProjectionFor(project)
+            : null;
+        if (projection) {
+            this.prioritizeArtworkForDestination?.(
+                projection.requestedCenteredTarget
+            );
+        }
         return this.animateResetCurtainState(
             {
                 resetCurtainState: READ_ENTRY_RESET_STATE
@@ -643,10 +653,14 @@ export class SimoneApplication {
         const currentAnchor = this.curtainField
             .projectedXForInteraction(interaction);
 
+        const previousViewportOffset = this.viewport.projectedOffset;
         this.viewport.shiftProjectedOffset(
             currentAnchor - previousAnchor - fingerDisplacement
         );
         this.render();
+        this.prioritizeArtworkForPan?.(
+            this.viewport.projectedOffset - previousViewportOffset
+        );
         return true;
     }
 
@@ -708,6 +722,11 @@ export class SimoneApplication {
             retainedVisibleFactors,
             viewportVelocity: initialViewportVelocity
         };
+        this.prioritizeArtworkForInertia?.(
+            initialViewportVelocity,
+            inertiaGain,
+            inertiaDamping
+        );
         let previousTimestamp = null;
         let inertiaStartedAt = null;
         let settleStartedAt = null;
@@ -788,6 +807,7 @@ export class SimoneApplication {
             } else {
                 this.touchExplorationFrame = null;
                 this.touchExplorationState = null;
+                this.prioritizeArtworkForIdle?.();
             }
         };
 

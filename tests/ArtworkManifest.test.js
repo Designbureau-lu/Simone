@@ -205,6 +205,50 @@ check(
     "scheduler did not complete deterministic segment states"
 );
 
+const priorityArtwork = ImmutableArtwork.fromMetadata(
+    Array.from({ length: 5 }, (_, index) => segmentMetadata(
+        `Priority ${index}`,
+        index
+    ))
+);
+const priorityOrder = [];
+let releaseFirstRequest;
+const firstRequestBlocked = new Promise((resolve) => {
+    releaseFirstRequest = resolve;
+});
+const priorityScheduler = new ArtworkSegmentScheduler({
+    artwork: priorityArtwork,
+    maximumRequests: 1,
+    maximumDecodes: 1,
+    async fetchSegment(segment) {
+        priorityOrder.push(segment.index);
+        if (segment.index === 0) {
+            await firstRequestBlocked;
+        }
+        return canvasSource(segment.width, segment.height);
+    },
+    decodeSegment: async (source) => source
+});
+const allPriorities = priorityScheduler.requestRemaining();
+priorityScheduler.reprioritize([{
+    indices: [4],
+    priority: SegmentPriority.MOVEMENT_AHEAD
+}]);
+priorityScheduler.reprioritize([
+    { indices: [1], priority: SegmentPriority.MOVEMENT_AHEAD },
+    { indices: [2], priority: SegmentPriority.VISIBLE }
+]);
+releaseFirstRequest();
+await allPriorities;
+check(
+    priorityOrder.slice(0, 4).join(",") === "0,2,1,3",
+    "visible work or reversed movement did not reprioritize queued segments"
+);
+check(
+    priorityOrder.indexOf(4) > priorityOrder.indexOf(1),
+    "stale movement direction remained prioritized after reversal"
+);
+
 const viewportArtwork = ImmutableArtwork.fromMetadata(schedulerMetadata);
 const viewportRequests = [];
 const viewportScheduler = new ArtworkSegmentScheduler({

@@ -24,7 +24,9 @@ one scene:
 - Ordered dimensions in `public/artwork.json` establish the complete virtual
   artwork before decoding. Only segments required by the initial viewport and
   guard region block the first curtain; remaining segments load through the
-  same metadata-backed artwork in the background.
+  same metadata-backed artwork in the background. Queued loading follows Pan,
+  predicted camera inertia, and semantic destinations without changing camera
+  or interaction behavior.
 
 See [SIMONE.md](SIMONE.md) for the design philosophy, architecture, geometry and
 rendering pipelines, intentional approximations, limitations, and research

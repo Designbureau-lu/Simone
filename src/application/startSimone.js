@@ -200,6 +200,7 @@ export async function loadManifestArtwork(application, onNavigation = null) {
         const initialSegments = application
             .requiredSegmentIndicesForCurrentViewport();
         const scheduler = new ArtworkSegmentScheduler({ artwork });
+        application.setArtworkSegmentScheduler(scheduler);
         let initialCurtainPresented = false;
         scheduler.onStateChange(({ index, state }) => {
             if (initialCurtainPresented
@@ -218,8 +219,8 @@ export async function loadManifestArtwork(application, onNavigation = null) {
         );
         application.render();
         initialCurtainPresented = true;
+        application.startBackgroundArtworkLoading();
         await navigation;
-        scheduler.requestRemaining(SegmentPriority.BACKGROUND);
     } catch (error) {
         console.error("SIMONE could not load its image manifest.", error);
     }
