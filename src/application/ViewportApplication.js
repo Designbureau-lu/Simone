@@ -197,6 +197,9 @@ export class ViewportApplication extends SimoneApplication {
             contentBounds.start,
             contentBounds.end
         );
+        if (previousExtent !== projectedExtent) {
+            this.alignCurrentProjectLeadingGutter();
+        }
 
         this.viewport.presentationExtent = viewing.frame.width;
         const viewingAppearance = this.viewingSurface.appearanceFor(

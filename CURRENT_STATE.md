@@ -4,6 +4,12 @@ Updated: 2026-08-01
 
 ## Today's work
 
+- Made mobile leading-gutter landing deterministic after navigation. The
+  semantic target was correct, but a later viewing-surface extent change could
+  preserve the camera centre and shift its left edge after arrival. Mobile READ
+  now reapplies the exact projected `artworkStart` boundary after presentation
+  settles and when a settled responsive resize changes the camera extent.
+  Exploration and in-progress navigation retain their existing camera rules.
 - Made semantic project landing responsive to the primary input modality.
   Desktop keeps the existing semantic-span center plus optical offset. On a
   coarse primary pointer, Index and NEXT/PREVIOUS instead share the projected
