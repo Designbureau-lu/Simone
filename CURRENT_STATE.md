@@ -1,17 +1,17 @@
 # SIMONE Current State
 
-Updated: 2026-08-01
+Updated: 2026-08-02
 
 ## Today's work
 
-- Added an isolated experimental depth-height projection. Circular geometry
-  now reports continuous normalized depth from each Period's actual front crest
-  to rear valley. Artwork columns retain their former lower edge while their
-  destination height decreases linearly to 75% at maximum depth, producing the
-  upper silhouette without another authored wave. Horizontal geometry,
-  shading, global coordinates, demand-driven sampling, and interactions are
-  unchanged; the 25% strength is centralized in
-  `DepthHeightProjection.js` for easy tuning or removal.
+- Replaced the previous per-frame depth mapping with an amplitude-aware physical
+  projection. Circular geometry reports each sampled column's current
+  physical distance behind its front crest and the Period's stable maximum
+  depth (`carrierDistance / pi`). Artwork columns retain their existing lower
+  edge and shorten by up to 25% against that stable reference. Opening the
+  curtain reduces actual depth and therefore reduces shortening; a flat fold
+  restores every column to exactly full height. Horizontal geometry, shading,
+  global coordinates, demand-driven sampling, and interactions are unchanged.
 - Replaced the heavy black conversation bar and Index with one white,
   exhibition-like title composition on mobile and desktop. The fixed-height
   clipped title line moves vertically between the public “Konschtpräis 2026”,

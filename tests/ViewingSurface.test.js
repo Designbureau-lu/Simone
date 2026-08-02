@@ -189,51 +189,87 @@ test("guarded sampling contains every column selected by the camera", () => {
     }
 });
 
-test("fold depth continuously spans full-height crest to shortest valley", () => {
-    const field = new CurtainField({ resetCurtainState: 0.75 });
-    const parameters = new SurfaceParameters();
-    const surface = new CircularFoldSurface();
-    field.configureFor(240, 120);
-    field.resolve(parameters);
-    surface.frameFor({ width: 240, height: 400 }, field);
-    const placements = Array.from({ length: 120 }, (_, sourceX) => (
-        surface.mapColumn({ sourceX }, field)
-    ));
-    const crest = placements.reduce((closest, placement) => (
-        placement.normalizedDepth < closest.normalizedDepth
-            ? placement
-            : closest
-    ));
-    const valley = placements.reduce((deepest, placement) => (
-        placement.normalizedDepth > deepest.normalizedDepth
-            ? placement
-            : deepest
-    ));
+test("absolute fold depth keeps the front crest at full height", () => {
+    for (const visibleFactor of [0.5, 0.75, 1]) {
+        const placements = foldPlacements(visibleFactor);
+        const crest = placements.reduce((closest, placement) => (
+            placement.depthFromFront < closest.depthFromFront
+                ? placement
+                : closest
+        ));
 
-    closeTo(crest.normalizedDepth, 0);
-    closeTo(valley.normalizedDepth, 1);
+        closeTo(crest.depthFromFront, 0, 1e-9);
+        closeTo(depthHeightFactor(
+            crest.depthFromFront,
+            crest.referenceMaximumDepth
+        ), 1);
+    }
+});
+
+test("shortening follows actual fold amplitude and vanishes when flat", () => {
+    const folded = foldPlacements(0.75);
+    const shallower = foldPlacements(0.9);
+    const flat = foldPlacements(1);
+    const foldedValley = deepestPlacement(folded);
+    const shallowerValley = deepestPlacement(shallower);
+
+    assert(
+        foldedValley.depthFromFront > shallowerValley.depthFromFront,
+        "Opening the fold did not reduce its physical depth"
+    );
+    assert(
+        depthHeightFactor(
+            foldedValley.depthFromFront,
+            foldedValley.referenceMaximumDepth
+        ) < depthHeightFactor(
+            shallowerValley.depthFromFront,
+            shallowerValley.referenceMaximumDepth
+        ),
+        "Opening the fold did not reduce column shortening"
+    );
+    for (const placement of flat) {
+        closeTo(placement.depthFromFront, 0, 1e-9);
+        closeTo(depthHeightFactor(
+            placement.depthFromFront,
+            placement.referenceMaximumDepth
+        ), 1);
+    }
+});
+
+test("half reference depth receives half the maximum shortening", () => {
+    const referenceMaximumDepth = 120;
+
     closeTo(
-        depthHeightFactor(crest.normalizedDepth),
-        1
+        depthHeightFactor(
+            referenceMaximumDepth / 2,
+            referenceMaximumDepth
+        ),
+        0.875
     );
     closeTo(
-        depthHeightFactor(valley.normalizedDepth),
+        depthHeightFactor(referenceMaximumDepth, referenceMaximumDepth),
         1 - COLUMN_DEPTH_HEIGHT_STRENGTH
     );
+});
+
+test("physical depth remains continuous across fold branch boundaries", () => {
+    const placements = foldPlacements(0.75);
+    const referenceDepth = placements[0].referenceMaximumDepth;
+
     for (let index = 1; index < placements.length; index += 1) {
         assert(
             Math.abs(
-                placements[index].normalizedDepth
-                    - placements[index - 1].normalizedDepth
-            ) < 0.08,
+                placements[index].depthFromFront
+                    - placements[index - 1].depthFromFront
+            ) / referenceDepth < 0.08,
             `Depth jumped between columns ${index - 1} and ${index}`
         );
     }
 });
 
 test("depth scaling preserves bottom profile and derives the top from height", () => {
-    const frontHeight = depthScaledHeight(400, 0, 2);
-    const rearHeight = depthScaledHeight(400, 1, 2);
+    const frontHeight = depthScaledHeight(400, 0, 120, 2);
+    const rearHeight = depthScaledHeight(400, 120, 120, 2);
     const frontTop = depthAnchoredTop(400, 20, frontHeight, 2);
     const rearTop = depthAnchoredTop(400, 20, rearHeight, 2);
 
@@ -246,9 +282,9 @@ test("depth scaling preserves bottom profile and derives the top from height", (
 });
 
 test("desktop and mobile scales use the same depth-height factor", () => {
-    const factor = depthHeightFactor(0.6);
-    const desktop = depthScaledHeight(400, 0.6, 1);
-    const mobile = depthScaledHeight(400, 0.6, 2.5);
+    const factor = depthHeightFactor(72, 120);
+    const desktop = depthScaledHeight(400, 72, 120, 1);
+    const mobile = depthScaledHeight(400, 72, 120, 2.5);
 
     closeTo(factor, 0.85);
     closeTo(mobile, desktop * 2.5);
@@ -295,9 +331,29 @@ function createViewingSurface(width, height) {
     };
 }
 
-function closeTo(actual, expected) {
+function foldPlacements(visibleFactor) {
+    const field = new CurtainField({ resetCurtainState: visibleFactor });
+    const parameters = new SurfaceParameters();
+    const surface = new CircularFoldSurface();
+    field.configureFor(240, 120);
+    field.resolve(parameters);
+    surface.frameFor({ width: 240, height: 400 }, field);
+    return Array.from({ length: 120 }, (_, sourceX) => (
+        surface.mapColumn({ sourceX }, field)
+    ));
+}
+
+function deepestPlacement(placements) {
+    return placements.reduce((deepest, placement) => (
+        placement.depthFromFront > deepest.depthFromFront
+            ? placement
+            : deepest
+    ));
+}
+
+function closeTo(actual, expected, tolerance = 1e-12) {
     assert(
-        Math.abs(actual - expected) <= 1e-12,
+        Math.abs(actual - expected) <= tolerance,
         `Expected ${actual} to equal ${expected}`
     );
 }

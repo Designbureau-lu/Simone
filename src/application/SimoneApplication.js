@@ -1138,7 +1138,8 @@ export class SimoneApplication {
             );
             const destinationHeight = depthScaledHeight(
                 column.height,
-                placement.normalizedDepth
+                placement.depthFromFront,
+                placement.referenceMaximumDepth
             );
 
             this.renderer.drawColumn(

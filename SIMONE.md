@@ -171,7 +171,8 @@ Geometry produces one immutable placement for each requested artwork column:
 
 - `sourceX`: source-column coordinate.
 - `targetX`, `targetY`: destination coordinates.
-- `normalizedDepth`: continuous position from front crest to rear valley.
+- `depthFromFront`: current physical distance behind the front crest.
+- `referenceMaximumDepth`: stable physical maximum supplied by the fold model.
 - `localSlope`: analytical slope of the circular surface.
 - `branch`: `front` or `rear` identity.
 - `alpha`: branch visibility supplied to the renderer.
@@ -182,9 +183,11 @@ values, without crossing branch boundaries. Requesting only a guarded region
 does not change the placement calculation: Period state, artwork coordinates,
 and camera coordinates remain global.
 
-Column destination height is independently scaled from `normalizedDepth`.
-The former lower edge (`targetY + source height`) remains authoritative, so the
-new top silhouette is derived from height rather than authored as another
+Column destination height is independently scaled by the ratio of current
+physical depth to the fold model's stable maximum depth. The signal collapses
+to zero as the curtain flattens, restoring uniform full-height columns. The
+former lower edge (`targetY + source height`) remains authoritative, so the top
+silhouette emerges from column height rather than being authored as another
 wave.
 
 ### Shading responsibilities

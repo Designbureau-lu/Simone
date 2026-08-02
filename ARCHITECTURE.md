@@ -252,7 +252,8 @@ requested globally indexed artwork column.
 | `periodIndex` | Geometry | Application | Identity used to retrieve the Period's local resolved shading parameters. |
 | `targetX` | Geometry | Application and renderer | Horizontal destination coordinate in the output frame. |
 | `targetY` | Geometry | Application and renderer | Vertical fold offset used to preserve the artwork's former lower edge. |
-| `normalizedDepth` | Geometry | Application | Continuous current-fold depth: front crest `0`, rear valley `1`. |
+| `depthFromFront` | Geometry | Application | Current physical distance behind the Period's front crest. It collapses to `0` as the fold becomes flat. |
+| `referenceMaximumDepth` | Geometry | Application | Stable physical depth bound supplied by the fold model; independent of current amplitude. |
 | `localSlope` | Geometry | Renderer; available to shading | Analytical slope at the mapped point. The renderer uses slope continuity to locate fold regions and crests. |
 | `branch` | Geometry | Application, shading, renderer | Viewer-relative branch identity: `front` or `rear`. |
 | `alpha` | Geometry visibility policy | Application and renderer | Branch visibility. It is forwarded unchanged and used only when drawing. |
@@ -268,11 +269,14 @@ requested globally indexed artwork column.
 Branch identity is semantic, not an arbitrary alternating label. The
 application does not calculate it, and the renderer does not reinterpret it.
 
-The experimental depth-height projection uses `normalizedDepth` to shorten a
-column continuously while preserving its former lower edge. This presentation
-mapping does not alter horizontal geometry, global coordinates, or the fold's
-existing vertical profile. Its single strength constant lives in
-`DepthHeightProjection.js` so the experiment remains isolated and reversible.
+The depth-height projection compares `depthFromFront` with the Period's stable
+`referenceMaximumDepth`. Columns therefore shorten in proportion to current
+physical fold amplitude rather than being renormalized within every frame. A
+flat fold reports zero depth and restores every column to full height. The
+former lower edge remains fixed; horizontal geometry, global coordinates, and
+the existing lower fold profile do not change. The single strength constant
+lives in `DepthHeightProjection.js` so the presentation mapping remains
+isolated and reversible.
 
 ---
 

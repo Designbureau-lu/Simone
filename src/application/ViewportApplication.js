@@ -265,7 +265,8 @@ export class ViewportApplication extends SimoneApplication {
             );
             const destinationHeight = depthScaledHeight(
                 column.height,
-                placement.normalizedDepth,
+                placement.depthFromFront,
+                placement.referenceMaximumDepth,
                 viewing.scaleY
             );
 

@@ -1,23 +1,30 @@
 export const COLUMN_DEPTH_HEIGHT_STRENGTH = 0.25;
 
 export function depthHeightFactor(
-    normalizedDepth,
+    depthFromFront,
+    referenceMaximumDepth,
     strength = COLUMN_DEPTH_HEIGHT_STRENGTH
 ) {
-    if (!Number.isFinite(normalizedDepth)
-        || normalizedDepth < 0
-        || normalizedDepth > 1
+    if (!Number.isFinite(depthFromFront)
+        || depthFromFront < 0
+        || !Number.isFinite(referenceMaximumDepth)
+        || referenceMaximumDepth <= 0
         || !Number.isFinite(strength)
         || strength < 0
         || strength >= 1) {
         throw new RangeError("Depth-height factor is invalid.");
     }
-    return 1 - strength * normalizedDepth;
+    const depthRatio = Math.min(
+        depthFromFront / referenceMaximumDepth,
+        1
+    );
+    return 1 - strength * depthRatio;
 }
 
 export function depthScaledHeight(
     sourceHeight,
-    normalizedDepth,
+    depthFromFront,
+    referenceMaximumDepth,
     scale = 1,
     strength = COLUMN_DEPTH_HEIGHT_STRENGTH
 ) {
@@ -28,7 +35,11 @@ export function depthScaledHeight(
         throw new RangeError("Depth-scaled height is invalid.");
     }
     return sourceHeight * scale
-        * depthHeightFactor(normalizedDepth, strength);
+        * depthHeightFactor(
+            depthFromFront,
+            referenceMaximumDepth,
+            strength
+        );
 }
 
 /** Derives the top from height while retaining the existing lower edge. */

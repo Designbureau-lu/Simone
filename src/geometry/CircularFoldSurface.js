@@ -71,10 +71,9 @@ export class CircularFoldSurface extends PeriodicSurface {
             + foldOffset
             + placement.x;
         const targetY = period.depthExtent + placement.y;
-        const normalizedDepth = normalizedFoldDepth(
-            placement.y,
-            period.frontDepth,
-            period.rearDepth
+        const depthFromFront = Math.max(
+            0,
+            placement.y + period.frontDepth
         );
         const branch = isFront ? "front" : "rear";
         const alpha = isFront ? 1 : period.rearAlpha;
@@ -88,7 +87,8 @@ export class CircularFoldSurface extends PeriodicSurface {
             branch,
             alpha,
             arc.chordLength,
-            normalizedDepth
+            depthFromFront,
+            period.depthExtent
         );
     }
 
@@ -216,13 +216,6 @@ function arcDepth(arc) {
     return arc.radius * (1 - Math.cos(arc.angle / 2));
 }
 
-function normalizedFoldDepth(depth, frontDepth, rearDepth) {
-    const extent = frontDepth + rearDepth;
-    return extent === 0
-        ? 0
-        : clamp((depth + frontDepth) / extent, 0, 1);
-}
-
 function solveCentralAngle(chordRatio) {
     if (chordRatio >= 1) {
         return 0;
@@ -280,7 +273,8 @@ export function createPlacement(
     branch,
     alpha,
     allocatedWidth,
-    normalizedDepth = 0
+    depthFromFront = 0,
+    referenceMaximumDepth = 1
 ) {
     return Object.freeze({
         sourceX,
@@ -291,7 +285,8 @@ export function createPlacement(
         branch,
         alpha,
         allocatedWidth,
-        normalizedDepth
+        depthFromFront,
+        referenceMaximumDepth
     });
 }
 

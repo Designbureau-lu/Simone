@@ -8,8 +8,9 @@
  *   application compares adjacent values to derive rasterized column width.
  * - `targetY`: geometry-owned vertical fold offset. The application preserves
  *   its former lower edge while applying the optional depth-height mapping.
- * - `normalizedDepth`: continuous position from the current Period's
- *   frontmost crest (`0`) to its deepest rear valley (`1`).
+ * - `depthFromFront`: current physical distance behind the Period's frontmost
+ *   crest. It collapses toward zero as the fold becomes flat.
+ * - `referenceMaximumDepth`: stable physical depth bound for that fold model.
  * - `localSlope`: geometry-owned analytical surface slope; consumed by the
  *   renderer's fold-region/crest detection and available to shading models.
  * - `branch`: geometry-owned identity. `front` is the viewer-facing fold and

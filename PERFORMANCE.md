@@ -3,17 +3,18 @@
 This document records controlled performance observations. It does not define
 optimization decisions.
 
-## Experimental depth-dependent column height
+## Amplitude-aware depth-dependent column height
 
-The 25% depth-height projection was measured with the same production manifest,
-guarded geometry pipeline, clean headless Firefox profile, and 20-step drag
-used by the existing control. The added scalar factor does not add per-column
-object allocation in the production loop.
+The 25% amplitude-aware depth-height projection was measured with the same
+production manifest, guarded geometry pipeline, clean headless Firefox profile,
+and 20-step drag used by the existing control. Current physical depth is divided
+by the fold model's stable maximum depth. These scalar operations do not add
+per-column object allocation in the production loop.
 
 | Metric | Previous guarded control | Depth-height experiment |
 | --- | ---: | ---: |
 | Rendering median / p95 | 15 / 29 ms | 14 / 17 ms |
-| Complete frame median / p95 | 26 / 40 ms | 24 / 30 ms |
+| Complete frame median / p95 | 26 / 40 ms | 24 / 28 ms |
 | Frame gaps over 50 ms | 1 | 1 |
 
 The run shows no measurable regression within normal headless-run variance.
