@@ -262,7 +262,10 @@ export class ViewportApplication extends SimoneApplication {
                 placement,
                 localParameters
             );
-            const destinationHeight = column.height * viewing.scaleY;
+            const destinationHeight = (
+                column.height
+                - 0.25 * placement.depthFromFront
+            ) * viewing.scaleY;
 
             this.renderer.drawColumn(
                 column,
