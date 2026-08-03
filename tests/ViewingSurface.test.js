@@ -3,7 +3,10 @@ import {
     ViewportCanvasColumnRenderer
 } from "../src/rendering/ViewportCanvasColumnRenderer.js";
 import {
-    depthAnchoredTop
+    depthAnchoredTop,
+    heightAmplitude,
+    branchHeightFactor,
+    MAX_REAR_VALLEY_SHORTENING
 } from "../src/rendering/DepthHeightProjection.js";
 import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
@@ -242,6 +245,69 @@ test("uniform-height strips preserve the lower profile and keep full height", ()
     closeTo(rearHeight, 800);
     closeTo(frontTop, 840 - frontHeight);
     closeTo(rearTop, 840 - rearHeight);
+});
+
+test("vertical-strip height equals original minus 2h invariants", () => {
+    // h is defined as the lower fold rise from the period's lowest reference;
+    // in production this is exposed as placement.depthFromFront.
+    const folded = foldPlacements(0.75);
+    const flat = foldPlacements(1);
+    const deepest = deepestPlacement(folded);
+
+    // deepest lower-fold point must have h == 0
+    closeTo(deepest.depthFromFront, 0, 1e-9);
+
+    // every placement's h is non-negative and height = L - 2*h remains positive
+    const L = 800;
+    for (const placement of folded) {
+        const h = placement.depthFromFront;
+        assert(h >= 0, "h must be non-negative");
+        const height = L - 2 * h;
+        assert(height > 0, "height must remain positive");
+    }
+
+    // flat state must collapse h to zero everywhere
+    for (const placement of flat) {
+        closeTo(placement.depthFromFront, 0, 1e-9);
+    }
+});
+
+test("height amplitude is normalized from visible factor and reset state", () => {
+    closeTo(heightAmplitude(1, 0.5), 0);
+    closeTo(heightAmplitude(0.75, 0.5), 0.5);
+    closeTo(heightAmplitude(0.2, 0.75), 0.8);
+    closeTo(heightAmplitude(0.5, 1), 0.5);
+});
+
+test("branch height factor preserves full height when visible factor equals reset state", () => {
+    const heightFactor = branchHeightFactor(
+        "rear",
+        0.5,
+        0.75,
+        0.75,
+        MAX_REAR_VALLEY_SHORTENING
+    );
+
+    closeTo(heightFactor, 1);
+});
+
+test("branch height factor shortens rear valleys more than front crests", () => {
+    const rearFactor = branchHeightFactor(
+        "rear",
+        0.5,
+        0.75,
+        0.5,
+        MAX_REAR_VALLEY_SHORTENING
+    );
+    const frontFactor = branchHeightFactor(
+        "front",
+        0.5,
+        0.75,
+        0.5,
+        MAX_REAR_VALLEY_SHORTENING
+    );
+
+    assert(rearFactor < frontFactor);
 });
 
 test("Pan priority corridor follows direction and reverses immediately", () => {
