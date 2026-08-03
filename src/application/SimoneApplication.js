@@ -1136,7 +1136,7 @@ export class SimoneApplication {
                 localParameters
             );
             const destinationHeight = column.height
-                - 0.25 * placement.depthFromFront;
+                - 4.0 * placement.depthFromFront;
 
             this.renderer.drawColumn(
                 column,
