@@ -3,10 +3,7 @@ import {
     ViewportCanvasColumnRenderer
 } from "../src/rendering/ViewportCanvasColumnRenderer.js";
 import {
-    COLUMN_DEPTH_HEIGHT_STRENGTH,
-    depthAnchoredTop,
-    depthHeightFactor,
-    depthScaledHeight
+    depthAnchoredTop
 } from "../src/rendering/DepthHeightProjection.js";
 import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
@@ -189,7 +186,7 @@ test("guarded sampling contains every column selected by the camera", () => {
     }
 });
 
-test("absolute fold depth keeps the front crest at full height", () => {
+test("depth values remain available without affecting strip height", () => {
     for (const visibleFactor of [0.5, 0.75, 1]) {
         const placements = foldPlacements(visibleFactor);
         const crest = placements.reduce((closest, placement) => (
@@ -199,14 +196,10 @@ test("absolute fold depth keeps the front crest at full height", () => {
         ));
 
         closeTo(crest.depthFromFront, 0, 1e-9);
-        closeTo(depthHeightFactor(
-            crest.depthFromFront,
-            crest.referenceMaximumDepth
-        ), 1);
     }
 });
 
-test("shortening follows actual fold amplitude and vanishes when flat", () => {
+test("uniform strips keep full height across fold depth", () => {
     const folded = foldPlacements(0.75);
     const shallower = foldPlacements(0.9);
     const flat = foldPlacements(1);
@@ -217,39 +210,9 @@ test("shortening follows actual fold amplitude and vanishes when flat", () => {
         foldedValley.depthFromFront > shallowerValley.depthFromFront,
         "Opening the fold did not reduce its physical depth"
     );
-    assert(
-        depthHeightFactor(
-            foldedValley.depthFromFront,
-            foldedValley.referenceMaximumDepth
-        ) < depthHeightFactor(
-            shallowerValley.depthFromFront,
-            shallowerValley.referenceMaximumDepth
-        ),
-        "Opening the fold did not reduce column shortening"
-    );
     for (const placement of flat) {
         closeTo(placement.depthFromFront, 0, 1e-9);
-        closeTo(depthHeightFactor(
-            placement.depthFromFront,
-            placement.referenceMaximumDepth
-        ), 1);
     }
-});
-
-test("half reference depth receives half the maximum shortening", () => {
-    const referenceMaximumDepth = 120;
-
-    closeTo(
-        depthHeightFactor(
-            referenceMaximumDepth / 2,
-            referenceMaximumDepth
-        ),
-        0.875
-    );
-    closeTo(
-        depthHeightFactor(referenceMaximumDepth, referenceMaximumDepth),
-        1 - COLUMN_DEPTH_HEIGHT_STRENGTH
-    );
 });
 
 test("physical depth remains continuous across fold branch boundaries", () => {
@@ -267,27 +230,18 @@ test("physical depth remains continuous across fold branch boundaries", () => {
     }
 });
 
-test("depth scaling preserves bottom profile and derives the top from height", () => {
-    const frontHeight = depthScaledHeight(400, 0, 120, 2);
-    const rearHeight = depthScaledHeight(400, 120, 120, 2);
+test("uniform-height strips preserve the lower profile and keep full height", () => {
+    const frontHeight = 400 * 2;
+    const rearHeight = 400 * 2;
     const frontTop = depthAnchoredTop(400, 20, frontHeight, 2);
     const rearTop = depthAnchoredTop(400, 20, rearHeight, 2);
 
     closeTo(frontTop + frontHeight, 840);
     closeTo(rearTop + rearHeight, 840);
     closeTo(frontHeight, 800);
-    closeTo(rearHeight, 600);
+    closeTo(rearHeight, 800);
     closeTo(frontTop, 840 - frontHeight);
     closeTo(rearTop, 840 - rearHeight);
-});
-
-test("desktop and mobile scales use the same depth-height factor", () => {
-    const factor = depthHeightFactor(72, 120);
-    const desktop = depthScaledHeight(400, 72, 120, 1);
-    const mobile = depthScaledHeight(400, 72, 120, 2.5);
-
-    closeTo(factor, 0.85);
-    closeTo(mobile, desktop * 2.5);
 });
 
 test("Pan priority corridor follows direction and reverses immediately", () => {

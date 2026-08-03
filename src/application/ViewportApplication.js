@@ -3,8 +3,7 @@ import {
     SegmentPriority
 } from "../artwork/ArtworkSegmentScheduler.js";
 import {
-    depthAnchoredTop,
-    depthScaledHeight
+    depthAnchoredTop
 } from "../rendering/DepthHeightProjection.js";
 
 const VIEWPORT_SAMPLING_GUARD_PERIODS = 4;
@@ -263,12 +262,7 @@ export class ViewportApplication extends SimoneApplication {
                 placement,
                 localParameters
             );
-            const destinationHeight = depthScaledHeight(
-                column.height,
-                placement.depthFromFront,
-                placement.referenceMaximumDepth,
-                viewing.scaleY
-            );
+            const destinationHeight = column.height * viewing.scaleY;
 
             this.renderer.drawColumn(
                 column,

@@ -269,14 +269,12 @@ requested globally indexed artwork column.
 Branch identity is semantic, not an arbitrary alternating label. The
 application does not calculate it, and the renderer does not reinterpret it.
 
-The depth-height projection compares `depthFromFront` with the Period's stable
-`referenceMaximumDepth`. Columns therefore shorten in proportion to current
-physical fold amplitude rather than being renormalized within every frame. A
-flat fold reports zero depth and restores every column to full height. The
-former lower edge remains fixed; horizontal geometry, global coordinates, and
-the existing lower fold profile do not change. The single strength constant
-lives in `DepthHeightProjection.js` so the presentation mapping remains
-isolated and reversible.
+The rendering baseline keeps every column at its original destination height.
+The lower fold profile remains the sole vertical anchor, and the top is derived
+from the original full destination height. Depth values remain available for
+geometry diagnostics, but they do not affect strip height in this step. The
+anchoring logic lives in `DepthHeightProjection.js` so the presentation mapping
+remains isolated and reversible.
 
 ---
 

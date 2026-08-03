@@ -3,8 +3,7 @@ import {
     resolveArtworkLayout
 } from "../navigation/ArtworkLayout.js";
 import {
-    depthAnchoredTop,
-    depthScaledHeight
+    depthAnchoredTop
 } from "../rendering/DepthHeightProjection.js";
 
 /**
@@ -1136,11 +1135,7 @@ export class SimoneApplication {
                 placement,
                 localParameters
             );
-            const destinationHeight = depthScaledHeight(
-                column.height,
-                placement.depthFromFront,
-                placement.referenceMaximumDepth
-            );
+            const destinationHeight = column.height;
 
             this.renderer.drawColumn(
                 column,

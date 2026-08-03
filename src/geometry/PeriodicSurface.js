@@ -7,7 +7,7 @@
  * - `targetX`: geometry-owned horizontal destination coordinate; the
  *   application compares adjacent values to derive rasterized column width.
  * - `targetY`: geometry-owned vertical fold offset. The application preserves
- *   its former lower edge while applying the optional depth-height mapping.
+ *   its former lower edge while anchoring the strip to the current fold profile.
  * - `depthFromFront`: current physical distance behind the Period's frontmost
  *   crest. It collapses toward zero as the fold becomes flat.
  * - `referenceMaximumDepth`: stable physical depth bound for that fold model.

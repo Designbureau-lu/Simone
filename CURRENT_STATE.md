@@ -4,14 +4,14 @@ Updated: 2026-08-02
 
 ## Today's work
 
-- Replaced the previous per-frame depth mapping with an amplitude-aware physical
-  projection. Circular geometry reports each sampled column's current
-  physical distance behind its front crest and the Period's stable maximum
-  depth (`carrierDistance / pi`). Artwork columns retain their existing lower
-  edge and shorten by up to 25% against that stable reference. Opening the
-  curtain reduces actual depth and therefore reduces shortening; a flat fold
-  restores every column to exactly full height. Horizontal geometry, shading,
-  global coordinates, demand-driven sampling, and interactions are unchanged.
+- Restored the rendering baseline so every artwork strip keeps its original
+  destination height. Circular geometry still reports each sampled column's
+  current physical distance behind its front crest and the Period's stable
+  maximum depth (`carrierDistance / pi`), but the renderer no longer uses that
+  depth to change strip height. The existing lower fold profile remains the sole
+  vertical anchor; top positions are derived from the original full destination
+  height. Horizontal geometry, shading, global coordinates, demand-driven
+  sampling, and interactions are unchanged.
 - Replaced the heavy black conversation bar and Index with one white,
   exhibition-like title composition on mobile and desktop. The fixed-height
   clipped title line moves vertically between the public “Konschtpräis 2026”,
