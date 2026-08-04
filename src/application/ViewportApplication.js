@@ -262,9 +262,10 @@ export class ViewportApplication extends SimoneApplication {
                 placement,
                 localParameters
             );
+            const h = placement.periodMaximumTargetY - placement.targetY;
             const destinationHeight = (
                 column.height
-                - 2 * placement.depthFromFront
+                - 2 * h
             ) * viewing.scaleY;
 
             this.renderer.drawColumn(
@@ -284,6 +285,7 @@ export class ViewportApplication extends SimoneApplication {
                     brightness,
                     alpha: placement.alpha,
                     branch: placement.branch,
+                    periodIndex: placement.periodIndex,
                     localSlope: placement.localSlope,
                     foldProgress: localParameters.foldProgress,
                     crestLifecycleMultiplier:

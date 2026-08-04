@@ -58,7 +58,7 @@ export class CircularFoldSurface extends PeriodicSurface {
         const artworkLength = isFront
             ? period.frontArtworkLength
             : period.rearArtworkLength;
-        const orientation = isFront ? -1 : 1;
+        const orientation = isFront ? 1 : -1;
         const distanceAlongFold = arc.materialLength
             * (isFront
                 ? distanceAlongPeriod
@@ -71,12 +71,14 @@ export class CircularFoldSurface extends PeriodicSurface {
             + foldOffset
             + placement.x;
         const targetY = period.depthExtent + placement.y;
-        const depthFromFront = Math.max(
-            0,
-            placement.y + period.frontDepth
-        );
+        const depthFromFront = isFront
+            ? Math.max(0, placement.y)
+            : Math.max(0, -placement.y);
         const branch = isFront ? "front" : "rear";
         const alpha = isFront ? 1 : period.rearAlpha;
+        const branchPosition = arc.materialLength === 0
+            ? 0.5
+            : distanceAlongFold / arc.materialLength;
 
         return createPlacement(
             sourceX,
@@ -86,9 +88,11 @@ export class CircularFoldSurface extends PeriodicSurface {
             placement.slope,
             branch,
             alpha,
+            branchPosition,
             arc.chordLength,
             depthFromFront,
-            period.depthExtent
+            period.depthExtent,
+            period.maximumTargetY
         );
     }
 
@@ -156,6 +160,8 @@ function resolvePeriod(parameters) {
         : resolveArc(rearMaterialLength, projectedWidth * rearBalance);
     const frontDepth = arcDepth(frontArc);
     const rearDepth = arcDepth(rearArc);
+    const depthExtent = foldMaterialLength / Math.PI;
+    const maximumTargetY = depthExtent + frontDepth;
 
     return Object.freeze({
         foldMaterialLength,
@@ -169,7 +175,8 @@ function resolvePeriod(parameters) {
         rearDepth,
         rearAlpha: progress < 1 ? 1 : 0,
         horizontalOffset: foldMaterialLength / (2 * Math.PI),
-        depthExtent: foldMaterialLength / Math.PI
+        depthExtent,
+        maximumTargetY
     });
 }
 
@@ -272,9 +279,11 @@ export function createPlacement(
     localSlope,
     branch,
     alpha,
+    branchPosition,
     allocatedWidth,
     depthFromFront = 0,
-    referenceMaximumDepth = 1
+    referenceMaximumDepth = 1,
+    periodMaximumTargetY = targetY
 ) {
     return Object.freeze({
         sourceX,
@@ -284,9 +293,11 @@ export function createPlacement(
         localSlope,
         branch,
         alpha,
+        branchPosition,
         allocatedWidth,
         depthFromFront,
-        referenceMaximumDepth
+        referenceMaximumDepth,
+        periodMaximumTargetY
     });
 }
 

@@ -1,17 +1,27 @@
 # SIMONE Current State
 
-Updated: 2026-08-02
+Updated: 2026-08-04
 
 ## Today's work
 
-- Restored the rendering baseline so every artwork strip keeps its original
-  destination height. Circular geometry still reports each sampled column's
-  current physical distance behind its front crest and the Period's stable
-  maximum depth (`carrierDistance / pi`), but the renderer no longer uses that
-  depth to change strip height. The existing lower fold profile remains the sole
-  vertical anchor; top positions are derived from the original full destination
-  height. Horizontal geometry, shading, global coordinates, demand-driven
-  sampling, and interactions are unchanged.
+- Approved the corrected circular Front/Rear orientation and structural strip
+  height model. Each placement exposes its Period's maximum `targetY`; the
+  application computes `h = periodMaximumTargetY - targetY` and draws
+  `destinationHeight = originalHeight - 2 * h` while preserving the lower fold
+  anchor. Physical Front folds remain distinct renderer cue regions after Rear
+  becomes non-drawable: branch changes close cue regions before zero-alpha or
+  zero-raster-width returns, and Period identity separates adjacent Front folds
+  when Rear has zero artwork length. Every Front fold therefore retains one
+  ridge and one crest highlight through Model 2 without changing the continuous
+  crest lifecycle or any cue tuning. The diagnostic region overlay is off at
+  the root URL and available only through `?debug-fold-regions=1` or
+  `?debug-fold-regions=corrected`. Normal rendering is visually approved.
+- Known separate issue: `OperatingPhaseResolver` compares normalized gathering
+  progress with an unnormalized transition threshold. With the canonical
+  20%–100% range and 50% Model Transition, phase classification changes at 60%
+  Visible Factor, while Rear disappearance and `foldProgress = 1` occur at 50%.
+  All phases currently use the same circular surface, so this does not cause the
+  crest-light placement defect. No phase-threshold correction has been made.
 - Replaced the heavy black conversation bar and Index with one white,
   exhibition-like title composition on mobile and desktop. The fixed-height
   clipped title line moves vertically between the public “Konschtpräis 2026”,

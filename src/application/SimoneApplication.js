@@ -1135,8 +1135,9 @@ export class SimoneApplication {
                 placement,
                 localParameters
             );
+            const h = placement.periodMaximumTargetY - placement.targetY;
             const destinationHeight = column.height
-                - 2 * placement.depthFromFront;
+                - 2 * h;
 
             this.renderer.drawColumn(
                 column,
@@ -1154,6 +1155,7 @@ export class SimoneApplication {
                     brightness,
                     alpha: placement.alpha,
                     branch: placement.branch,
+                    periodIndex: placement.periodIndex,
                     localSlope: placement.localSlope,
                     foldProgress: localParameters.foldProgress,
                     crestLifecycleMultiplier:

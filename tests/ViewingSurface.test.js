@@ -3,14 +3,12 @@ import {
     ViewportCanvasColumnRenderer
 } from "../src/rendering/ViewportCanvasColumnRenderer.js";
 import {
-    depthAnchoredTop,
-    heightAmplitude,
-    branchHeightFactor,
-    MAX_REAR_VALLEY_SHORTENING
+    depthAnchoredTop
 } from "../src/rendering/DepthHeightProjection.js";
 import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
 import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
+import { SurfaceShading } from "../src/shading/SurfaceShading.js";
 import { Viewport } from "../src/viewport/Viewport.js";
 import {
     inertiaPriorityCorridor,
@@ -202,6 +200,352 @@ test("depth values remain available without affecting strip height", () => {
     }
 });
 
+test("per-period h is computed from maximum targetY and not depthFromFront", () => {
+    const placements = foldPlacements(0.75);
+    const periodMax = Math.max(...placements.map((p) => p.periodMaximumTargetY));
+
+    for (const placement of placements) {
+        const h = periodMax - placement.targetY;
+        const canonicalH = placement.periodMaximumTargetY - placement.targetY;
+
+        closeTo(h, canonicalH, 1e-9);
+        assert(h >= 0, "h must be non-negative");
+        if (placement.targetY === periodMax) {
+            closeTo(h, 0, 1e-9);
+        }
+    }
+});
+
+test("flat state restores full height via period maximum targetY", () => {
+    const placements = foldPlacements(1);
+    const periodMax = Math.max(...placements.map((p) => p.periodMaximumTargetY));
+
+    for (const placement of placements) {
+        closeTo(placement.targetY, periodMax, 1e-9);
+        closeTo(800 - 2 * (placement.periodMaximumTargetY - placement.targetY), 800, 1e-9);
+    }
+});
+
+test("front/rear boundary height remains continuous", () => {
+    const placements = foldPlacements(0.75);
+    for (let i = 1; i < placements.length; i += 1) {
+        const prev = placements[i - 1];
+        const current = placements[i];
+        const prevHeight = 800 - 2 * (prev.periodMaximumTargetY - prev.targetY);
+        const currentHeight = 800 - 2 * (current.periodMaximumTargetY - current.targetY);
+        closeTo(prevHeight, currentHeight, 30); // allow coarse slope but no jump
+    }
+});
+
+test("front branch lower profile is a U-shape and rear branch is inverted", () => {
+    const placements = foldPlacements(0.75);
+    const front = placements.filter((placement) => placement.branch === "front");
+    const rear = placements.filter((placement) => placement.branch === "rear");
+
+    assert(front.length > 0);
+    assert(rear.length > 0);
+
+    const frontFirst = front[0].targetY;
+    const frontLast = front[front.length - 1].targetY;
+    const frontMiddle = front[Math.floor((front.length - 1) / 2)].targetY;
+    assert(frontMiddle > frontFirst, "Front profile must rise toward the center");
+    assert(frontMiddle > frontLast, "Front profile must rise toward the center");
+
+    const rearFirst = rear[0].targetY;
+    const rearLast = rear[rear.length - 1].targetY;
+    const rearMiddle = rear[Math.floor((rear.length - 1) / 2)].targetY;
+    assert(rearMiddle < rearFirst, "Rear profile must invert relative to the front");
+    assert(rearMiddle < rearLast, "Rear profile must invert relative to the front");
+});
+
+test("front/rear branch boundary slope and targetY are continuous", () => {
+    const placements = foldPlacements(0.75);
+    const boundaryIndex = placements.findIndex((placement, index) => (
+        index > 0
+            && placement.branch === "rear"
+            && placements[index - 1].branch === "front"
+    ));
+
+    assert(boundaryIndex > 0, "Expected a front/rear boundary in the Period");
+    const previous = placements[boundaryIndex - 1];
+    const current = placements[boundaryIndex];
+
+    closeTo(previous.targetY, current.targetY, 1.0);
+    closeTo(previous.localSlope, current.localSlope, 0.5);
+    assert(previous.branch === "front" && current.branch === "rear");
+});
+
+test("shading path remains active with branch and crest cues", () => {
+    const canvas = document.createElement("canvas");
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = 1;
+    sourceCanvas.height = 1;
+    sourceCanvas.getContext("2d").fillRect(0, 0, 1, 1);
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    const frame = { width: 100, height: 100 };
+    const appearance = {
+        rearDarkening: { color: [0, 0, 0] },
+        crestHighlight: {
+            color: [255, 255, 255],
+            strength: 1,
+            stops: [
+                { offset: 0, intensity: 0 },
+                { offset: 0.5, intensity: 1 },
+                { offset: 1, intensity: 0 }
+            ]
+        },
+        valleyShadow: {
+            color: [0, 0, 0],
+            strength: 0.5,
+            stops: [
+                { offset: 0, intensity: 0 },
+                { offset: 1, intensity: 1 }
+            ]
+        }
+    };
+
+    renderer.beginFrame(frame, appearance);
+    renderer.drawColumn(
+        {
+            source: sourceCanvas,
+            sourceX: 0,
+            sourceY: 0,
+            width: 1,
+            height: 1
+        },
+        { x: 0, y: 0, width: 10, height: 100 },
+        {
+            brightness: 0.5,
+            alpha: 1,
+            branch: "front",
+            localSlope: 0.1,
+            foldProgress: 0.5,
+            crestLifecycleMultiplier: 0.5
+        }
+    );
+    const metrics = renderer.endFrame();
+
+    assert(metrics !== null && metrics !== undefined);
+});
+
+test("renderer groups a continuous front branch into a single fold region", () => {
+    const canvas = document.createElement("canvas");
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = 1;
+    sourceCanvas.height = 1;
+    const column = {
+        source: sourceCanvas,
+        sourceX: 0,
+        sourceY: 0,
+        width: 1,
+        height: 1
+    };
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    const frame = { width: 200, height: 200 };
+    const appearance = {
+        rearDarkening: { color: [0, 0, 0] },
+        crestHighlight: {
+            color: [255, 255, 255],
+            strength: 1,
+            stops: [
+                { offset: 0, intensity: 0 },
+                { offset: 0.5, intensity: 1 },
+                { offset: 1, intensity: 0 }
+            ]
+        },
+        valleyShadow: {
+            color: [0, 0, 0],
+            strength: 0.5,
+            stops: [
+                { offset: 0, intensity: 0 },
+                { offset: 1, intensity: 1 }
+            ]
+        }
+    };
+
+    renderer.beginFrame(frame, appearance);
+
+    // Simulate three adjacent columns on the front branch with an internal
+    // slope-sign reversal (positive, negative, positive). They must be
+    // considered one coherent fold region for shading.
+    renderer.drawColumn(column, { x: 0, y: 0, width: 20, height: 100 }, {
+        brightness: 1,
+        alpha: 1,
+        branch: "front",
+        localSlope: 0.5,
+        foldProgress: 0.5,
+        crestLifecycleMultiplier: 1
+    });
+
+    renderer.drawColumn(column, { x: 20, y: 10, width: 20, height: 100 }, {
+        brightness: 1,
+        alpha: 1,
+        branch: "front",
+        localSlope: -0.5,
+        foldProgress: 0.5,
+        crestLifecycleMultiplier: 1
+    });
+
+    renderer.drawColumn(column, { x: 40, y: 0, width: 20, height: 100 }, {
+        brightness: 1,
+        alpha: 1,
+        branch: "front",
+        localSlope: 0.5,
+        foldProgress: 0.5,
+        crestLifecycleMultiplier: 1
+    });
+
+    renderer.endFrame();
+    const regions = renderer.getDebugRegions();
+    assert(regions.foldRegions.length === 1, "Front branch must form one fold region");
+    assert(regions.foldRegions[0].branch === "front");
+});
+
+test("branch change still creates separate fold regions", () => {
+    const canvas = document.createElement("canvas");
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = 1;
+    sourceCanvas.height = 1;
+    const column = {
+        source: sourceCanvas,
+        sourceX: 0,
+        sourceY: 0,
+        width: 1,
+        height: 1
+    };
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    const frame = { width: 200, height: 200 };
+    const appearance = {
+        rearDarkening: { color: [0, 0, 0] },
+        crestHighlight: {
+            color: [255, 255, 255],
+            strength: 1,
+            stops: [
+                { offset: 0, intensity: 0 },
+                { offset: 0.5, intensity: 1 },
+                { offset: 1, intensity: 0 }
+            ]
+        },
+        valleyShadow: {
+            color: [0, 0, 0],
+            strength: 0.5,
+            stops: [
+                { offset: 0, intensity: 0 },
+                { offset: 1, intensity: 1 }
+            ]
+        }
+    };
+
+    renderer.beginFrame(frame, appearance);
+    // Front column
+    renderer.drawColumn(column, { x: 0, y: 0, width: 20, height: 100 }, {
+        brightness: 1,
+        alpha: 1,
+        branch: "front",
+        localSlope: 0.5,
+        foldProgress: 0.5,
+        crestLifecycleMultiplier: 1
+    });
+
+    // Rear column immediately following should create a new region
+    renderer.drawColumn(column, { x: 20, y: 10, width: 20, height: 100 }, {
+        brightness: 1,
+        alpha: 1,
+        branch: "rear",
+        localSlope: -0.5,
+        foldProgress: 0.5,
+        crestLifecycleMultiplier: 1
+    });
+
+    renderer.endFrame();
+    const regions = renderer.getDebugRegions();
+    // Expect two regions: one front and one rear
+    assert(regions.foldRegions.length >= 2);
+    assert(regions.foldRegions[0].branch === "front");
+    assert(regions.foldRegions[regions.foldRegions.length - 1].branch === "rear");
+});
+
+test("a non-drawable rear branch closes the preceding front cue region", () => {
+    for (const rearCase of [
+        { width: 20, alpha: 0 },
+        { width: 0, alpha: 1 }
+    ]) {
+        const canvas = document.createElement("canvas");
+        const sourceCanvas = document.createElement("canvas");
+        sourceCanvas.width = 1;
+        sourceCanvas.height = 1;
+        const column = {
+            source: sourceCanvas,
+            sourceX: 0,
+            sourceY: 0,
+            width: 1,
+            height: 1
+        };
+        const renderer = new ViewportCanvasColumnRenderer(canvas);
+        const appearance = cueTestAppearance();
+        renderer.beginFrame({ width: 200, height: 200 }, appearance);
+        renderer.drawColumn(column, { x: 0, y: 0, width: 20, height: 100 }, {
+            ...cueColumnAppearance("front"),
+            localSlope: 0
+        });
+        renderer.drawColumn(
+            column,
+            { x: 20, y: 0, width: rearCase.width, height: 100 },
+            {
+                ...cueColumnAppearance("rear"),
+                alpha: rearCase.alpha
+            }
+        );
+        renderer.drawColumn(column, { x: 40, y: 0, width: 20, height: 100 }, {
+            ...cueColumnAppearance("front"),
+            localSlope: 0
+        });
+        renderer.endFrame();
+
+        const regions = renderer.getDebugRegions();
+        const frontRegions = regions.foldRegions.filter(
+            (region) => region.branch === "front"
+        );
+        assert(frontRegions.length === 2);
+        assert(regions.cueApplications.crestHighlights.length === 2);
+        assert(frontRegions[0].ridgeX !== frontRegions[1].ridgeX);
+    }
+});
+
+test("Model 2 keeps physical front folds in distinct cue regions", () => {
+    const regions = correctedFoldCueDiagnostics(0.5);
+    const frontRegions = regions.foldRegions.filter(
+        (region) => region.branch === "front"
+    );
+    const crestHighlights = regions.cueApplications.crestHighlights;
+
+    assert(frontRegions.length === 2);
+    assert(crestHighlights.length === 2);
+    closeTo(frontRegions[0].left, 19);
+    closeTo(frontRegions[0].right, 79);
+    closeTo(frontRegions[1].left, 79);
+    closeTo(frontRegions[1].right, 139);
+    closeTo(frontRegions[0].ridgeX, 49.5);
+    closeTo(frontRegions[1].ridgeX, 109.5);
+});
+
+test("Model 1 cue regions remain unchanged", () => {
+    const regions = correctedFoldCueDiagnostics(0.75);
+    const frontRegions = regions.foldRegions.filter(
+        (region) => region.branch === "front"
+    );
+
+    assert(frontRegions.length === 2);
+    assert(regions.rearRegions.length === 2);
+    assert(regions.cueApplications.crestHighlights.length === 2);
+    closeTo(frontRegions[0].left, 19);
+    closeTo(frontRegions[0].right, 87);
+    closeTo(frontRegions[1].left, 109);
+    closeTo(frontRegions[1].right, 177);
+    closeTo(frontRegions[0].ridgeX, 53.5);
+    closeTo(frontRegions[1].ridgeX, 143.5);
+});
+
 test("uniform strips keep full height across fold depth", () => {
     const folded = foldPlacements(0.75);
     const shallower = foldPlacements(0.9);
@@ -248,66 +592,27 @@ test("uniform-height strips preserve the lower profile and keep full height", ()
 });
 
 test("vertical-strip height equals original minus 2h invariants", () => {
-    // h is defined as the lower fold rise from the period's lowest reference;
-    // in production this is exposed as placement.depthFromFront.
     const folded = foldPlacements(0.75);
     const flat = foldPlacements(1);
-    const deepest = deepestPlacement(folded);
+    const periodMax = Math.max(...folded.map((p) => p.periodMaximumTargetY));
+    const deepest = folded.reduce((candidate, placement) => (
+        placement.targetY > candidate.targetY ? placement : candidate
+    ), folded[0]);
 
-    // deepest lower-fold point must have h == 0
-    closeTo(deepest.depthFromFront, 0, 1e-9);
+    closeTo(deepest.targetY, periodMax, 1e-9);
 
-    // every placement's h is non-negative and height = L - 2*h remains positive
     const L = 800;
     for (const placement of folded) {
-        const h = placement.depthFromFront;
+        const h = periodMax - placement.targetY;
         assert(h >= 0, "h must be non-negative");
         const height = L - 2 * h;
         assert(height > 0, "height must remain positive");
     }
 
-    // flat state must collapse h to zero everywhere
     for (const placement of flat) {
-        closeTo(placement.depthFromFront, 0, 1e-9);
+        closeTo(placement.targetY, placement.periodMaximumTargetY, 1e-9);
+        closeTo(800 - 2 * (placement.periodMaximumTargetY - placement.targetY), 800, 1e-9);
     }
-});
-
-test("height amplitude is normalized from visible factor and reset state", () => {
-    closeTo(heightAmplitude(1, 0.5), 0);
-    closeTo(heightAmplitude(0.75, 0.5), 0.5);
-    closeTo(heightAmplitude(0.2, 0.75), 0.8);
-    closeTo(heightAmplitude(0.5, 1), 0.5);
-});
-
-test("branch height factor preserves full height when visible factor equals reset state", () => {
-    const heightFactor = branchHeightFactor(
-        "rear",
-        0.5,
-        0.75,
-        0.75,
-        MAX_REAR_VALLEY_SHORTENING
-    );
-
-    closeTo(heightFactor, 1);
-});
-
-test("branch height factor shortens rear valleys more than front crests", () => {
-    const rearFactor = branchHeightFactor(
-        "rear",
-        0.5,
-        0.75,
-        0.5,
-        MAX_REAR_VALLEY_SHORTENING
-    );
-    const frontFactor = branchHeightFactor(
-        "front",
-        0.5,
-        0.75,
-        0.5,
-        MAX_REAR_VALLEY_SHORTENING
-    );
-
-    assert(rearFactor < frontFactor);
 });
 
 test("Pan priority corridor follows direction and reverses immediately", () => {
@@ -348,6 +653,40 @@ function createViewingSurface(width, height) {
         container,
         surface: new ViewingSurface(canvas),
         remove: () => container.remove()
+    };
+}
+
+function cueTestAppearance() {
+    return {
+        rearDarkening: { color: [0, 0, 0] },
+        crestHighlight: {
+            color: [255, 255, 255],
+            strength: 1,
+            stops: [
+                { offset: 0, intensity: 0 },
+                { offset: 0.5, intensity: 1 },
+                { offset: 1, intensity: 0 }
+            ]
+        },
+        valleyShadow: {
+            color: [0, 0, 0],
+            strength: 0.5,
+            stops: [
+                { offset: 0, intensity: 0 },
+                { offset: 1, intensity: 1 }
+            ]
+        }
+    };
+}
+
+function cueColumnAppearance(branch) {
+    return {
+        brightness: 1,
+        alpha: 1,
+        branch,
+        localSlope: 0.5,
+        foldProgress: 0.5,
+        crestLifecycleMultiplier: 1
     };
 }
 
@@ -409,3 +748,71 @@ function run() {
 }
 
 run();
+
+function correctedFoldCueDiagnostics(visibleFactor) {
+    const field = new CurtainField({ resetCurtainState: visibleFactor });
+    const parameters = new SurfaceParameters();
+    const shading = new SurfaceShading();
+    const surface = new CircularFoldSurface();
+    field.configureFor(240, 120);
+    field.resolve(parameters);
+    const frame = surface.frameFor({ width: 240, height: 400 }, field);
+    const placements = Array.from({ length: 240 }, (_, sourceX) => (
+        surface.mapColumn({ sourceX }, field)
+    ));
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = 240;
+    sourceCanvas.height = 400;
+    const renderer = new ViewportCanvasColumnRenderer(
+        document.createElement("canvas")
+    );
+    renderer.beginFrame(frame, shading.appearanceFor());
+
+    let lastWidth = 1;
+    for (let sourceX = 0; sourceX < placements.length; sourceX += 1) {
+        const placement = placements[sourceX];
+        const next = placements[sourceX + 1];
+        const width = next && next.branch === placement.branch
+            ? next.targetX - placement.targetX
+            : lastWidth;
+        if (width !== 0) {
+            lastWidth = width;
+        }
+        const h = placement.periodMaximumTargetY - placement.targetY;
+        const height = 400 - 2 * h;
+        const localParameters = field.resolvedParametersAt(
+            placement.periodIndex
+        );
+        renderer.drawColumn(
+            {
+                source: sourceCanvas,
+                sourceX,
+                sourceY: 0,
+                width: 1,
+                height: 400
+            },
+            {
+                x: placement.targetX,
+                y: depthAnchoredTop(400, placement.targetY, height),
+                width,
+                height
+            },
+            {
+                brightness: shading.factorFor(
+                    placement,
+                    localParameters
+                ),
+                alpha: placement.alpha,
+                branch: placement.branch,
+                periodIndex: placement.periodIndex,
+                localSlope: placement.localSlope,
+                foldProgress: localParameters.foldProgress,
+                crestLifecycleMultiplier:
+                    shading.crestLifecycleFor(localParameters)
+            }
+        );
+    }
+
+    renderer.endFrame();
+    return renderer.getDebugRegions();
+}

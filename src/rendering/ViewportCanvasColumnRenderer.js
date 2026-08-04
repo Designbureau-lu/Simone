@@ -1,3 +1,14 @@
+const DEBUG_FOLD_REGIONS = ["1", "corrected"].includes(
+    new URLSearchParams(window.location.search).get("debug-fold-regions")
+);
+const DEBUG_REGION_COLORS = Object.freeze([
+    "rgba(0, 120, 255, 0.12)",
+    "rgba(255, 170, 0, 0.12)",
+    "rgba(0, 190, 120, 0.12)",
+    "rgba(170, 80, 255, 0.12)"
+]);
+const DEBUG_RIDGE_COLOR = "rgba(255, 0, 0, 0.9)";
+
 /** Canvas 2D renderer for globally placed columns in the guarded region. */
 export class ViewportCanvasColumnRenderer {
     #canvas;
@@ -9,6 +20,7 @@ export class ViewportCanvasColumnRenderer {
     #appearance;
     #drawImageCalls = 0;
     #backingStoreResized = false;
+    #cueApplications = { crestHighlights: [], valleyShadows: [] };
 
     constructor(canvas) {
         if (!(canvas instanceof HTMLCanvasElement)) {
@@ -42,9 +54,16 @@ export class ViewportCanvasColumnRenderer {
         this.#activeRearRegion = null;
         this.#foldRegions = [];
         this.#activeFoldRegion = null;
+        this.#cueApplications = { crestHighlights: [], valleyShadows: [] };
     }
 
     drawColumn(column, placement, appearance) {
+        if (this.#activeFoldRegion
+            && (appearance.branch !== this.#activeFoldRegion.branch
+                || appearance.periodIndex
+                    !== this.#activeFoldRegion.periodIndex)) {
+            this.#finishFoldRegion();
+        }
         if (appearance.branch !== "rear") {
             this.#finishRearRegion();
         }
@@ -82,7 +101,8 @@ export class ViewportCanvasColumnRenderer {
             appearance.branch,
             appearance.localSlope,
             appearance.foldProgress,
-            appearance.crestLifecycleMultiplier
+            appearance.crestLifecycleMultiplier,
+            appearance.periodIndex
         );
         if (appearance.branch === "rear") {
             this.#extendRearRegion(
@@ -119,6 +139,7 @@ export class ViewportCanvasColumnRenderer {
         }
 
         this.#drawFoldCues();
+        this.#drawRegionDiagnostics();
         return Object.freeze({
             canvasWidth: this.#canvas.width,
             canvasHeight: this.#canvas.height,
@@ -162,6 +183,14 @@ export class ViewportCanvasColumnRenderer {
         // Local fold existence × this Period's lifecycle emphasis.
         const crestMultiplier = geometricMultiplier
             * region.crestLifecycleMultiplier;
+        this.#cueApplications.crestHighlights.push({
+            branch: region.branch,
+            regionLeft: region.left,
+            regionRight: region.right,
+            ridgeX: region.ridgeX,
+            cueLeft: left,
+            cueRight: left + width
+        });
         addRidgeGradientStops(gradient, settings, crestMultiplier);
         this.#context.fillStyle = gradient;
         this.#context.fillRect(
@@ -174,6 +203,13 @@ export class ViewportCanvasColumnRenderer {
 
     #drawValleyShadow(region) {
         const settings = this.#appearance.valleyShadow;
+        this.#cueApplications.valleyShadows.push({
+            branch: region.branch,
+            left: region.left,
+            right: region.right,
+            top: region.top,
+            bottom: region.bottom
+        });
         const gradient = this.#context.createLinearGradient(
             region.left,
             0,
@@ -190,6 +226,35 @@ export class ViewportCanvasColumnRenderer {
         );
     }
 
+    #drawRegionDiagnostics() {
+        if (!DEBUG_FOLD_REGIONS || this.#foldRegions.length === 0) {
+            return;
+        }
+
+        this.#context.save();
+        this.#context.globalCompositeOperation = "source-atop";
+        for (let index = 0; index < this.#foldRegions.length; index += 1) {
+            const region = this.#foldRegions[index];
+            this.#context.fillStyle = DEBUG_REGION_COLORS[
+                index % DEBUG_REGION_COLORS.length
+            ];
+            this.#context.fillRect(
+                region.left,
+                region.top,
+                region.right - region.left,
+                region.bottom - region.top
+            );
+            this.#context.fillStyle = DEBUG_RIDGE_COLOR;
+            this.#context.fillRect(
+                Math.round(region.ridgeX) - 1,
+                region.top,
+                2,
+                region.bottom - region.top
+            );
+        }
+        this.#context.restore();
+    }
+
     #extendFoldRegion(
         x,
         y,
@@ -198,9 +263,10 @@ export class ViewportCanvasColumnRenderer {
         branch,
         localSlope,
         foldProgress,
-        crestLifecycleMultiplier
+        crestLifecycleMultiplier,
+        periodIndex
     ) {
-        if (this.#startsNewFold(branch, localSlope)) {
+        if (this.#startsNewFold(branch, localSlope, periodIndex)) {
             this.#finishFoldRegion();
         }
         const left = Math.min(x, x + width);
@@ -211,6 +277,7 @@ export class ViewportCanvasColumnRenderer {
         if (!this.#activeFoldRegion) {
             this.#activeFoldRegion = {
                 branch,
+                periodIndex,
                 left,
                 right,
                 top: y,
@@ -254,13 +321,20 @@ export class ViewportCanvasColumnRenderer {
         }
     }
 
-    #startsNewFold(branch, localSlope) {
+    #startsNewFold(branch, localSlope, periodIndex) {
         const region = this.#activeFoldRegion;
-        if (!region || branch !== region.branch) {
+        if (!region
+            || branch !== region.branch
+            || periodIndex !== region.periodIndex) {
             return Boolean(region);
         }
+        // Do not split a continuous front branch solely on an internal
+        // slope-sign reversal. Front folds are U-shaped in the corrected
+        // geometry and must remain one coherent shading region so that
+        // crest highlight and valley shadow are evaluated once.
+        // Rear folds keep the previous slope-sign boundary behaviour.
         return branch === "front"
-            ? region.previousSlope > 0 && localSlope <= 0
+            ? false
             : region.previousSlope < 0 && localSlope >= 0;
     }
 
@@ -300,6 +374,20 @@ export class ViewportCanvasColumnRenderer {
         }
         this.#rearRegions.push(this.#activeRearRegion);
         this.#activeRearRegion = null;
+    }
+
+    // Debug accessor used only by focused tests to verify region grouping.
+    // Returns a shallow copy of the renderer's computed regions.
+    getDebugRegions() {
+        return {
+            foldRegions: this.#foldRegions.slice(),
+            rearRegions: this.#rearRegions.slice(),
+            cueApplications: {
+                crestHighlights:
+                    this.#cueApplications.crestHighlights.slice(),
+                valleyShadows: this.#cueApplications.valleyShadows.slice()
+            }
+        };
     }
 }
 
