@@ -6,10 +6,13 @@
  *   application to select local resolved parameters for shading.
  * - `targetX`: geometry-owned horizontal destination coordinate; the
  *   application compares adjacent values to derive rasterized column width.
- * - `targetY`: geometry-owned vertical fold offset. The application preserves
- *   its former lower edge while anchoring the strip to the current fold profile.
+ * - `targetY`: geometry-owned lower-fold ordinate used by the presentation
+ *   projection to keep each slice attached to the authoritative lower fold.
+ * - `periodMaximumTargetY`: maximum lower-fold ordinate for this Period; the
+ *   presentation derives structural height from its difference with `targetY`.
  * - `depthFromFront`: current physical distance behind the Period's frontmost
- *   crest. It collapses toward zero as the fold becomes flat.
+ *   crest. It collapses toward zero as the fold becomes flat and remains a
+ *   geometry diagnostic; it is not the strip-height ordinate.
  * - `referenceMaximumDepth`: stable physical depth bound for that fold model.
  * - `localSlope`: geometry-owned analytical surface slope; consumed by the
  *   renderer's fold-region/crest detection and available to shading models.
@@ -26,10 +29,10 @@
  * and the frame-level Rear/crest/valley appearance settings. The application
  * forwards geometry's `alpha`, `branch`, and `localSlope` alongside shading's
  * local `brightness`, `foldProgress`, and crest lifecycle; it derives renderer
- * `x`, `y`, and `width` from adjacent geometry placements. The renderer assumes placements
- * arrive in immutable
- * artwork-column order. It identifies fold boundaries from branch changes and
- * from the documented Front/Rear slope-direction reset.
+ * `x`, `y`, and `width` from adjacent geometry placements. The renderer assumes
+ * placements arrive in immutable artwork-column order. It identifies fold
+ * boundaries from Period identity, branch changes, and the documented Rear
+ * slope-direction reset.
  *
  * Geometry-only contract for periodic surface implementations.
  *

@@ -3,8 +3,9 @@ import {
     ViewportCanvasColumnRenderer
 } from "../src/rendering/ViewportCanvasColumnRenderer.js";
 import {
-    depthAnchoredTop
-} from "../src/rendering/DepthHeightProjection.js";
+    lowerAnchoredTop,
+    structuralSliceHeight
+} from "../src/rendering/StructuralSliceProjection.js";
 import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
 import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
@@ -207,8 +208,14 @@ test("per-period h is computed from maximum targetY and not depthFromFront", () 
     for (const placement of placements) {
         const h = periodMax - placement.targetY;
         const canonicalH = placement.periodMaximumTargetY - placement.targetY;
+        const destinationHeight = structuralSliceHeight(
+            800,
+            placement.targetY,
+            placement.periodMaximumTargetY
+        );
 
         closeTo(h, canonicalH, 1e-9);
+        closeTo(destinationHeight, 800 - 2 * h, 1e-9);
         assert(h >= 0, "h must be non-negative");
         if (placement.targetY === periodMax) {
             closeTo(h, 0, 1e-9);
@@ -222,7 +229,11 @@ test("flat state restores full height via period maximum targetY", () => {
 
     for (const placement of placements) {
         closeTo(placement.targetY, periodMax, 1e-9);
-        closeTo(800 - 2 * (placement.periodMaximumTargetY - placement.targetY), 800, 1e-9);
+        closeTo(structuralSliceHeight(
+            800,
+            placement.targetY,
+            placement.periodMaximumTargetY
+        ), 800, 1e-9);
     }
 });
 
@@ -231,8 +242,16 @@ test("front/rear boundary height remains continuous", () => {
     for (let i = 1; i < placements.length; i += 1) {
         const prev = placements[i - 1];
         const current = placements[i];
-        const prevHeight = 800 - 2 * (prev.periodMaximumTargetY - prev.targetY);
-        const currentHeight = 800 - 2 * (current.periodMaximumTargetY - current.targetY);
+        const prevHeight = structuralSliceHeight(
+            800,
+            prev.targetY,
+            prev.periodMaximumTargetY
+        );
+        const currentHeight = structuralSliceHeight(
+            800,
+            current.targetY,
+            current.periodMaximumTargetY
+        );
         closeTo(prevHeight, currentHeight, 30); // allow coarse slope but no jump
     }
 });
@@ -546,7 +565,7 @@ test("Model 1 cue regions remain unchanged", () => {
     closeTo(frontRegions[1].ridgeX, 143.5);
 });
 
-test("uniform strips keep full height across fold depth", () => {
+test("physical depth remains available as a geometry diagnostic", () => {
     const folded = foldPlacements(0.75);
     const shallower = foldPlacements(0.9);
     const flat = foldPlacements(1);
@@ -577,20 +596,6 @@ test("physical depth remains continuous across fold branch boundaries", () => {
     }
 });
 
-test("uniform-height strips preserve the lower profile and keep full height", () => {
-    const frontHeight = 400 * 2;
-    const rearHeight = 400 * 2;
-    const frontTop = depthAnchoredTop(400, 20, frontHeight, 2);
-    const rearTop = depthAnchoredTop(400, 20, rearHeight, 2);
-
-    closeTo(frontTop + frontHeight, 840);
-    closeTo(rearTop + rearHeight, 840);
-    closeTo(frontHeight, 800);
-    closeTo(rearHeight, 800);
-    closeTo(frontTop, 840 - frontHeight);
-    closeTo(rearTop, 840 - rearHeight);
-});
-
 test("vertical-strip height equals original minus 2h invariants", () => {
     const folded = foldPlacements(0.75);
     const flat = foldPlacements(1);
@@ -605,13 +610,53 @@ test("vertical-strip height equals original minus 2h invariants", () => {
     for (const placement of folded) {
         const h = periodMax - placement.targetY;
         assert(h >= 0, "h must be non-negative");
-        const height = L - 2 * h;
+        const height = structuralSliceHeight(
+            L,
+            placement.targetY,
+            placement.periodMaximumTargetY
+        );
         assert(height > 0, "height must remain positive");
+        closeTo(height, L - 2 * h, 1e-9);
     }
 
     for (const placement of flat) {
         closeTo(placement.targetY, placement.periodMaximumTargetY, 1e-9);
-        closeTo(800 - 2 * (placement.periodMaximumTargetY - placement.targetY), 800, 1e-9);
+        closeTo(structuralSliceHeight(
+            800,
+            placement.targetY,
+            placement.periodMaximumTargetY
+        ), 800, 1e-9);
+    }
+});
+
+test("structural slices remain attached to the authoritative lower fold", () => {
+    const L = 800;
+    for (const placement of foldPlacements(0.75)) {
+        const height = structuralSliceHeight(
+            L,
+            placement.targetY,
+            placement.periodMaximumTargetY
+        );
+        const top = lowerAnchoredTop(L, placement.targetY, height);
+        closeTo(top + height, placement.targetY + L, 1e-9);
+
+        const scaledHeight = structuralSliceHeight(
+            L,
+            placement.targetY,
+            placement.periodMaximumTargetY,
+            2
+        );
+        const scaledTop = lowerAnchoredTop(
+            L,
+            placement.targetY,
+            scaledHeight,
+            2
+        );
+        closeTo(
+            scaledTop + scaledHeight,
+            (placement.targetY + L) * 2,
+            1e-9
+        );
     }
 });
 
@@ -778,8 +823,11 @@ function correctedFoldCueDiagnostics(visibleFactor) {
         if (width !== 0) {
             lastWidth = width;
         }
-        const h = placement.periodMaximumTargetY - placement.targetY;
-        const height = 400 - 2 * h;
+        const height = structuralSliceHeight(
+            400,
+            placement.targetY,
+            placement.periodMaximumTargetY
+        );
         const localParameters = field.resolvedParametersAt(
             placement.periodIndex
         );
@@ -793,7 +841,7 @@ function correctedFoldCueDiagnostics(visibleFactor) {
             },
             {
                 x: placement.targetX,
-                y: depthAnchoredTop(400, placement.targetY, height),
+                y: lowerAnchoredTop(400, placement.targetY, height),
                 width,
                 height
             },

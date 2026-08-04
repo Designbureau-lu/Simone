@@ -3,8 +3,9 @@ import {
     SegmentPriority
 } from "../artwork/ArtworkSegmentScheduler.js";
 import {
-    depthAnchoredTop
-} from "../rendering/DepthHeightProjection.js";
+    lowerAnchoredTop,
+    structuralSliceHeight
+} from "../rendering/StructuralSliceProjection.js";
 
 const VIEWPORT_SAMPLING_GUARD_PERIODS = 4;
 
@@ -262,17 +263,18 @@ export class ViewportApplication extends SimoneApplication {
                 placement,
                 localParameters
             );
-            const h = placement.periodMaximumTargetY - placement.targetY;
-            const destinationHeight = (
-                column.height
-                - 2 * h
-            ) * viewing.scaleY;
+            const destinationHeight = structuralSliceHeight(
+                column.height,
+                placement.targetY,
+                placement.periodMaximumTargetY,
+                viewing.scaleY
+            );
 
             this.renderer.drawColumn(
                 column,
                 {
                     x: this.viewport.toPresentationX(placement.targetX),
-                    y: depthAnchoredTop(
+                    y: lowerAnchoredTop(
                         column.height,
                         placement.targetY,
                         destinationHeight,

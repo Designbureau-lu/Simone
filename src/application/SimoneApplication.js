@@ -3,8 +3,9 @@ import {
     resolveArtworkLayout
 } from "../navigation/ArtworkLayout.js";
 import {
-    depthAnchoredTop
-} from "../rendering/DepthHeightProjection.js";
+    lowerAnchoredTop,
+    structuralSliceHeight
+} from "../rendering/StructuralSliceProjection.js";
 
 /**
  * Application layer: coordinates the domain pipeline and owns no pixel logic.
@@ -1135,15 +1136,17 @@ export class SimoneApplication {
                 placement,
                 localParameters
             );
-            const h = placement.periodMaximumTargetY - placement.targetY;
-            const destinationHeight = column.height
-                - 2 * h;
+            const destinationHeight = structuralSliceHeight(
+                column.height,
+                placement.targetY,
+                placement.periodMaximumTargetY
+            );
 
             this.renderer.drawColumn(
                 column,
                 {
                     x: this.viewport.toPresentationX(placement.targetX),
-                    y: depthAnchoredTop(
+                    y: lowerAnchoredTop(
                         column.height,
                         placement.targetY,
                         destinationHeight

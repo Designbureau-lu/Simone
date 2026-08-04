@@ -20,7 +20,6 @@ export class ViewportCanvasColumnRenderer {
     #appearance;
     #drawImageCalls = 0;
     #backingStoreResized = false;
-    #cueApplications = { crestHighlights: [], valleyShadows: [] };
 
     constructor(canvas) {
         if (!(canvas instanceof HTMLCanvasElement)) {
@@ -54,7 +53,6 @@ export class ViewportCanvasColumnRenderer {
         this.#activeRearRegion = null;
         this.#foldRegions = [];
         this.#activeFoldRegion = null;
-        this.#cueApplications = { crestHighlights: [], valleyShadows: [] };
     }
 
     drawColumn(column, placement, appearance) {
@@ -183,14 +181,6 @@ export class ViewportCanvasColumnRenderer {
         // Local fold existence × this Period's lifecycle emphasis.
         const crestMultiplier = geometricMultiplier
             * region.crestLifecycleMultiplier;
-        this.#cueApplications.crestHighlights.push({
-            branch: region.branch,
-            regionLeft: region.left,
-            regionRight: region.right,
-            ridgeX: region.ridgeX,
-            cueLeft: left,
-            cueRight: left + width
-        });
         addRidgeGradientStops(gradient, settings, crestMultiplier);
         this.#context.fillStyle = gradient;
         this.#context.fillRect(
@@ -203,13 +193,6 @@ export class ViewportCanvasColumnRenderer {
 
     #drawValleyShadow(region) {
         const settings = this.#appearance.valleyShadow;
-        this.#cueApplications.valleyShadows.push({
-            branch: region.branch,
-            left: region.left,
-            right: region.right,
-            top: region.top,
-            bottom: region.bottom
-        });
         const gradient = this.#context.createLinearGradient(
             region.left,
             0,
@@ -379,13 +362,33 @@ export class ViewportCanvasColumnRenderer {
     // Debug accessor used only by focused tests to verify region grouping.
     // Returns a shallow copy of the renderer's computed regions.
     getDebugRegions() {
+        const crestHighlights = this.#foldRegions
+            .filter((region) => region.branch === "front")
+            .map((region) => {
+                const width = (region.right - region.left) / 2;
+                const cueLeft = region.ridgeX - width / 2;
+                return {
+                    branch: region.branch,
+                    regionLeft: region.left,
+                    regionRight: region.right,
+                    ridgeX: region.ridgeX,
+                    cueLeft,
+                    cueRight: cueLeft + width
+                };
+            });
+        const valleyShadows = this.#foldRegions.map((region) => ({
+            branch: region.branch,
+            left: region.left,
+            right: region.right,
+            top: region.top,
+            bottom: region.bottom
+        }));
         return {
             foldRegions: this.#foldRegions.slice(),
             rearRegions: this.#rearRegions.slice(),
             cueApplications: {
-                crestHighlights:
-                    this.#cueApplications.crestHighlights.slice(),
-                valleyShadows: this.#cueApplications.valleyShadows.slice()
+                crestHighlights,
+                valleyShadows
             }
         };
     }

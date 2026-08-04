@@ -76,10 +76,6 @@ export class CircularFoldSurface extends PeriodicSurface {
             : Math.max(0, -placement.y);
         const branch = isFront ? "front" : "rear";
         const alpha = isFront ? 1 : period.rearAlpha;
-        const branchPosition = arc.materialLength === 0
-            ? 0.5
-            : distanceAlongFold / arc.materialLength;
-
         return createPlacement(
             sourceX,
             periodIndex,
@@ -88,7 +84,6 @@ export class CircularFoldSurface extends PeriodicSurface {
             placement.slope,
             branch,
             alpha,
-            branchPosition,
             arc.chordLength,
             depthFromFront,
             period.depthExtent,
@@ -279,7 +274,6 @@ export function createPlacement(
     localSlope,
     branch,
     alpha,
-    branchPosition,
     allocatedWidth,
     depthFromFront = 0,
     referenceMaximumDepth = 1,
@@ -293,7 +287,6 @@ export function createPlacement(
         localSlope,
         branch,
         alpha,
-        branchPosition,
         allocatedWidth,
         depthFromFront,
         referenceMaximumDepth,

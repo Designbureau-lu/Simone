@@ -183,13 +183,6 @@ values, without crossing branch boundaries. Requesting only a guarded region
 does not change the placement calculation: Period state, artwork coordinates,
 and camera coordinates remain global.
 
-Column destination height is independently scaled by the ratio of current
-physical depth to the fold model's stable maximum depth. The signal collapses
-to zero as the curtain flattens, restoring uniform full-height columns. The
-former lower edge (`targetY + source height`) remains authoritative, so the top
-silhouette emerges from column height rather than being authored as another
-wave.
-
 ### Shading responsibilities
 
 Shading owns appearance values and tuning constants. Rear darkening and valley

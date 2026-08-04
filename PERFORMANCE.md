@@ -3,12 +3,12 @@
 This document records controlled performance observations. It does not define
 optimization decisions.
 
-## Uniform-height rendering baseline
+## Historical uniform-height rendering baseline
 
 The full-height rendering baseline was measured with the same production
 manifest, guarded geometry pipeline, clean headless Firefox profile, and
-20-step drag used by the existing control. The renderer uses the original full
-source height and anchors each strip to the existing lower fold profile.
+20-step drag used by the existing control. That historical control used the
+original full source height and anchored each strip to the lower fold profile.
 
 | Metric | Previous guarded control | Uniform-height baseline |
 | --- | ---: | ---: |

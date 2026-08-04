@@ -48,22 +48,6 @@ Each ribbon is attached to the existing lower fold profile.
 
 Perspective should emerge from the relationship between ribbons rather than from a global deformation of the artwork.
 
-## Height experiments
-
-The current renderer intentionally represents the neutral baseline.
-
-Every strip currently renders at 100% height.
-
-Future height experiments should begin from this baseline.
-
-The first objective is not realism.
-
-The first objective is discovering a convincing projection rule.
-
-The renderer already distinguishes between front-fold and rear-fold geometry.
-
-Future projection experiments will probably derive strip height from these two existing geometric models rather than from a single normalized depth value.
-
 ## Swing
 
 The original ambition was a curtain that appears to swing.

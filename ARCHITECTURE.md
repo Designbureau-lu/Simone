@@ -251,9 +251,9 @@ requested globally indexed artwork column.
 | `sourceX` | Geometry | Diagnostics and geometry-aware consumers | Original horizontal source-column coordinate. |
 | `periodIndex` | Geometry | Application | Identity used to retrieve the Period's local resolved shading parameters. |
 | `targetX` | Geometry | Application and renderer | Horizontal destination coordinate in the output frame. |
-| `targetY` | Geometry | Application and renderer | Vertical fold offset used to preserve the artwork's former lower edge. |
-| `depthFromFront` | Geometry | Application | Current physical distance behind the Period's front crest. It collapses to `0` as the fold becomes flat. |
-| `referenceMaximumDepth` | Geometry | Application | Stable physical depth bound supplied by the fold model; independent of current amplitude. |
+| `targetY` | Geometry | Application and renderer | Authoritative lower-fold ordinate used by the structural slice projection. |
+| `depthFromFront` | Geometry | Diagnostics | Current physical distance behind the Period's front crest. It collapses to `0` as the fold becomes flat and is not the strip-height ordinate. |
+| `referenceMaximumDepth` | Geometry | Diagnostics | Stable physical depth bound supplied by the fold model; independent of current amplitude. |
 | `localSlope` | Geometry | Renderer; available to shading | Analytical slope at the mapped point. The renderer uses slope continuity to locate fold regions and crests. |
 | `branch` | Geometry | Application, shading, renderer | Viewer-relative branch identity: `front` or `rear`. |
 | `alpha` | Geometry visibility policy | Application and renderer | Branch visibility. It is forwarded unchanged and used only when drawing. |
@@ -268,13 +268,6 @@ requested globally indexed artwork column.
 
 Branch identity is semantic, not an arbitrary alternating label. The
 application does not calculate it, and the renderer does not reinterpret it.
-
-The rendering baseline keeps every column at its original destination height.
-The lower fold profile remains the sole vertical anchor, and the top is derived
-from the original full destination height. Depth values remain available for
-geometry diagnostics, but they do not affect strip height in this step. The
-anchoring logic lives in `DepthHeightProjection.js` so the presentation mapping
-remains isolated and reversible.
 
 ---
 
