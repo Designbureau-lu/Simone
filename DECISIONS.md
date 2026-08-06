@@ -2,6 +2,19 @@
 
 This file records durable project and engineering-workflow decisions.
 
+## 2026-08-06 — Desktop elasticity belongs to curtain timing
+
+Desktop mouse/pen release continues the captured local CurtainField interaction
+through monotonic exponentially damped inertia. The camera retains its separate
+bounded reframe and never overshoots. The resulting Period factors persist as
+authoritative state; there is no spring, rebound, or artwork transformation.
+
+Sheared artwork and whole-curtain affine swing were rejected because they read
+as image distortion and could introduce distracting diagonal structure. Camera
+overshoot was rejected because the desired mass belongs to curtain motion, not
+viewport motion. Direct touch retains its existing independent interaction and
+inertia lifecycle.
+
 ## 2026-07-17 — Feature-scoped Codex threads
 
 Use one Codex thread for each coherent feature or investigation. Keep threads

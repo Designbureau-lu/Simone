@@ -385,9 +385,19 @@ interactive performance.
 ### EXPLORE
 
 EXPLORE treats the curtain itself as a continuous field of discovery. Dragging
-with a mouse or pen is primary curtain manipulation. Direct touch uses a
-different input language over the same Viewport, CurtainField, geometry, and
-renderer: one finger owns continuous bounded camera movement, while a small
+with a mouse or pen is primary curtain manipulation. Desktop displacement is
+scaled by `0.5` and redistributed from the grabbed Period through 40 neighbors
+per side. Incremental projected pointer velocity is low-pass filtered over
+45 ms. On release, gain `1.0` and exponential damping `6.0` continue the same
+captured local interaction monotonically until its velocity threshold is
+reached. The resulting Period factors are persistent curtain state. The
+existing bounded desktop camera reframe remains a separate animation; a new
+grab cancels both without restoring or snapping either state. No spring,
+rebound, renderer transform, or additional artwork draw is involved.
+
+Direct touch uses a different input language over the same Viewport,
+CurtainField, geometry, and renderer: one finger owns continuous bounded camera
+movement, while a small
 velocity-derived local Visible Factor contribution lets the curtain accompany
 exploration. The contribution is evaluated from a captured base state, retains
 part of its local reveal and directional redistribution, and develops

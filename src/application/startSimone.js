@@ -93,7 +93,6 @@ export function startSimone() {
             "(pointer: coarse)"
         ).matches === true
     });
-
     bindDebugPanel(debugPanelElement, debugReopenElement);
     bindSurfaceControls(controls, application);
     const synchronizeViewportControl = bindViewportControl(
@@ -616,7 +615,10 @@ export function bindCurtainDragging(
             return;
         }
 
-        const interaction = application.beginLocalInteraction(targetX);
+        const interaction = application.beginLocalInteraction(
+            targetX,
+            application.desktopCurtainNeighborReach()
+        );
         const project = application.projectAtPresentationX(targetX);
 
         if (!interaction) {
@@ -630,9 +632,12 @@ export function bindCurtainDragging(
             startPointerPosition: pointerPosition,
             displacementScale: application.interactionDisplacementScale(
                 width
-            ),
+            ) * application.desktopCurtainDirectDragScale(),
             interaction,
             project,
+            lastX: event.clientX,
+            lastTimestamp: event.timeStamp,
+            smoothedVelocity: 0,
             dragLearned: false
         };
 
@@ -737,6 +742,25 @@ export function bindCurtainDragging(
             return;
         }
 
+        const incrementalMovement = event.clientX - drag.lastX;
+        const elapsed = Math.max(
+            1,
+            Math.min(
+                event.timeStamp - drag.lastTimestamp,
+                DESKTOP_CURTAIN_INERTIA_MAXIMUM_SAMPLE_DURATION
+            )
+        );
+        const velocity = incrementalMovement
+            * drag.displacementScale / elapsed;
+        drag.smoothedVelocity = lowPass(
+            drag.smoothedVelocity,
+            velocity,
+            elapsed,
+            DESKTOP_CURTAIN_INERTIA_VELOCITY_SMOOTHING
+        );
+        drag.lastX = event.clientX;
+        drag.lastTimestamp = event.timeStamp;
+
         const horizontalDisplacement = (
             event.clientX - drag.startX
         ) * drag.displacementScale;
@@ -775,6 +799,7 @@ export function bindCurtainDragging(
         const grabbedInteraction = drag.interaction;
         const grabbedProject = drag.project;
         const completedDrag = drag.dragLearned;
+        const dragReleaseVelocity = drag.smoothedVelocity;
         const clickReveal = allowClickReveal && isCurtainClick(
             event.clientX - drag.startX,
             event.clientY - drag.startY
@@ -788,12 +813,21 @@ export function bindCurtainDragging(
             }
         } else if (clickReveal) {
             conversation.showDragHint();
-        } else if (reframeDirection !== 0) {
-            application.reframeHorizontal(
-                reframeDirection,
-                grabbedInteraction,
-                synchronizeViewportControl
-            );
+        } else {
+            if (allowClickReveal && completedDrag) {
+                application.startDesktopCurtainInertia(
+                    grabbedInteraction,
+                    totalProjectedDisplacement,
+                    dragReleaseVelocity
+                );
+            }
+            if (reframeDirection !== 0) {
+                application.reframeHorizontal(
+                    reframeDirection,
+                    grabbedInteraction,
+                    synchronizeViewportControl
+                );
+            }
         }
         if (!clickReveal && completedDrag) {
             conversation.markExplorationInactive();
@@ -1214,6 +1248,8 @@ const HORIZONTAL_REFRAME_EDGE_FRACTION = 0.2;
 const MINIMUM_EXPLORATORY_DRAG_FRACTION = 0.1;
 const CURTAIN_CLICK_TOLERANCE = 5;
 const TOUCH_EXPLORATION_MAXIMUM_SAMPLE_DURATION = 50;
+const DESKTOP_CURTAIN_INERTIA_MAXIMUM_SAMPLE_DURATION = 50;
+const DESKTOP_CURTAIN_INERTIA_VELOCITY_SMOOTHING = 45;
 const TOUCH_CURTAIN_VELOCITY_SMOOTHING = 45;
 const TOUCH_CURTAIN_FOLLOW_RATE = 90;
 const TOUCH_CURTAIN_VELOCITY_TO_REVEAL = 0.04;

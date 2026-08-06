@@ -3,6 +3,99 @@
 This document records controlled performance observations. It does not define
 optimization decisions.
 
+## Closed desktop Chrome investigation
+
+### Objective and trigger
+
+This investigation asked whether the poor continuous-drag performance observed
+in desktop Chrome was caused by the recent structural rendering work, and
+whether a production-safe bottleneck reduction could be demonstrated. The work
+was opened after the corrected Front/Rear orientation, the structural
+`destinationHeight = originalHeight - 2 * h` model, and renderer cleanup had
+landed close to the report of slower Chrome interaction.
+
+The investigation is closed without a production-code change. Measurement did
+not associate the slowdown with that structural work, and no tested change was
+both effective and suitable for production.
+
+### Experiments and demonstrated facts
+
+The investigation used the production scene and continuous dragging, with the
+existing component instrumentation used to separate geometry/projection,
+source-column drawing, and shading/overlay work. It included:
+
+- controlled comparisons across the structural rendering boundary;
+- component timings for global Period layout, guarded column projection,
+  source-column rendering, and shading;
+- runs with shading/overlay work isolated from source-column drawing;
+- Chrome graphics diagnostics to verify the active acceleration path;
+- source-path comparisons for decoded image sources and canvas-backed copies;
+- checks in Firefox and Safari where comparable automation and diagnostics
+  were available.
+
+The following are facts demonstrated by those measurements:
+
+- The corrected orientation, structural `2 * h` height rule, and renderer
+  cleanup did not introduce the Chrome slowdown. Comparable Chrome behavior
+  exists on both sides of that structural change.
+- Geometry and projection are not the bottleneck. Existing guarded-production
+  measurements put exact column projection at 3 ms median / 6 ms p95, while
+  global Period layout and viewport discovery are at or below 1 ms. The Chrome
+  component traces likewise locate the dominant time after those stages.
+- Shading is an additional but comparatively small cost. The isolated crest
+  measurements below add approximately 1–3 ms to the shading/overlay phase and
+  do not change the source-column `drawImage()` count or measured column-drawing
+  time.
+- Chrome remained GPU accelerated in the inspected runs. The slowdown is not
+  evidence that Chrome had fallen back to wholly software-rendered graphics.
+- Slow continuous-drag frames coincide with the renderer issuing thousands of
+  narrow `drawImage()` operations from decoded image sources. The dominant
+  measured time is in that drawing stage rather than geometry, projection, or
+  shading.
+- Replacing decoded image sources with canvas-backed copies did not yield a
+  production-ready improvement. That experiment was rejected and fully
+  reverted; production continues to draw from the decoded segmented image
+  sources.
+
+Together, these results eliminate a regression in the recent structural model,
+geometry/projection cost, shading alone, and loss of GPU acceleration as
+explanations for the dominant Chrome slowdown. They also eliminate the tested
+canvas-source substitution as a useful production fix.
+
+### Interpretation and conclusion
+
+The evidence is most consistent with a cost inside Chrome's handling of
+thousands of Canvas 2D `drawImage()` operations using decoded image sources
+during continuously changing drag frames. This is a reasonable interpretation
+of the component timings and source-path experiments, not a demonstrated
+browser-internal root cause. The investigation did not establish which Chrome
+Canvas, raster, upload, batching, or compositor mechanism accounts for that
+cost.
+
+No production-ready improvement was found. Further renderer changes would
+therefore be speculative, and this investigation does not justify changing the
+physical model, reducing projection accuracy, removing shading, or replacing
+the production source architecture. Production code was restored to its clean
+pre-investigation state, including complete removal of the canvas-source
+experiment.
+
+### Remaining unknowns and scope limits
+
+- The precise browser-internal cause of Chrome's per-frame drawing cost remains
+  unknown.
+- Whether a different production-safe batching or source representation could
+  help remains a hypothesis; the tested canvas-backed representation did not.
+- Android performance is unknown. Desktop Chrome results must not be used to
+  infer Chrome on Android, device GPU behavior, thermal behavior, or mobile
+  frame pacing.
+- Firefox and Safari could not be evaluated under all of the same conditions,
+  so this investigation does not establish a controlled cross-browser ranking
+  or prove that their internal behavior matches Chrome.
+
+This record explains why the investigation was closed: it cleared the recent
+structural work, localized the observed cost sufficiently to avoid unproductive
+geometry or shading changes, and found no safe implementation worth retaining.
+
 ## Historical uniform-height rendering baseline
 
 The full-height rendering baseline was measured with the same production

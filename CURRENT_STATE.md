@@ -1,9 +1,32 @@
 # SIMONE Current State
 
-Updated: 2026-08-04
+Updated: 2026-08-05
 
 ## Today's work
 
+- Desktop mouse/pen exploration now includes local curtain inertia after
+  release. Direct drag displacement uses scale `0.5`; incremental projected
+  pointer velocity is low-pass filtered over 45 ms and continues the same
+  captured local interaction with gain `1.0` and exponential damping `6.0`.
+  The grabbed Period retains participation `0.08`, with normalized linear
+  redistribution through 40 neighboring Periods per side. The unchanged
+  desktop camera reframe runs independently. A new grab or competing reset,
+  navigation, mode, surface, or viewport change cancels inertia without
+  snapping; the last applied Period factors remain authoritative. There is no
+  spring, reversal, rebound, renderer transform, or mobile interaction change.
+- Closed the desktop Chrome performance investigation without changing
+  production code. Controlled comparisons show that the corrected orientation,
+  structural `destinationHeight = originalHeight - 2 * h` model, and renderer
+  cleanup did not introduce the slowdown. Geometry and guarded projection are
+  not the bottleneck, shading adds only a small separate cost, and Chrome
+  remained GPU accelerated in the inspected runs. The evidence is most
+  consistent with Chrome spending the dominant time handling thousands of
+  narrow Canvas 2D `drawImage()` calls from decoded image sources during
+  continuous dragging, but the browser-internal cause remains unknown. A
+  canvas-backed source experiment produced no production-ready improvement and
+  was fully reverted. Android remains unmeasured, and Firefox and Safari were
+  not fully comparable under the same conditions. `PERFORMANCE.md` records the
+  measurements, interpretation, eliminated hypotheses, and scope limits.
 - Approved the corrected circular Front/Rear orientation and structural strip
   height model. Each placement exposes its Period's maximum `targetY`; the
   application computes `h = periodMaximumTargetY - targetY` and draws
@@ -288,8 +311,9 @@ Updated: 2026-08-04
 - Removed redundant `Period.index` identity and renamed the uniform reference
   configuration to `resetCurtainState` without changing interaction behavior.
 - Established a linear influence ramp affecting the nearest
-  `CONCERNED_NEIGHBORS` neighboring periods; the current implementation uses
-  50 neighbors as its single influence parameter.
+  captured number of neighboring Periods. Touch and general local interactions
+  use the 50-Period default; production desktop mouse/pen drag captures the
+  approved 40-Period reach while preserving the same normalized decay model.
 - Adopted the viewport-canvas architecture as part of SIMONE. It retains
   virtual curtain geometry and Viewport selection while rendering into a
   CSS-size × DPR backing store.
@@ -314,8 +338,10 @@ Updated: 2026-08-04
 
 Desktop and direct-touch exploration now express different visitor intentions
 through one rendering architecture. With a mouse or pen, the curtain remains
-the direct-manipulation object: dragging changes only curtain state and never
-directly navigates the Viewport. With one direct-touch pointer, the artwork is
+the direct-manipulation object: dragging changes curtain state directly, and
+release continues that same local deformation through monotonic inertia while
+the established automatic camera reframe remains independent. With one
+direct-touch pointer, the artwork is
 the primary object: movement pans the bounded Viewport continuously while a
 subtle velocity-driven curtain response follows temporarily. Projects remain
 secondary to free discovery in both cases.
@@ -452,25 +478,24 @@ navigation can reveal white space beyond the curtain's right edge.
 
 ## Performance investigation
 
-A performance overview and frame instrumentation are in progress. The current
-worktree measures total frame time and separates CurtainField, geometry,
-Viewport, rendering, and overlay work. It also records canvas size,
-`drawImage()` calls, visible columns, period count, and scene parameters.
+The desktop Chrome investigation is complete and closed without a production
+change. Instrumented comparisons cleared the recent corrected orientation,
+structural `2 * h` height model, and renderer cleanup as the source of the
+slowdown. They also show that geometry/projection is not the bottleneck,
+shading is only a small additional cost, and Chrome remains GPU accelerated.
 
-Controlled experiments currently establish:
+The dominant measured stage is the thousands of narrow Canvas 2D `drawImage()`
+operations using decoded segmented image sources during continuous dragging.
+Chrome's handling of that workload is the best current interpretation, not a
+demonstrated browser-internal root cause. A canvas-backed source variant did
+not provide a production-ready improvement and was fully reverted. No
+optimization from this investigation ships in production.
 
-- Changing source columns from `HTMLImageElement` to `HTMLCanvasElement` does
-  not materially change Firefox or Safari performance.
-- Destination canvas backing-store width is a first-order performance factor
-  in Firefox: the recorded 10000-pixel-wide case was much slower than the
-  5000-pixel-wide case.
-- Safari was largely insensitive to that width change.
-- Chrome remains slow in both width variants; its dominant cost is not yet
-  isolated.
-
-These earlier experiments established the viewport-canvas architecture now
-used by SIMONE. Further bottleneck isolation and renderer optimization remain
-available as later engineering work.
+Android performance remains unknown and cannot be inferred from desktop
+Chrome. Firefox and Safari were not fully evaluated under identical conditions,
+so no controlled cross-browser conclusion should be drawn. Earlier destination
+backing-store and source-type experiments remain useful historical evidence for
+the viewport-canvas architecture.
 
 See `PERFORMANCE.md` for the recorded experimental evidence.
 

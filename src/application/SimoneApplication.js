@@ -35,6 +35,8 @@ export class SimoneApplication {
         this.renderer = renderer;
         this.performanceOverview = performanceOverview;
         this.useLeadingProjectAlignment = useLeadingProjectAlignment;
+        this.desktopCurtainInertiaFrame = null;
+        this.desktopCurtainInertiaState = null;
         this.artwork = null;
         this.attentionMode = ATTENTION_MODE_EXPLORE;
         this.projectNavigation = null;
@@ -88,6 +90,7 @@ export class SimoneApplication {
     }
 
     updateSurface(values) {
+        this.cancelDesktopCurtainInertia();
         this.cancelTouchExplorationResponse();
         this.cancelLocalReveal();
         this.cancelResetCurtainAnimation();
@@ -116,6 +119,7 @@ export class SimoneApplication {
         onFrame = null,
         onComplete = null
     ) {
+        this.cancelDesktopCurtainInertia();
         const {
             resetCurtainState = this.curtainField.resetCurtainState,
             ...configuration
@@ -192,6 +196,7 @@ export class SimoneApplication {
             return;
         }
 
+        this.cancelDesktopCurtainInertia();
         this.cancelTouchExplorationResponse();
         this.cancelHorizontalReframe();
         this.viewport.setPosition(position);
@@ -295,6 +300,7 @@ export class SimoneApplication {
             return false;
         }
 
+        this.cancelDesktopCurtainInertia();
         this.cancelTouchExplorationResponse();
         this.cancelResetCurtainAnimation();
         const project = this.projectNavigation.projects[targetIndex];
@@ -478,11 +484,12 @@ export class SimoneApplication {
         this.horizontalReframeFrame = null;
     }
 
-    beginLocalInteraction(targetX) {
+    beginLocalInteraction(targetX, neighborReach = undefined) {
         if (!this.artwork) {
             return null;
         }
 
+        this.cancelDesktopCurtainInertia();
         this.enterExploreMode();
         this.cancelTouchExplorationResponse();
         this.cancelLocalReveal();
@@ -494,7 +501,10 @@ export class SimoneApplication {
             projectedX - this.parameters.carrierDistance / (2 * Math.PI)
         );
 
-        return this.curtainField.beginLocalInteraction(fieldX);
+        return this.curtainField.beginLocalInteraction(
+            fieldX,
+            neighborReach
+        );
     }
 
     beginTouchExploration(targetX) {
@@ -506,6 +516,7 @@ export class SimoneApplication {
             return null;
         }
 
+        this.cancelDesktopCurtainInertia();
         this.enterExploreMode();
         this.cancelTouchExplorationResponse();
         this.cancelLocalReveal();
@@ -611,6 +622,88 @@ export class SimoneApplication {
         this.render();
 
         return visibleFactor;
+    }
+
+    startDesktopCurtainInertia(
+        interaction,
+        releaseDisplacement,
+        releaseVelocity
+    ) {
+        if (!interaction
+            || !Number.isFinite(releaseDisplacement)
+            || !Number.isFinite(releaseVelocity)) {
+            return false;
+        }
+
+        this.cancelDesktopCurtainInertia();
+        const velocity = clamp(
+            releaseVelocity,
+            -DESKTOP_CURTAIN_INERTIA_MAXIMUM_VELOCITY,
+            DESKTOP_CURTAIN_INERTIA_MAXIMUM_VELOCITY
+        );
+        if (Math.abs(velocity) < DESKTOP_CURTAIN_INERTIA_MINIMUM_VELOCITY) {
+            return false;
+        }
+
+        this.desktopCurtainInertiaState = {
+            interaction,
+            displacement: releaseDisplacement,
+            velocity,
+            previousTimestamp: null
+        };
+        const advance = (timestamp) => {
+            const state = this.desktopCurtainInertiaState;
+            if (!state) {
+                return;
+            }
+            state.previousTimestamp ??= timestamp;
+            const frameDuration = Math.min(
+                Math.max(timestamp - state.previousTimestamp, 0),
+                DESKTOP_CURTAIN_INERTIA_MAXIMUM_FRAME_DURATION
+            );
+            state.previousTimestamp = timestamp;
+
+            if (frameDuration > 0) {
+                state.displacement += state.velocity
+                    * DESKTOP_CURTAIN_INERTIA_GAIN
+                    * frameDuration;
+                this.updateLocalInteraction(
+                    state.interaction,
+                    state.displacement
+                );
+                state.velocity *= Math.exp(
+                    -DESKTOP_CURTAIN_INERTIA_DAMPING
+                        * frameDuration / 1000
+                );
+            }
+
+            if (Math.abs(state.velocity)
+                < DESKTOP_CURTAIN_INERTIA_MINIMUM_VELOCITY) {
+                this.cancelDesktopCurtainInertia();
+                return;
+            }
+
+            this.desktopCurtainInertiaFrame = requestAnimationFrame(advance);
+        };
+
+        this.desktopCurtainInertiaFrame = requestAnimationFrame(advance);
+        return true;
+    }
+
+    cancelDesktopCurtainInertia() {
+        if (this.desktopCurtainInertiaFrame !== null) {
+            cancelAnimationFrame(this.desktopCurtainInertiaFrame);
+        }
+        this.desktopCurtainInertiaFrame = null;
+        this.desktopCurtainInertiaState = null;
+    }
+
+    desktopCurtainDirectDragScale() {
+        return DESKTOP_CURTAIN_DIRECT_DRAG_SCALE;
+    }
+
+    desktopCurtainNeighborReach() {
+        return DESKTOP_CURTAIN_NEIGHBOR_REACH;
     }
 
     updateTouchExploration(
@@ -1299,6 +1392,13 @@ const PROJECT_OPENING_PROTOTYPE = "prototype";
 const PROJECT_OPENING_FLAT_SPAN = "flat-semantic-span";
 const MAXIMUM_VIEWPORT_INERTIA_FRAME_DURATION = 32;
 const MINIMUM_VIEWPORT_INERTIA_VELOCITY = 0.05;
+const DESKTOP_CURTAIN_DIRECT_DRAG_SCALE = 0.5;
+const DESKTOP_CURTAIN_INERTIA_GAIN = 1;
+const DESKTOP_CURTAIN_INERTIA_DAMPING = 6;
+const DESKTOP_CURTAIN_NEIGHBOR_REACH = 40;
+const DESKTOP_CURTAIN_INERTIA_MAXIMUM_VELOCITY = 5;
+const DESKTOP_CURTAIN_INERTIA_MINIMUM_VELOCITY = 0.01;
+const DESKTOP_CURTAIN_INERTIA_MAXIMUM_FRAME_DURATION = 32;
 function resetEaseOut(value) {
     return 1 - (1 - value) ** 3;
 }
@@ -1379,4 +1479,8 @@ function mosesRevealAmount(elapsed) {
     }
 
     return 0;
+}
+
+function clamp(value, minimum, maximum) {
+    return Math.min(Math.max(value, minimum), maximum);
 }

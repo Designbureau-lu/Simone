@@ -94,12 +94,18 @@ export class CurtainField {
         }
     }
 
-    beginLocalInteraction(projectedX) {
+    beginLocalInteraction(
+        projectedX,
+        neighborReach = CONCERNED_NEIGHBORS
+    ) {
+        validateNeighborReach(neighborReach);
         return this.#localInteractionAt(
             projectedX,
             Object.freeze(this.#periods.map(
                 (period) => period.visibleFactor
-            ))
+            )),
+            null,
+            neighborReach
         );
     }
 
@@ -134,7 +140,8 @@ export class CurtainField {
     #localInteractionAt(
         projectedX,
         visibleFactors,
-        projectedPeriodWidths = null
+        projectedPeriodWidths = null,
+        neighborReach = CONCERNED_NEIGHBORS
     ) {
         if (!Number.isFinite(projectedX)) {
             throw new RangeError("Projected interaction position must be finite.");
@@ -159,13 +166,16 @@ export class CurtainField {
             leftInfluence: influenceTotalFor(
                 periodIndex,
                 -1,
-                this.#periods.length
+                this.#periods.length,
+                neighborReach
             ),
             rightInfluence: influenceTotalFor(
                 periodIndex,
                 1,
-                this.#periods.length
+                this.#periods.length,
+                neighborReach
             ),
+            neighborReach,
             visibleFactors
         });
     }
@@ -535,12 +545,17 @@ function clamp(value, minimum, maximum) {
     return Math.min(Math.max(value, minimum), maximum);
 }
 
-function influenceTotalFor(periodIndex, direction, periodCount) {
+function influenceTotalFor(
+    periodIndex,
+    direction,
+    periodCount,
+    neighborReach = CONCERNED_NEIGHBORS
+) {
     let total = 0;
 
     for (
         let distance = 1;
-        distance <= CONCERNED_NEIGHBORS;
+        distance <= neighborReach;
         distance += 1
     ) {
         const neighborIndex = periodIndex + direction * distance;
@@ -549,14 +564,17 @@ function influenceTotalFor(periodIndex, direction, periodCount) {
             break;
         }
 
-        total += influenceForDistance(distance);
+        total += influenceForDistance(distance, neighborReach);
     }
 
     return total;
 }
 
-function influenceForDistance(distance) {
-    return 1 - distance / (CONCERNED_NEIGHBORS + 1);
+function influenceForDistance(
+    distance,
+    neighborReach = CONCERNED_NEIGHBORS
+) {
+    return 1 - distance / (neighborReach + 1);
 }
 
 function localDeformationFor(
@@ -566,6 +584,8 @@ function localDeformationFor(
     periodCount
 ) {
     const displacementInPeriods = projectedDisplacement / periodLength;
+    const neighborReach = interaction.neighborReach
+        ?? CONCERNED_NEIGHBORS;
     const grabbedRedistribution = displacementInPeriods
         * GRABBED_PERIOD_PARTICIPATION;
     const leftRedistribution = interaction.rightwardOnly
@@ -583,10 +603,10 @@ function localDeformationFor(
         : rightRedistribution / interaction.rightInfluence;
     const start = interaction.rightwardOnly
         ? interaction.periodIndex
-        : Math.max(0, interaction.periodIndex - CONCERNED_NEIGHBORS);
+        : Math.max(0, interaction.periodIndex - neighborReach);
     const end = Math.min(
         periodCount - 1,
-        interaction.periodIndex + CONCERNED_NEIGHBORS
+        interaction.periodIndex + neighborReach
     );
     const redistributions = new Array(periodCount).fill(0);
 
@@ -594,7 +614,12 @@ function localDeformationFor(
         const offset = index - interaction.periodIndex;
         redistributions[index] = offset === 0
             ? grabbedRedistribution
-            : redistributionForNeighbor(offset, leftScale, rightScale);
+            : redistributionForNeighbor(
+                offset,
+                leftScale,
+                rightScale,
+                neighborReach
+            );
     }
 
     return { start, end, redistributions };
@@ -646,11 +671,25 @@ function periodCenteredInteraction(periodIndex, periodCount) {
     };
 }
 
-function redistributionForNeighbor(offset, leftScale, rightScale) {
-    const influence = influenceForDistance(Math.abs(offset));
+function redistributionForNeighbor(
+    offset,
+    leftScale,
+    rightScale,
+    neighborReach = CONCERNED_NEIGHBORS
+) {
+    const influence = influenceForDistance(
+        Math.abs(offset),
+        neighborReach
+    );
     return offset < 0
         ? leftScale * influence
         : -rightScale * influence;
+}
+
+function validateNeighborReach(neighborReach) {
+    if (!Number.isInteger(neighborReach) || neighborReach < 1) {
+        throw new RangeError("Neighbor reach must be a positive integer.");
+    }
 }
 
 function directionalChangeFor(offset, directionalBias, influence) {

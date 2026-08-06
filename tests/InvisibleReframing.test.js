@@ -1021,6 +1021,43 @@ test("grabbing the curtain cancels an active viewport sequence", () => {
     animation.restore();
 });
 
+test("desktop curtain inertia and camera reframe run and cancel independently", () => {
+    const viewport = createViewport(100);
+    const application = createApplication(viewport);
+    const animation = captureAnimationFrames();
+    const displacements = [];
+    equal(application.desktopCurtainDirectDragScale(), 0.5);
+    equal(application.desktopCurtainNeighborReach(), 40);
+    application.updateLocalInteraction = (interaction, displacement) => {
+        void interaction;
+        displacements.push(displacement);
+    };
+    application.render = () => {};
+
+    assert(application.startDesktopCurtainInertia(
+        { periodIndex: 3 },
+        100,
+        1
+    ));
+    assert(application.reframeHorizontal(1, {}));
+    animation.runNext(0);
+    animation.runNext(0);
+    animation.runNext(16);
+    animation.runNext(225);
+    animation.runNext(32);
+
+    assert(displacements.length === 2);
+    assert(displacements[0] > 100);
+    assert(displacements[1] > displacements[0]);
+    closeTo(viewport.projectedOffset, 200);
+    const displacementBeforeCancellation = displacements.at(-1);
+    application.beginLocalInteraction(100);
+    equal(application.desktopCurtainInertiaFrame, null);
+    equal(application.horizontalReframeFrame, null);
+    equal(displacements.at(-1), displacementBeforeCancellation);
+    animation.restore();
+});
+
 test("viewport position reflects settled offset changes", () => {
     const viewport = createViewport(100);
 
@@ -1044,6 +1081,32 @@ test("rightward interaction has no influence before its boundary period", () => 
     equal(field.periods[2].visibleFactor, 0.55);
     assert(field.periods[3].visibleFactor > 0.55);
     assert(field.periods[4].visibleFactor > 0.55);
+});
+
+test("desktop neighbor reach changes only its captured local interaction", () => {
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const parameters = new SurfaceParameters();
+    field.configureFor(201 * 120, 120);
+    field.resolve(parameters);
+    const periodWidth = parameters.resolve(0.5).projectedCarrierSpacing;
+    const interaction = field.beginLocalInteraction(
+        100.5 * periodWidth,
+        40
+    );
+
+    equal(interaction.neighborReach, 40);
+    field.applyLocalDisplacement(interaction, 120, 120, 0.2, 1);
+    equal(
+        field.periods.filter((period) => period.visibleFactor !== 0.5).length,
+        81
+    );
+
+    field.setResetCurtainState(0.5);
+    field.resolve(parameters);
+    const productionInteraction = field.beginLocalInteraction(
+        100.5 * periodWidth
+    );
+    equal(productionInteraction.neighborReach, 50);
 });
 
 test("reset animation converges every period exactly to its target", () => {
