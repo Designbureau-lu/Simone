@@ -7,10 +7,14 @@ Updated: 2026-08-05
 - Desktop mouse/pen exploration now includes local curtain inertia after
   release. Direct drag displacement uses scale `0.5`; incremental projected
   pointer velocity is low-pass filtered over 45 ms and continues the same
-  captured local interaction with gain `1.0` and exponential damping `6.0`.
-  The grabbed Period retains participation `0.08`, with normalized linear
-  redistribution through 40 neighboring Periods per side. The unchanged
-  desktop camera reframe runs independently. A new grab or competing reset,
+  captured local interaction with gain `1.0` and exponential damping `5.0`.
+  The grabbed Period opens from displacement magnitude with participation
+  `0.08` in either drag direction, while signed movement continues to drive
+  normalized directional redistribution through 40 neighboring Periods per
+  side. The unchanged
+  desktop camera reframe runs independently, using a 550 ms smootherstep path
+  to the same bounded target. Shared Index and READ viewport animation retains
+  its existing 450 ms smoothstep timing. A new grab or competing reset,
   navigation, mode, surface, or viewport change cancels inertia without
   snapping; the last applied Period factors remain authoritative. There is no
   spring, reversal, rebound, renderer transform, or mobile interaction change.

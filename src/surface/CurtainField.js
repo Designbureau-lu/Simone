@@ -586,15 +586,17 @@ function localDeformationFor(
     const displacementInPeriods = projectedDisplacement / periodLength;
     const neighborReach = interaction.neighborReach
         ?? CONCERNED_NEIGHBORS;
-    const grabbedRedistribution = displacementInPeriods
+    const signedGrabbedParticipation = displacementInPeriods
+        * GRABBED_PERIOD_PARTICIPATION;
+    const grabbedOpening = Math.abs(displacementInPeriods)
         * GRABBED_PERIOD_PARTICIPATION;
     const leftRedistribution = interaction.rightwardOnly
         ? 0
         : displacementInPeriods
-            - interaction.localPosition * grabbedRedistribution;
+            - interaction.localPosition * signedGrabbedParticipation;
     const rightRedistribution = interaction.rightwardOnly
-        ? -(displacementInPeriods - grabbedRedistribution)
-        : leftRedistribution + grabbedRedistribution;
+        ? -(displacementInPeriods - signedGrabbedParticipation)
+        : leftRedistribution + signedGrabbedParticipation;
     const leftScale = interaction.leftInfluence === 0
         ? 0
         : leftRedistribution / interaction.leftInfluence;
@@ -613,7 +615,7 @@ function localDeformationFor(
     for (let index = start; index <= end; index += 1) {
         const offset = index - interaction.periodIndex;
         redistributions[index] = offset === 0
-            ? grabbedRedistribution
+            ? grabbedOpening
             : redistributionForNeighbor(
                 offset,
                 leftScale,

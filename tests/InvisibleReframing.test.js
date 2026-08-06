@@ -339,6 +339,45 @@ test("desktop local displacement retains its existing redistribution", () => {
     );
 });
 
+test("grabbed Period opens symmetrically while neighbors remain directional", () => {
+    const resultFor = (displacement) => {
+        const field = new CurtainField({ resetCurtainState: 0.5 });
+        const parameters = new SurfaceParameters();
+        field.configureFor(201 * 100, 100);
+        field.resolve(parameters);
+        const periodWidth = parameters.resolve(0.5).projectedCarrierSpacing;
+        const interaction = field.beginLocalInteraction(
+            100.5 * periodWidth,
+            40
+        );
+        field.applyLocalDisplacement(
+            interaction,
+            displacement,
+            100,
+            0.2,
+            1
+        );
+        return {
+            center: field.periods[interaction.periodIndex].visibleFactor,
+            left: field.periods[interaction.periodIndex - 1].visibleFactor,
+            right: field.periods[interaction.periodIndex + 1].visibleFactor
+        };
+    };
+    const positive = resultFor(100);
+    const negative = resultFor(-100);
+    const zero = resultFor(0);
+
+    closeTo(positive.center, 0.58);
+    closeTo(negative.center, positive.center);
+    closeTo(zero.center, 0.5);
+    assert(positive.left > 0.5);
+    assert(positive.right < 0.5);
+    assert(negative.left < 0.5);
+    assert(negative.right > 0.5);
+    closeTo(positive.left - 0.5, 0.5 - negative.left);
+    closeTo(0.5 - positive.right, negative.right - 0.5);
+});
+
 test("touch settlement retains only its directional deformation", () => {
     const field = new CurtainField({ resetCurtainState: 0.5 });
     field.configureFor(1000, 100);
@@ -925,7 +964,7 @@ test("clicked projected artwork resolves to its semantic project", () => {
     equal(application.projectAtPresentationX(5), null);
 });
 
-test("reframing settles by half a viewport with smoothstep easing", () => {
+test("desktop reframing settles by half a viewport with smootherstep", () => {
     const viewport = createViewport(100);
     const application = createApplication(viewport);
     const animation = captureAnimationFrames();
@@ -940,12 +979,42 @@ test("reframing settles by half a viewport with smoothstep easing", () => {
     }));
     animation.runNext(0);
     closeTo(viewport.projectedOffset, 100);
-    animation.runNext(225);
+    animation.runNext(275);
     closeTo(viewport.projectedOffset, 200);
-    animation.runNext(450);
+    animation.runNext(550);
     closeTo(viewport.projectedOffset, 300);
     equal(renderedFrames, 3);
     equal(synchronizedFrames, 3);
+    animation.restore();
+});
+
+test("desktop reframe uses smootherstep without changing its target", () => {
+    const viewport = createViewport(100);
+    const application = createApplication(viewport);
+    const animation = captureAnimationFrames();
+    application.render = () => {};
+
+    assert(application.reframeHorizontal(1, {}));
+    animation.runNext(0);
+    animation.runNext(137.5);
+    closeTo(viewport.projectedOffset, 120.703125);
+    animation.runNext(550);
+    closeTo(viewport.projectedOffset, 300);
+    animation.restore();
+});
+
+test("shared viewport animation retains smoothstep outside desktop reframe", () => {
+    const viewport = createViewport(100);
+    const application = createApplication(viewport);
+    const animation = captureAnimationFrames();
+    application.render = () => {};
+
+    assert(application.animateViewportToProjectedOffset(300));
+    animation.runNext(0);
+    animation.runNext(112.5);
+    closeTo(viewport.projectedOffset, 131.25);
+    animation.runNext(550);
+    closeTo(viewport.projectedOffset, 300);
     animation.restore();
 });
 
@@ -957,7 +1026,7 @@ test("reframing is shortened at viewport bounds", () => {
 
     assert(application.reframeHorizontal(1, {}));
     animation.runNext(0);
-    animation.runNext(450);
+    animation.runNext(550);
     closeTo(viewport.projectedOffset, 1000);
     animation.restore();
 });
@@ -982,7 +1051,7 @@ test("reframing never moves beyond the grabbed point", () => {
 
     assert(application.reframeHorizontal(1, {}));
     animation.runNext(0);
-    animation.runNext(450);
+    animation.runNext(550);
     closeTo(viewport.projectedOffset, 220);
     animation.restore();
 });
@@ -995,7 +1064,7 @@ test("earlier reframing mirrors the grabbed-point limit", () => {
 
     assert(application.reframeHorizontal(-1, {}));
     animation.runNext(0);
-    animation.runNext(450);
+    animation.runNext(550);
     closeTo(viewport.projectedOffset, 240);
     animation.restore();
 });
@@ -1043,7 +1112,7 @@ test("desktop curtain inertia and camera reframe run and cancel independently", 
     animation.runNext(0);
     animation.runNext(0);
     animation.runNext(16);
-    animation.runNext(225);
+    animation.runNext(275);
     animation.runNext(32);
 
     assert(displacements.length === 2);
@@ -1056,6 +1125,50 @@ test("desktop curtain inertia and camera reframe run and cancel independently", 
     equal(application.horizontalReframeFrame, null);
     equal(displacements.at(-1), displacementBeforeCancellation);
     animation.restore();
+});
+
+test("desktop inertia opens the grabbed Period in either release direction", () => {
+    const factorAfterRelease = (direction) => {
+        const field = new CurtainField({ resetCurtainState: 0.5 });
+        const parameters = new SurfaceParameters();
+        field.configureFor(201 * 100, 100);
+        field.resolve(parameters);
+        const periodWidth = parameters.resolve(0.5).projectedCarrierSpacing;
+        const interaction = field.beginLocalInteraction(
+            100.5 * periodWidth,
+            40
+        );
+        const application = new SimoneApplication({
+            artworkLoader: null,
+            parameters,
+            curtainField: field,
+            viewport: createViewport(0),
+            phaseResolver: null,
+            surfaces: null,
+            shading: null,
+            renderer: null
+        });
+        application.artwork = {};
+        application.render = () => {};
+        const animation = captureAnimationFrames();
+
+        assert(application.startDesktopCurtainInertia(
+            interaction,
+            direction * 50,
+            direction
+        ));
+        animation.runNext(0);
+        animation.runNext(16);
+        const factor = field.periods[interaction.periodIndex].visibleFactor;
+        application.cancelDesktopCurtainInertia();
+        animation.restore();
+        return factor;
+    };
+    const positive = factorAfterRelease(1);
+    const negative = factorAfterRelease(-1);
+
+    assert(positive > 0.5);
+    closeTo(negative, positive);
 });
 
 test("viewport position reflects settled offset changes", () => {
@@ -1107,6 +1220,32 @@ test("desktop neighbor reach changes only its captured local interaction", () =>
         100.5 * periodWidth
     );
     equal(productionInteraction.neighborReach, 50);
+});
+
+test("symmetric grabbed opening remains valid at curtain boundaries", () => {
+    const parameters = new SurfaceParameters();
+    const factorFor = (projectedX, displacement) => {
+        const field = new CurtainField({ resetCurtainState: 0.5 });
+        field.configureFor(10 * 100, 100);
+        field.resolve(parameters);
+        const interaction = field.beginLocalInteraction(projectedX, 40);
+        field.applyLocalDisplacement(
+            interaction,
+            displacement,
+            100,
+            0.2,
+            1
+        );
+        assert(field.periods.every(
+            (period) => period.visibleFactor >= 0.2
+                && period.visibleFactor <= 1
+        ));
+        return field.periods[interaction.periodIndex].visibleFactor;
+    };
+    const periodWidth = parameters.resolve(0.5).projectedCarrierSpacing;
+
+    closeTo(factorFor(0, -100), 0.58);
+    closeTo(factorFor(9.5 * periodWidth, 100), 0.58);
 });
 
 test("reset animation converges every period exactly to its target", () => {

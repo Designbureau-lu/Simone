@@ -391,8 +391,10 @@ per side. Incremental projected pointer velocity is low-pass filtered over
 45 ms. On release, gain `1.0` and exponential damping `6.0` continue the same
 captured local interaction monotonically until its velocity threshold is
 reached. The resulting Period factors are persistent curtain state. The
-existing bounded desktop camera reframe remains a separate animation; a new
-grab cancels both without restoring or snapping either state. No spring,
+existing bounded desktop camera reframe remains a separate 550 ms smootherstep
+animation to the same constrained target; a new grab cancels both without
+restoring or snapping either state. Shared Index and READ viewport movement
+retains its existing smoothstep timing. No spring,
 rebound, renderer transform, or additional artwork draw is involved.
 
 Direct touch uses a different input language over the same Viewport,

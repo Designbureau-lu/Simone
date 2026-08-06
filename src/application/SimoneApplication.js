@@ -261,7 +261,13 @@ export class SimoneApplication {
             grabbedPointScreenPositionAfter: grabbedScreenPositionAfter
         });
 
-        return this.animateViewportToProjectedOffset(targetOffset, onFrame);
+        return this.animateViewportToProjectedOffset(
+            targetOffset,
+            onFrame,
+            null,
+            smootherstep,
+            DESKTOP_REFRAME_DURATION
+        );
     }
 
     navigateToNextProject(onFrame = null) {
@@ -429,7 +435,9 @@ export class SimoneApplication {
     animateViewportToProjectedOffset(
         targetOffset,
         onFrame = null,
-        onComplete = null
+        onComplete = null,
+        easing = smoothstep,
+        duration = HORIZONTAL_REFRAME_DURATION
     ) {
         if (!this.artwork || !Number.isFinite(targetOffset)) {
             return false;
@@ -451,11 +459,11 @@ export class SimoneApplication {
         const settle = (timestamp) => {
             startedAt ??= timestamp;
             const progress = Math.min(
-                (timestamp - startedAt) / HORIZONTAL_REFRAME_DURATION,
+                (timestamp - startedAt) / duration,
                 1
             );
             const desiredOffset = startOffset
-                + displacement * smoothstep(progress);
+                + displacement * easing(progress);
 
             this.viewport.shiftProjectedOffset(
                 desiredOffset - this.viewport.projectedOffset
@@ -1370,6 +1378,7 @@ function boundsFor(projectedColumns, start, end) {
 
 const HORIZONTAL_REFRAME_DISTANCE_FACTOR = 0.5;
 const HORIZONTAL_REFRAME_DURATION = 450;
+const DESKTOP_REFRAME_DURATION = 550;
 const SEMANTIC_AUTO_OPEN_DURATION = 125;
 const PROJECT_REVEAL_DURATION = 1000;
 const RESET_CURTAIN_DURATION = 600;
@@ -1394,7 +1403,7 @@ const MAXIMUM_VIEWPORT_INERTIA_FRAME_DURATION = 32;
 const MINIMUM_VIEWPORT_INERTIA_VELOCITY = 0.05;
 const DESKTOP_CURTAIN_DIRECT_DRAG_SCALE = 0.5;
 const DESKTOP_CURTAIN_INERTIA_GAIN = 1;
-const DESKTOP_CURTAIN_INERTIA_DAMPING = 6;
+const DESKTOP_CURTAIN_INERTIA_DAMPING = 5;
 const DESKTOP_CURTAIN_NEIGHBOR_REACH = 40;
 const DESKTOP_CURTAIN_INERTIA_MAXIMUM_VELOCITY = 5;
 const DESKTOP_CURTAIN_INERTIA_MINIMUM_VELOCITY = 0.01;
@@ -1405,6 +1414,10 @@ function resetEaseOut(value) {
 
 function smoothstep(value) {
     return value ** 2 * (3 - 2 * value);
+}
+
+function smootherstep(value) {
+    return value ** 3 * (value * (value * 6 - 15) + 10);
 }
 
 function mosesVisibleFactors(
