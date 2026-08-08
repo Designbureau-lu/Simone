@@ -110,9 +110,9 @@ test("conversation title follows default, Explore, project, and inactive states"
         () => {}
     );
 
-    equal(controller.title, "Konschtpräis 2026");
+    equal(controller.title, "LETZEBUERGER KONSCHTPRAIS");
     controller.showDragHint();
-    equal(controller.title, "Konschtpräis 2026");
+    equal(controller.title, "LETZEBUERGER KONSCHTPRAIS");
     controller.markDragLearned();
     equal(controller.title, "Simone Decker");
     controller.showProject(fixture.projects[2]);
@@ -122,7 +122,7 @@ test("conversation title follows default, Explore, project, and inactive states"
     controller.markDragLearned();
     equal(controller.title, "Simone Decker");
     controller.markExplorationInactive();
-    equal(controller.title, "Konschtpräis 2026");
+    equal(controller.title, "LETZEBUERGER KONSCHTPRAIS");
 });
 
 test("title transitions keep header height and reduced motion replaces immediately", () => {
@@ -138,7 +138,7 @@ test("title transitions keep header height and reduced motion replaces immediate
     equal(getComputedStyle(fixture.bar).height, initialHeight);
 
     const output = document.createElement("output");
-    output.setAttribute("aria-label", "Konschtpräis 2026");
+    output.setAttribute("aria-label", "LETZEBUERGER KONSCHTPRAIS");
     const transition = createTitleTransition(output, {
         reducedMotion: true
     });
@@ -226,9 +226,9 @@ function createFixture() {
     bar.className = "conversation-bar";
     bar.innerHTML = `
         <output class="conversation-bar-text" data-conversation-text
-            aria-label="Konschtpräis 2026">
+            aria-label="LETZEBUERGER KONSCHTPRAIS">
             <span class="conversation-title-line"
-                data-conversation-title-line>Konschtpräis 2026</span>
+                data-conversation-title-line>LETZEBUERGER KONSCHTPRAIS</span>
         </output>
         <button class="conversation-menu-trigger" type="button"
             data-conversation-menu-trigger>☰</button>

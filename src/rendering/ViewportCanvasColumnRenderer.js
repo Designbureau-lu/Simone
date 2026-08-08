@@ -249,7 +249,7 @@ export class ViewportCanvasColumnRenderer {
         crestLifecycleMultiplier,
         periodIndex
     ) {
-        if (this.#startsNewFold(branch, localSlope, periodIndex)) {
+        if (this.#startsNewFold(branch, periodIndex)) {
             this.#finishFoldRegion();
         }
         const left = Math.min(x, x + width);
@@ -304,21 +304,16 @@ export class ViewportCanvasColumnRenderer {
         }
     }
 
-    #startsNewFold(branch, localSlope, periodIndex) {
+    #startsNewFold(branch, periodIndex) {
         const region = this.#activeFoldRegion;
         if (!region
             || branch !== region.branch
             || periodIndex !== region.periodIndex) {
             return Boolean(region);
         }
-        // Do not split a continuous front branch solely on an internal
-        // slope-sign reversal. Front folds are U-shaped in the corrected
-        // geometry and must remain one coherent shading region so that
-        // crest highlight and valley shadow are evaluated once.
-        // Rear folds keep the previous slope-sign boundary behaviour.
-        return branch === "front"
-            ? false
-            : region.previousSlope < 0 && localSlope >= 0;
+        // A slope-sign reversal is internal to a physical branch. Cue regions
+        // remain continuous until the branch or Period identity changes.
+        return false;
     }
 
     #finishFoldRegion() {

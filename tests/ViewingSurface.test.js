@@ -420,6 +420,84 @@ test("renderer groups a continuous front branch into a single fold region", () =
     assert(regions.foldRegions[0].branch === "front");
 });
 
+test("renderer keeps a Rear branch continuous across its zero-slope crossing", () => {
+    const canvas = document.createElement("canvas");
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = 1;
+    sourceCanvas.height = 1;
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    const column = {
+        source: sourceCanvas,
+        sourceX: 0,
+        sourceY: 0,
+        width: 1,
+        height: 1
+    };
+
+    renderer.beginFrame({ width: 60, height: 100 }, cueTestAppearance());
+    for (const [x, localSlope] of [[0, -0.5], [20, 0], [40, 0.5]]) {
+        renderer.drawColumn(column, { x, y: 0, width: 20, height: 100 }, {
+            ...cueColumnAppearance("rear"),
+            periodIndex: 7,
+            localSlope
+        });
+    }
+    renderer.endFrame();
+
+    const regions = renderer.getDebugRegions();
+    const rearRegions = regions.foldRegions.filter(
+        (region) => region.branch === "rear"
+    );
+    const rearShadows = regions.cueApplications.valleyShadows.filter(
+        (region) => region.branch === "rear"
+    );
+    assert(rearRegions.length === 1);
+    assert(rearRegions[0].left === 0 && rearRegions[0].right === 60);
+    assert(rearRegions[0].ridgeX === 30);
+    assert(rearShadows.length === 1);
+    assert(rearShadows[0].left === 0 && rearShadows[0].right === 60);
+    assert(
+        rearRegions[0].ridgeX !== rearShadows[0].left
+            && rearRegions[0].ridgeX !== rearShadows[0].right,
+        "Rear zero-slope position must not be a maximum-strength gradient edge"
+    );
+});
+
+test("renderer separates otherwise continuous Rear branches by Period", () => {
+    const canvas = document.createElement("canvas");
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = 1;
+    sourceCanvas.height = 1;
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    const column = {
+        source: sourceCanvas,
+        sourceX: 0,
+        sourceY: 0,
+        width: 1,
+        height: 1
+    };
+
+    renderer.beginFrame({ width: 40, height: 100 }, cueTestAppearance());
+    renderer.drawColumn(column, { x: 0, y: 0, width: 20, height: 100 }, {
+        ...cueColumnAppearance("rear"),
+        periodIndex: 3,
+        localSlope: -0.5
+    });
+    renderer.drawColumn(column, { x: 20, y: 0, width: 20, height: 100 }, {
+        ...cueColumnAppearance("rear"),
+        periodIndex: 4,
+        localSlope: 0.5
+    });
+    renderer.endFrame();
+
+    const rearRegions = renderer.getDebugRegions().foldRegions.filter(
+        (region) => region.branch === "rear"
+    );
+    assert(rearRegions.length === 2);
+    assert(rearRegions[0].periodIndex === 3);
+    assert(rearRegions[1].periodIndex === 4);
+});
+
 test("branch change still creates separate fold regions", () => {
     const canvas = document.createElement("canvas");
     const sourceCanvas = document.createElement("canvas");

@@ -1,8 +1,27 @@
 # SIMONE Current State
 
-Updated: 2026-08-05
+Updated: 2026-08-08
 
 ## Today's work
+
+- Established the first-page composition as one exact dynamic viewport: the
+  existing header, a curtain row consuming the remaining height, and 28 px of
+  `#f0f0ed` breathing space. A separate empty dynamic-viewport section follows
+  the hero and creates genuine document scrolling without overflowing the
+  first viewport. Curtain geometry and responsive interaction are unchanged.
+- Rear valley-shadow cues now remain one continuous renderer region across an
+  internal negative-to-nonnegative slope reversal. Regions still separate at
+  Front/Rear branch and Period boundaries. This removes the paired maximum-
+  strength gradient endpoints that produced the narrow Rear “anti-crest”
+  without changing shading strength, color, alpha, geometry, or slice height.
+- Added the current desktop-only Söhne Mono identity evaluation. Fixed
+  character cells replace `SIMONE DECKER` with
+  `LETZEBUERGER KONSCHTPRAIS 2026` after 700 ms at 28 ms per cell; the prize
+  name uses Extraleicht and `2026` uses Buch. Index selection temporarily
+  replaces the identity with the selected project title, holds for 1,050 ms,
+  then replaces it once with `SIMONE DECKER`. Mobile and navigation behavior
+  are unchanged. The two local evaluation WOFF2 files remain ignored and are
+  not production or licensed repository assets.
 
 - Desktop mouse/pen exploration now includes local curtain inertia after
   release. Direct drag displacement uses scale `0.5`; incremental projected

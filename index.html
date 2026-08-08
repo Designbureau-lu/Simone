@@ -4,15 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konschtpräis 2026</title>
+    <title>LETZEBUERGER KONSCHTPRAIS</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+<main class="hero">
 <header id="conversationBar" class="conversation-bar">
-    <output class="conversation-bar-text" data-conversation-text aria-live="polite" aria-label="Konschtpräis 2026">
-        <span class="conversation-title-line" data-conversation-title-line aria-hidden="true">Konschtpräis 2026</span>
+    <section class="identity-lab" data-identity-lab aria-label="SIMONE DECKER" hidden>
+        <span class="identity-lab-line" data-identity-lab-line></span>
+    </section>
+    <output class="conversation-bar-text" data-conversation-text aria-live="polite" aria-label="LETZEBUERGER KONSCHTPRAIS">
+        <span class="conversation-title-line" data-conversation-title-line aria-hidden="true">LETZEBUERGER KONSCHTPRAIS</span>
     </output>
     <button type="button" class="conversation-menu-trigger" data-conversation-menu-trigger aria-expanded="false" aria-controls="conversationProjectList" aria-label="Open project list">☰</button>
     <nav id="conversationProjectList" class="conversation-project-list" aria-label="Projects" hidden>
@@ -106,8 +110,12 @@ Load artwork to begin measuring.</pre>
     </div>
 
 </div>
+</main>
+
+<section class="page-continuation" aria-hidden="true"></section>
 
 <script type="module" src="script.js"></script>
+<script type="module" src="src/prototypes/identity/runIdentityLab.js"></script>
 
 </body>
 </html>
