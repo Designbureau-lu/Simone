@@ -769,6 +769,7 @@ export function bindCurtainDragging(
             event.clientY - drag.startY
         )) {
             drag.dragLearned = true;
+            conversation.clearProjectSelection();
             conversation.markDragLearned();
         }
         application.updateLocalInteraction(
@@ -952,8 +953,11 @@ export function bindConversationInterface(
     }
 
     const title = createTitleTransition(conversation);
+    const desktopIndex = window.matchMedia?.("(min-width: 768px)").matches
+        === true;
     let menuOpen = false;
     let exploredProjectIndex = null;
+    let projectSelectionCleared = false;
     const closeMenu = ({ restoreFocus = true } = {}) => {
         menuOpen = false;
         panel.hidden = true;
@@ -970,7 +974,7 @@ export function bindConversationInterface(
         synchronizeProjects();
         panel.hidden = false;
         element.classList.add("is-menu-open");
-        trigger.textContent = "×";
+        trigger.textContent = desktopIndex ? "X" : "×";
         trigger.setAttribute("aria-expanded", "true");
         trigger.setAttribute("aria-label", "Close project list");
         const active = list.querySelector('[aria-current="true"]');
@@ -1010,9 +1014,11 @@ export function bindConversationInterface(
             projectYear.className = "conversation-project-year";
             projectYear.textContent = project.year ?? "";
             button.append(projectTitle, projectYear);
-            const activeIndex = application.attentionMode === "read"
-                ? application.currentProjectIndex
-                : exploredProjectIndex;
+            const activeIndex = projectSelectionCleared
+                ? null
+                : application.attentionMode === "read"
+                    ? application.currentProjectIndex
+                    : exploredProjectIndex;
             if (index === activeIndex) {
                 button.setAttribute("aria-current", "true");
             }
@@ -1029,6 +1035,7 @@ export function bindConversationInterface(
             && projectIndex >= 0
             ? projectIndex
             : null;
+        projectSelectionCleared = false;
         title.set(project.title);
     };
     const showDragHint = () => {
@@ -1039,6 +1046,13 @@ export function bindConversationInterface(
     };
     const markExplorationInactive = () => {
         title.set(PUBLIC_TITLE);
+    };
+    const clearProjectSelection = () => {
+        if (projectSelectionCleared) {
+            return;
+        }
+        projectSelectionCleared = true;
+        synchronizeProjects();
     };
 
     trigger.addEventListener("click", () => {
@@ -1059,6 +1073,7 @@ export function bindConversationInterface(
         synchronizeProjects,
         showProject,
         showDragHint,
+        clearProjectSelection,
         markDragLearned,
         markExplorationInactive,
         get title() {

@@ -1,1 +1,40 @@
-# Simone Navigation v1Blister,3 Bubles,3Airbag,3 What if,1Le grand soufflé,5Jérémy,3Eisberg,2Filtre,4White Noise,4Prototypes d’epaces infinis,2Whitening,3500 pieces,2View finder,1Fine Sélection,2NY-space,2Chewing in Venice,6Ghost,4So weiß, weißer geht’s nicht,5Inlays,2Glaçons,3Second Life,5Genus,3Untermieter,2Magnificatio,6Rising up,2Pied-à-terre,2Pavillons pour Saint-Nazaire,2Pavillons in Vaduz,2Implantate,4Distributeur,2Jagdschlößchen,4Re-Rooted,2Shifting shapes,4Curtain wall,5Meeting,2A couple of full moons,3Clashtest,5Lenka Denise Charlotte,3Petite galerie des glaces,2
+# Simone Navigation v1
+Blister,3
+Bubles,3
+Airbag,3
+What if,1
+Le grand souffle,5
+Jeremy,3
+Eisberg,2
+Filtre,4
+White Noise,4
+Prototypes d epaces infinis,2
+Whitening,3
+500 pieces,2
+View finder,1
+Fine Selection,2
+NY-space,2
+Chewing in Venice,6
+Ghost,4
+So weiss, weisser gehts nicht,5
+Inlays,2
+Glacons,3
+Second Life,5
+Genus,3
+Untermieter,2
+Magnificatio,6
+Rising up,2
+Pied-a-terre,2
+Pavillons pour Saint-Nazaire,2
+Pavillons in Vaduz,2
+Implantate,4
+Distributeur,2
+Jagdschlosschen,4
+Re-Rooted,2
+Shifting shapes,4
+Curtain wall,5
+Meeting,2
+A couple of full moons,3
+Clashtest,5
+Lenka Denise Charlotte,3
+Petite galerie des glaces,2

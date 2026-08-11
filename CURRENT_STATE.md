@@ -1,42 +1,63 @@
 # SIMONE Current State
 
-Updated: 2026-08-08
+Updated: 2026-08-11
 
-## Today's work
+## Desktop milestone
 
-- Established the first-page composition as one exact dynamic viewport: the
-  existing header, a curtain row consuming the remaining height, and 28 px of
-  `#f0f0ed` breathing space. A separate empty dynamic-viewport section follows
-  the hero and creates genuine document scrolling without overflowing the
-  first viewport. Curtain geometry and responsive interaction are unchanged.
-- Rear valley-shadow cues now remain one continuous renderer region across an
-  internal negative-to-nonnegative slope reversal. Regions still separate at
-  Front/Rear branch and Period boundaries. This removes the paired maximum-
-  strength gradient endpoints that produced the narrow Rear “anti-crest”
-  without changing shading strength, color, alpha, geometry, or slice height.
-- Added the current desktop-only Söhne Mono identity evaluation. Fixed
-  character cells replace `SIMONE DECKER` with
-  `LETZEBUERGER KONSCHTPRAIS 2026` after 700 ms at 28 ms per cell; the prize
-  name uses Extraleicht and `2026` uses Buch. Index selection temporarily
-  replaces the identity with the selected project title, holds for 1,050 ms,
-  then replaces it once with `SIMONE DECKER`. Mobile and navigation behavior
-  are unchanged. The two local evaluation WOFF2 files remain ignored and are
-  not production or licensed repository assets.
-
-- Desktop mouse/pen exploration now includes local curtain inertia after
-  release. Direct drag displacement uses scale `0.5`; incremental projected
-  pointer velocity is low-pass filtered over 45 ms and continues the same
-  captured local interaction with gain `1.0` and exponential damping `5.0`.
-  The grabbed Period opens from displacement magnitude with participation
-  `0.08` in either drag direction, while signed movement continues to drive
-  normalized directional redistribution through 40 neighboring Periods per
-  side. The unchanged
-  desktop camera reframe runs independently, using a 550 ms smootherstep path
-  to the same bounded target. Shared Index and READ viewport animation retains
-  its existing 450 ms smoothstep timing. A new grab or competing reset,
-  navigation, mode, surface, or viewport change cancels inertia without
-  snapping; the last applied Period factors remain authoritative. There is no
-  spring, reversal, rebound, renderer transform, or mobile interaction change.
+- The page has three normal-flow parts: a `100dvh` live identity screen, the
+  existing curtain inside a `200dvh` sticky stage, and the semantic exhibition
+  information article. Root scrolling uses `y proximity`; Screen 1 and the
+  curtain stage align at `start`, and Screen 1 retains `scroll-snap-stop:
+  always`. The curtain canvas, geometry, camera, artwork, interaction, and
+  rendering remain the approved production implementation.
+- Desktop identity typography uses Söhne Mono evaluation fonts with
+  `--color-text: #3c3c3c`, `--type-display: clamp(4rem, 5vw, 6rem)`,
+  `--type-section: clamp(2.5rem, 3.2vw, 4rem)`, `--type-interface: 1.5rem`,
+  and `--page-margin: 150px`. Language is at `40px` / `31.2px`, the date is
+  centered at `top: 150px`, and the venue is centered at `bottom: 120px`.
+- `assets/blop.svg` is presented unchanged behind the Screen 1 title. A stable
+  per-load pose chooses a left `28–42vw` or right `58–72vw` center and a
+  `38–60vh` vertical center. Procedural pose ranges are scaleX `0.97–1.03`,
+  scaleY `0.95–1.05`, rotation `-4–4deg`, and skewX `-2–2deg`. Its asymmetric
+  9-second breath scales `0.985–1.015`, drifts within about ±6 px horizontally
+  and ±5 px vertically, and does not animate rotation. The blob travels at 90%
+  of page scroll speed; the pose is not rerandomized on scroll or resize.
+- The curtain entrance starts at `1.10` viewport widths with a 10% scroll dead
+  zone and a `0.55` viewport-width pre-flight target. At sticky-stage alignment,
+  an independent 280 ms linear flight reaches exact zero. Curtain factors stay
+  at `0.85` during travel. Impact immediately starts captured visible Periods
+  settling left-to-right with a 12 ms start stagger and 600 ms `easeOutCubic`
+  duration; `sceneVisibleFactor` settles globally. The complete captured
+  snapshot is restored before interaction unlocks. INDEX reveals 200 ms later,
+  one fixed cell every 35 ms. No Scroll Snap Event drives application state.
+- The desktop curtain header is 96 px high. INDEX uses `1.5rem` Söhne Mono Buch
+  at a 40 px left inset and a 12 px optical downward adjustment. Its content box
+  is `min(620px, 100%)`; the open `X` is 40 px inside that box's right edge.
+  Project rows are uppercase, 56 px minimum height, padded 10 px vertically and
+  `40px` / `32px` horizontally, with `1.5rem` / `1.2` typography. Rows use
+  Extraleicht normally and Buch for hover or selection, without markers or
+  background highlights. Genuine visitor curtain movement clears only the
+  visual project selection. The reusable `CharacterCellReplacement` utility is
+  active only for the one-shot INDEX reveal and exposes no global API.
+- Desktop mouse/pen interaction uses direct drag scale `0.5`, 45 ms incremental
+  velocity smoothing, inertia gain `1.0`, damping `5.0`, stop threshold `0.01`,
+  and a 32 ms RAF delta clamp. The captured interaction reaches 40 Periods per
+  side with grabbed participation `0.08`; the grabbed Period opens symmetrically
+  while neighbor redistribution remains directional. Desktop camera reframing
+  remains independent at 550 ms with smootherstep and no overshoot.
+- The lower article uses semantic sections rather than positioned PDF
+  reconstruction. Editorial titles are right-aligned Söhne Mono Buch with
+  explicit authored lines; related pills occupy the same right column. Noi
+  Grotesk Light body copy occupies the left half at desktop `--type-body: 1.5rem`,
+  line-height `1.45`, and `min(50vw, 56rem)` reading width. Pill labels are
+  `0.85rem` inside unchanged 48 px minimum-height pill boxes. Exhibition and
+  opening remain two centered information blocks and both use line-height
+  `1.5`. The semantic footer retains `assets/logos.svg`, address,
+  phone, email, and visit action.
+- Rear valley shadows group one continuous Rear branch across its internal
+  zero-slope crossing. Front/Rear and Period boundaries still split regions;
+  cue strengths, geometry, structural height, and Front crest behavior are
+  unchanged.
 - Closed the desktop Chrome performance investigation without changing
   production code. Controlled comparisons show that the corrected orientation,
   structural `destinationHeight = originalHeight - 2 * h` model, and renderer

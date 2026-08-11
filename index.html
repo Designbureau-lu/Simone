@@ -10,11 +10,36 @@
 
 <body>
 
+<section class="arrival-screen arrival-screen-identity" aria-label="Exhibition identity">
+    <nav class="arrival-identity-language" aria-label="Languages">
+        <span>EN</span>
+        <span>FR</span>
+    </nav>
+    <div class="arrival-identity-blob" data-identity-blob aria-hidden="true">
+        <div class="arrival-identity-blob-pose">
+            <img src="assets/blop.svg" alt="">
+        </div>
+    </div>
+    <h1 class="arrival-identity-title">
+        <span class="arrival-identity-artist">
+            <span>SIMONE</span>
+            <span>DECKER</span>
+        </span>
+        <span class="arrival-identity-prize">
+            <span>LETZE<strong>20</strong></span>
+            <span>BUERGER</span>
+            <span>KONSCHT</span>
+            <span>PRAIS<strong>26</strong></span>
+        </span>
+    </h1>
+    <p class="arrival-identity-dates">13.11.2026 - 21.03.2027</p>
+    <p class="arrival-identity-venue">NATIONALMUSEE UM FESCHMAART</p>
+</section>
+
+<section class="curtain-sticky-stage">
 <main class="hero">
 <header id="conversationBar" class="conversation-bar">
-    <section class="identity-lab" data-identity-lab aria-label="SIMONE DECKER" hidden>
-        <span class="identity-lab-line" data-identity-lab-line></span>
-    </section>
+    <span class="curtain-index-label">INDEX</span>
     <output class="conversation-bar-text" data-conversation-text aria-live="polite" aria-label="LETZEBUERGER KONSCHTPRAIS">
         <span class="conversation-title-line" data-conversation-title-line aria-hidden="true">LETZEBUERGER KONSCHTPRAIS</span>
     </output>
@@ -111,11 +136,109 @@ Load artwork to begin measuring.</pre>
 
 </div>
 </main>
+</section>
 
-<section class="page-continuation" aria-hidden="true"></section>
+<article class="exhibition-information" aria-label="Exhibition information">
+    <section class="editorial-section" aria-labelledby="simone-decker-heading">
+        <h2 id="simone-decker-heading" class="editorial-title">
+            <span class="editorial-title-line">SIMONE</span>
+            <span class="editorial-title-line">DECKER</span>
+        </h2>
+        <div class="editorial-body">
+            <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam
+                nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam
+                erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci
+                tation ullamcorper suscipit lobortis nisl ut aliquip ex ea
+                commodo consequat.</p>
+            <p>Duis autem vel eum iriure dolor in hendrerit in vulputate velit
+                esse molestie consequat, vel illum dolore eu feugiat nulla
+                facilisis at vero eros et accumsan et iusto odio.</p>
+        </div>
+        <div class="editorial-actions" aria-label="Related Simone Decker content">
+            <button class="information-pill" type="button">Video Interview</button>
+            <button class="information-pill" type="button">Portrait</button>
+        </div>
+    </section>
+
+    <section class="editorial-section" aria-labelledby="prize-heading">
+        <h2 id="prize-heading" class="editorial-title">
+            <span class="editorial-title-line">LETZEBUERGER</span>
+            <span class="editorial-title-line">KONSCHTPRAIS</span>
+            <strong class="editorial-title-line">2026</strong>
+        </h2>
+        <div class="editorial-body">
+            <p>The Lëtzebuerger Konschtpräis is a biennial art award established
+                in 2022 by Luxembourg’s Ministry for Culture. The prize includes
+                €10,000 and honours an artist for their work and ongoing
+                commitment to Luxembourg’s art scene. The artist must be
+                Luxembourgish, live in Luxembourg or have a strong connection
+                with the country. After Berthe Lutgen received the prize in 2022
+                and Marc-Henri Reckinger in 2024, a professional jury selected
+                Simone Decker as the 2026 laureate.</p>
+        </div>
+        <div class="editorial-actions" aria-label="Related prize content">
+            <button class="information-pill" type="button">Press release</button>
+        </div>
+    </section>
+
+    <section class="editorial-section" aria-labelledby="jury-heading">
+        <h2 id="jury-heading" class="editorial-title">
+            <span class="editorial-title-line">JURY</span>
+            <span class="editorial-title-line">STATEMENT</span>
+        </h2>
+        <div class="editorial-body" lang="fr">
+            <p>Dans sa motivation, le jury, composé de cinq historiens d’art et
+                institué par le ministère de la Culture, indique avoir porté son
+                choix, le 8 décembre 2025, sur «une artiste majeure de la scène
+                contemporaine luxembourgeoise et internationale».</p>
+            <p>Active depuis les années 1990, Simone Decker est reconnue pour son
+                travail dans les arts plastiques, en particulier l’installation
+                et la photographie. Le jury a mis en avant «la force conceptuelle
+                de son travail, sa poésie visuelle et ses interventions dans
+                l’espace public», ainsi que son parcours académique, notamment
+                son enseignement à l’Akademie der Bildenden Künste de Nuremberg
+                entre 2008 et 2015. Son œuvre, marquée par des installations,
+                sculptures et photographies.</p>
+        </div>
+        <div class="editorial-actions" aria-label="Related jury content">
+            <button class="information-pill" type="button">The Jury</button>
+        </div>
+    </section>
+
+    <section class="visit-information" aria-label="Exhibition dates">
+        <section class="visit-information-block visit-information-block-exhibition"
+            aria-labelledby="exhibition-heading">
+            <h2 id="exhibition-heading">EXHIBITION</h2>
+            <p>Temporary exhibition<br>
+                at the Nationalmusee um Feschmaart<br>
+                Kapellchen<br>
+                <time datetime="2026-11-13">13.11.2026</time> -
+                <time datetime="2027-03-21">21.03.2027</time></p>
+        </section>
+        <section class="visit-information-block" aria-labelledby="opening-heading">
+            <h2 id="opening-heading">OPENING</h2>
+            <p><time datetime="2026-11-12T18:00">12.11.2026<br>18:00</time></p>
+        </section>
+    </section>
+
+    <footer class="exhibition-footer">
+        <img class="exhibition-footer-logos" src="assets/logos.svg"
+            alt="Nationalmusée um Fëschmaart and Ministry of Culture">
+        <address class="exhibition-contact">
+            Nationalmusée um Fëschmaart<br>
+            Marché-aux-Poissons<br>
+            L-2345 Luxembourg<br>
+            Luxembourg<br>
+            <a href="tel:+3524793301">+352 47 93 30 - 1</a><br>
+            <a href="mailto:nationalmusee@mnaha.etat.lu">nationalmusee@mnaha.etat.lu</a>
+        </address>
+        <button class="information-pill exhibition-visit-action" type="button">
+            Plan my visit
+        </button>
+    </footer>
+</article>
 
 <script type="module" src="script.js"></script>
-<script type="module" src="src/prototypes/identity/runIdentityLab.js"></script>
 
 </body>
 </html>

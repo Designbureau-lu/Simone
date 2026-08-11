@@ -1,7 +1,7 @@
-const DESKTOP_QUERY = "(min-width: 768px)";
 const EMPTY_CELL = "\u00a0";
 
-class IdentityCellReplacement {
+/** Reusable fixed-cell typographic replacement used by the INDEX reveal. */
+export class CharacterCellReplacement {
     #element;
     #cells;
     #source;
@@ -21,6 +21,9 @@ class IdentityCellReplacement {
         interval = 28,
         delay = 700
     }) {
+        if (!(element instanceof HTMLElement)) {
+            throw new TypeError("CharacterCellReplacement requires an element.");
+        }
         this.#element = element;
         this.#source = normalizeState(source);
         this.#target = normalizeState(target);
@@ -79,11 +82,10 @@ class IdentityCellReplacement {
         this.#ensureCellCount(cellCount);
         this.#current = padState(this.#current, cellCount);
         const paddedTarget = padState(normalizedTarget, cellCount);
-        const order = resolveOrder(replacementOrder, cellCount);
         this.#cancel();
         this.#startReplacement(
             paddedTarget,
-            order,
+            resolveOrder(replacementOrder, cellCount),
             requireNonNegativeNumber(delay, "delay"),
             requireNonNegativeNumber(interval, "interval"),
             onComplete
@@ -104,12 +106,12 @@ class IdentityCellReplacement {
                 }
             };
             replaceNextCell();
-            if (orderIndex >= order.length) {
-                return;
+            if (orderIndex < order.length) {
+                this.#intervalId = window.setInterval(
+                    replaceNextCell,
+                    interval
+                );
             }
-            this.#intervalId = window.setInterval(() => {
-                replaceNextCell();
-            }, interval);
         }, delay);
     }
 
@@ -131,12 +133,8 @@ class IdentityCellReplacement {
         const cell = this.#cells[index];
         this.#current[index] = cellState;
         cell.textContent = cellState.character || EMPTY_CELL;
-        cell.classList.toggle("is-buch", cellState.weight === "buch");
-        cell.classList.toggle(
-            "is-extraleicht",
-            cellState.weight === "extraleicht"
-        );
-        this.#element.parentElement?.setAttribute(
+        cell.dataset.weight = cellState.weight;
+        this.#element.setAttribute(
             "aria-label",
             this.#cells.map((currentCell) => (
                 currentCell.textContent === EMPTY_CELL
@@ -149,11 +147,11 @@ class IdentityCellReplacement {
     #ensureCellCount(cellCount) {
         while (this.#cells.length < cellCount) {
             const cell = document.createElement("span");
-            cell.className = "identity-lab-cell";
+            cell.className = "character-cell";
             this.#cells.push(cell);
             this.#element.append(cell);
         }
-        this.#element.style.setProperty("--identity-cell-count", cellCount);
+        this.#element.style.setProperty("--character-cell-count", cellCount);
     }
 }
 
@@ -181,7 +179,7 @@ function resolveOrder(order, cellCount) {
     } else if (Array.isArray(order)) {
         resolved = order.slice();
     } else {
-        throw new TypeError("Unsupported identity replacement order.");
+        throw new TypeError("Unsupported character replacement order.");
     }
     const unique = resolved.filter((index, position) => (
         Number.isInteger(index)
@@ -203,83 +201,4 @@ function requireNonNegativeNumber(value, name) {
         throw new RangeError(`${name} must be a non-negative number.`);
     }
     return number;
-}
-
-function startIdentityLab() {
-    if (!window.matchMedia(DESKTOP_QUERY).matches) {
-        return;
-    }
-    const lab = document.querySelector("[data-identity-lab]");
-    const line = lab?.querySelector("[data-identity-lab-line]");
-    if (!(lab instanceof HTMLElement) || !(line instanceof HTMLElement)) {
-        return;
-    }
-
-    lab.hidden = false;
-    const replacement = new IdentityCellReplacement({
-        element: line,
-        source: [{ text: "SIMONE DECKER", weight: "buch" }],
-        target: [
-            { text: "LETZEBUERGER KONSCHTPRAIS", weight: "extraleicht" },
-            { text: " 2026", weight: "buch" }
-        ],
-        replacementOrder: "left-to-right",
-        interval: 28,
-        delay: 700
-    });
-
-    let returnDelayId = null;
-    const projectList = document.querySelector("[data-conversation-projects]");
-    projectList?.addEventListener("click", (event) => {
-        const button = event.target instanceof Element
-            ? event.target.closest("button")
-            : null;
-        const projectTitle = button?.querySelector(
-            ".conversation-project-title"
-        )?.textContent?.trim();
-        if (!projectTitle) {
-            return;
-        }
-
-        window.clearTimeout(returnDelayId);
-        replacement.replace(
-            [{ text: projectTitle, weight: "buch" }],
-            {
-                interval: replacement.interval,
-                onComplete() {
-                    returnDelayId = window.setTimeout(() => {
-                        replacement.replace(
-                            [{ text: "SIMONE DECKER", weight: "buch" }],
-                            { interval: replacement.interval }
-                        );
-                    }, 1050);
-                }
-            }
-        );
-    });
-
-    window.__simoneIdentity = {
-        get interval() {
-            return replacement.interval;
-        },
-        set interval(value) {
-            replacement.interval = value;
-        },
-        get delay() {
-            return replacement.delay;
-        },
-        set delay(value) {
-            replacement.delay = value;
-        },
-        restart() {
-            window.clearTimeout(returnDelayId);
-            replacement.restart();
-        }
-    };
-}
-
-if (document.readyState === "complete") {
-    startIdentityLab();
-} else {
-    window.addEventListener("load", startIdentityLab, { once: true });
 }

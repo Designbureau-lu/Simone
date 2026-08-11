@@ -3,8 +3,282 @@ import {
     bindConversationInterface,
     createTitleTransition
 } from "../src/application/startSimone.js";
+import {
+    CurtainEntranceMotion
+} from "../src/prototypes/arrival/CurtainEntranceMotion.js";
+import {
+    CURTAIN_ENTRANCE_CONFIG,
+    curtainSettlementIsReady,
+    revealIndexLabel,
+    restoreCurtainSnapshot,
+    settlementDurationForRange,
+    staggeredPeriodProgress,
+    visiblePeriodRangeFor
+} from "../src/prototypes/arrival/startCurtainEntrance.js";
+import {
+    createIdentityBlobPresentation,
+    IDENTITY_BLOB_CONFIG
+} from "../src/prototypes/identity/startIdentityBlobPresentation.js";
 
 const tests = [];
+
+test("human scroll directly controls the pre-snap curtain position", () => {
+    const motion = createEntranceMotion();
+    motion.updateScrollProgress(0.75);
+
+    equal(motion.currentOffset, motion.targetOffset);
+    assert(motion.currentOffset < motion.initialOffset);
+    assert(motion.currentOffset > motion.offsetRemainingAtSnap);
+});
+
+test("curtain entrance retains a short ten-percent onset dead zone", () => {
+    const motion = createEntranceMotion();
+    equal(CURTAIN_ENTRANCE_CONFIG.delayProgress, 0.10);
+    motion.updateScrollProgress(0.09);
+    equal(motion.currentOffset, motion.initialOffset);
+    motion.updateScrollProgress(0.11);
+    assert(motion.currentOffset < motion.initialOffset);
+});
+
+test("entrance controller does not depend on Scroll Snap Events", async () => {
+    const source = await fetch(
+        "../src/prototypes/arrival/startCurtainEntrance.js"
+    ).then((response) => response.text());
+    assert(!source.includes("scrollsnapchanging"));
+    assert(!source.includes("scrollsnapchange"));
+});
+
+test("curtain entrance overflow is contained without clipping page scroll", async () => {
+    const source = await fetch("../style.css").then((response) => (
+        response.text()
+    ));
+    assert(/\.hero\s*>\s*\.container\s*\{[^}]*overflow-x:clip;/s.test(
+        source
+    ));
+    assert(!/html\s*,\s*body\s*\{[^}]*overflow\s*:\s*hidden/s.test(source));
+});
+
+test("Screen 1 alone uses an always-stop snap target", async () => {
+    const source = await fetch("../style.css").then((response) => (
+        response.text()
+    ));
+    assert(/\.arrival-screen-identity\s*\{[^}]*scroll-snap-stop:always;/s.test(
+        source
+    ));
+    assert(/\.arrival-screen,\s*\.curtain-sticky-stage\s*\{[^}]*scroll-snap-stop:normal;/s.test(
+        source
+    ));
+});
+
+test("INDEX reveal keeps the approved post-landing beat", () => {
+    equal(CURTAIN_ENTRANCE_CONFIG.indexRevealDelay, 200);
+    equal(CURTAIN_ENTRANCE_CONFIG.indexCharacterInterval, 35);
+});
+
+test("INDEX fixed cells become visible and readable after reveal", async () => {
+    const bar = document.createElement("header");
+    bar.id = "conversationBar";
+    bar.className = "conversation-bar";
+    const label = document.createElement("span");
+    label.className = "curtain-index-label";
+    bar.append(label);
+    document.body.append(bar);
+
+    revealIndexLabel(label);
+    await new Promise((resolve) => window.setTimeout(resolve, 180));
+
+    const cells = Array.from(label.querySelectorAll(".character-cell"));
+    const style = getComputedStyle(label);
+    equal(cells.length, 5);
+    equal(cells.map((cell) => cell.textContent).join(""), "INDEX");
+    equal(style.opacity, "1");
+    equal(style.visibility, "visible");
+    equal(style.color, "rgb(60, 60, 60)");
+    equal(
+        style.transform,
+        window.matchMedia("(min-width: 768px)").matches
+            ? "matrix(1, 0, 0, 1, 0, 12)"
+            : "none"
+    );
+    equal(
+        style.display,
+        window.matchMedia("(min-width: 768px)").matches ? "block" : "none"
+    );
+
+    bar.remove();
+});
+
+test("continued pre-snap scroll never leaves curtain on a waiting plateau", () => {
+    const motion = createEntranceMotion();
+    motion.updateScrollProgress(0.8);
+    const early = motion.currentOffset;
+    motion.updateScrollProgress(0.9);
+    const later = motion.currentOffset;
+    motion.updateScrollProgress(0.99);
+
+    assert(later < early);
+    assert(motion.currentOffset < later);
+    assert(motion.currentOffset > motion.offsetRemainingAtSnap);
+});
+
+test("native snap begins without resetting curtain position", () => {
+    const motion = createEntranceMotion();
+    motion.updateScrollProgress(0.99);
+    const positionAtSnap = motion.currentOffset;
+
+    motion.beginNativeSnap();
+
+    equal(motion.currentOffset, positionAtSnap);
+    equal(motion.snapStartOffset, positionAtSnap);
+});
+
+test("native snap triggers an independent finite curtain flight", () => {
+    const motion = createEntranceMotion();
+    motion.updateScrollProgress(0.99);
+    motion.beginNativeSnap();
+    const snapStart = motion.currentOffset;
+
+    motion.advance(CURTAIN_ENTRANCE_CONFIG.snapFlightDuration / 2);
+    approximatelyEqual(motion.currentOffset, snapStart * 0.5);
+    assert(!motion.complete);
+    motion.advance(CURTAIN_ENTRANCE_CONFIG.snapFlightDuration / 2);
+
+    equal(motion.currentOffset, 0);
+    assert(motion.complete);
+    equal(motion.snapFlightElapsed, 280);
+});
+
+test("snap-following curtain ignores later ordinary scroll targets", () => {
+    const motion = createEntranceMotion();
+    motion.updateScrollProgress(0.9);
+    motion.beginNativeSnap();
+    const capturedPosition = motion.currentOffset;
+
+    motion.updateScrollProgress(0.25);
+
+    equal(motion.currentOffset, capturedPosition);
+});
+
+test("condensation starts on the horizontal impact frame", () => {
+    const snapshot = { visibleFactors: [0.4], sceneVisibleFactor: 0.4 };
+    assert(!curtainSettlementIsReady({
+        horizontalJustCompleted: false,
+        curtainSnapshot: snapshot
+    }));
+    assert(curtainSettlementIsReady({
+        horizontalJustCompleted: true,
+        curtainSnapshot: snapshot
+    }));
+});
+
+test("curtain entrance restores the captured state exactly", () => {
+    const appliedFactors = [];
+    const application = {
+        curtainField: {
+            setVisibleFactors(visibleFactors) {
+                appliedFactors.push(visibleFactors);
+            }
+        },
+        sceneVisibleFactor: 0.85,
+        renderCount: 0,
+        render() {
+            this.renderCount += 1;
+        }
+    };
+    const snapshot = {
+        visibleFactors: Object.freeze([0.2, 0.375, 0.9]),
+        sceneVisibleFactor: 0.375
+    };
+
+    restoreCurtainSnapshot(application, snapshot);
+
+    equal(appliedFactors[0].join(","), snapshot.visibleFactors.join(","));
+    assert(appliedFactors[0] !== snapshot.visibleFactors);
+    equal(application.sceneVisibleFactor, snapshot.sceneVisibleFactor);
+    equal(application.renderCount, 1);
+});
+
+test("settlement staggers visible Periods in physical left-to-right order", () => {
+    const visibleRange = { first: 4, last: 7 };
+    const options = {
+        elapsed: 24,
+        visibleRange,
+        stagger: CURTAIN_ENTRANCE_CONFIG.periodSettlementStagger,
+        duration: CURTAIN_ENTRANCE_CONFIG.settlementDuration
+    };
+    equal(options.stagger, 12);
+    equal(options.duration, 600);
+    const progress = [4, 5, 6, 7].map((periodIndex) => (
+        staggeredPeriodProgress({ ...options, periodIndex })
+    ));
+    assert(progress[0] > progress[1]);
+    assert(progress[1] > progress[2]);
+    equal(progress[2], 0);
+    equal(progress[3], 0);
+});
+
+test("settlement captures one fixed visible Period range", () => {
+    const columns = [
+        projectedColumn(0, -10),
+        projectedColumn(1, 10),
+        undefined,
+        projectedColumn(2, 30),
+        projectedColumn(3, 50)
+    ];
+    const application = {
+        curtainField: { periods: [{}, {}, {}, {}] },
+        projectedColumns: columns,
+        viewport: {
+            projectedOffset: 10,
+            projectedExtent: 30
+        }
+    };
+    const capturedRange = visiblePeriodRangeFor(application);
+    application.viewport.projectedOffset = 30;
+
+    equal(capturedRange.first, 1);
+    equal(capturedRange.last, 2);
+});
+
+test("offscreen Period settlement clamps to visible edge timing", () => {
+    const options = {
+        elapsed: 120,
+        visibleRange: { first: 4, last: 7 },
+        stagger: 12,
+        duration: 600
+    };
+    equal(
+        staggeredPeriodProgress({ ...options, periodIndex: 0 }),
+        staggeredPeriodProgress({ ...options, periodIndex: 4 })
+    );
+    equal(
+        staggeredPeriodProgress({ ...options, periodIndex: 12 }),
+        staggeredPeriodProgress({ ...options, periodIndex: 7 })
+    );
+    equal(settlementDurationForRange(options.visibleRange, 600, 12), 636);
+});
+
+test("completed entrance restoration cannot overwrite later interaction", () => {
+    const application = {
+        curtainField: {
+            factors: [],
+            setVisibleFactors(factors) {
+                this.factors = factors.slice();
+            }
+        },
+        sceneVisibleFactor: 0.85,
+        render() {}
+    };
+    const snapshot = {
+        visibleFactors: Object.freeze([0.3, 0.6]),
+        sceneVisibleFactor: 0.3
+    };
+    restoreCurtainSnapshot(application, snapshot);
+    application.curtainField.factors[0] = 0.72;
+
+    equal(application.curtainField.factors[0], 0.72);
+    equal(snapshot.visibleFactors[0], 0.3);
+});
 
 test("public markup no longer contains the floating cartel flow", async () => {
     const source = await fetch("../index.html").then((response) => (
@@ -12,8 +286,175 @@ test("public markup no longer contains the floating cartel flow", async () => {
     ));
 
     assert(!source.includes("projectInformation"));
-    assert(!source.includes("Lorem ipsum"));
     assert(!source.includes("Read more"));
+});
+
+test("lower information is semantic live HTML with section-owned actions", async () => {
+    const source = await fetch("../index.html").then((response) => (
+        response.text()
+    ));
+    const page = new DOMParser().parseFromString(source, "text/html");
+    const information = page.querySelector(".exhibition-information");
+    const editorialSections = information.querySelectorAll(
+        ":scope > .editorial-section"
+    );
+
+    assert(information);
+    assert(!page.querySelector(".arrival-screen-content"));
+    equal(editorialSections.length, 3);
+    equal(
+        Array.from(editorialSections).map((section) => (
+            section.querySelector("h2").textContent.replace(/\s+/g, " ").trim()
+        )).join("|"),
+        "SIMONE DECKER|LETZEBUERGER KONSCHTPRAIS 2026|JURY STATEMENT"
+    );
+    equal(
+        Array.from(editorialSections).map((section) => (
+            section.querySelectorAll(":scope > .editorial-actions .information-pill")
+                .length
+        )).join("|"),
+        "2|1|1"
+    );
+    equal(information.querySelectorAll(".visit-information-block").length, 2);
+    assert(information.querySelector(".exhibition-footer-logos[src='assets/logos.svg']"));
+    equal(information.querySelectorAll(".information-pill").length, 5);
+    equal(information.querySelectorAll("h2 img,h2 svg").length, 0);
+    equal(
+        Array.from(editorialSections).map((section) => (
+            Array.from(section.querySelectorAll(".editorial-title-line"))
+                .map((line) => line.textContent.trim()).join("/")
+        )).join("|"),
+        "SIMONE/DECKER|LETZEBUERGER/KONSCHTPRAIS/2026|JURY/STATEMENT"
+    );
+});
+
+test("lower information uses the shared type system and constrained body copy", async () => {
+    const source = await fetch("../style.css").then((response) => (
+        response.text()
+    ));
+
+    assert(/font-family:"Noi Grotesk Light";[^}]*NoiGrotesk-Light\.woff2[^}]*font-weight:300;/s.test(
+        source
+    ));
+    assert(/--type-section:clamp\(2\.5rem,3\.2vw,4rem\);/.test(source));
+    assert(/--type-body:1rem;/.test(source));
+    assert(/@media \(min-width:768px\)\s*\{\s*:root\s*\{[^}]*--type-body:1\.5rem;/s.test(
+        source
+    ));
+    assert(/\.editorial-body\s*\{[^}]*width:min\(50vw,56rem\);[^}]*font:300 var\(--type-body\)\/1\.45 "Noi Grotesk Light",sans-serif;/s.test(
+        source
+    ));
+    assert(/\.information-pill\s*\{[^}]*border-radius:999px;[^}]*font:400 0\.85rem\/1 "Söhne Mono Buch",monospace;/s.test(
+        source
+    ));
+    assert(/\.visit-information-block p\s*\{[^}]*font:400 var\(--type-interface\)\/1\.5 "Söhne Mono Buch",monospace;/s.test(
+        source
+    ));
+    assert(/@media \(min-width:768px\)\s*\{[\s\S]*?\.editorial-title\s*\{[^}]*grid-area:title;[^}]*justify-self:end;[^}]*text-align:right;/s.test(
+        source
+    ));
+});
+
+test("desktop Screen 1 identity is live HTML rather than the reference SVG", async () => {
+    const source = await fetch("../index.html").then((response) => (
+        response.text()
+    ));
+    const page = new DOMParser().parseFromString(source, "text/html");
+    const screen = page.querySelector(".arrival-screen-identity");
+
+    assert(screen);
+    assert(!screen.querySelector("svg"));
+    equal(screen.querySelector("[data-identity-blob] img")?.getAttribute("src"),
+        "assets/blop.svg");
+    equal(screen.querySelector(".arrival-identity-language").textContent
+        .replace(/\s+/g, " ").trim(), "EN FR");
+    equal(screen.querySelector(".arrival-identity-artist").textContent
+        .replace(/\s+/g, " ").trim(), "SIMONE DECKER");
+    equal(screen.querySelector(".arrival-identity-prize").textContent
+        .replace(/\s+/g, " ").trim(), "LETZE20 BUERGER KONSCHT PRAIS26");
+    equal(
+        Array.from(screen.querySelectorAll(".arrival-identity-prize strong"))
+            .map((element) => element.textContent).join("|"),
+        "20|26"
+    );
+    equal(screen.querySelector(".arrival-identity-dates").textContent,
+        "13.11.2026 - 21.03.2027");
+    equal(screen.querySelector(".arrival-identity-venue").textContent,
+        "NATIONALMUSEE UM FESCHMAART");
+});
+
+test("desktop identity blob uses one stable bounded presentation", () => {
+    const minimum = createIdentityBlobPresentation(() => 0);
+    const maximum = createIdentityBlobPresentation(() => 1);
+
+    equal(JSON.stringify(minimum), JSON.stringify({
+        horizontalSide: "left",
+        centerX: 28,
+        centerY: 38,
+        scaleX: 0.97,
+        scaleY: 0.95,
+        rotation: -4,
+        skewX: -2
+    }));
+    equal(JSON.stringify(maximum), JSON.stringify({
+        horizontalSide: "right",
+        centerX: 72,
+        centerY: 60,
+        scaleX: 1.03,
+        scaleY: 1.05,
+        rotation: 4,
+        skewX: 2
+    }));
+    equal(IDENTITY_BLOB_CONFIG.scrollRate, 0.90);
+});
+
+test("desktop identity blob separates pose, breathing, and scroll transforms", async () => {
+    const source = await fetch("../style.css").then((response) => (
+        response.text()
+    ));
+
+    assert(/\.arrival-identity-blob\s*\{[^}]*z-index:0;[^}]*width:clamp\(360px,42vw,720px\);[^}]*--blob-scroll-separation/s.test(
+        source
+    ));
+    assert(/\.arrival-identity-blob-pose\s*\{[^}]*rotate\(var\(--blob-rotation,0deg\)\)[^}]*skewX\(var\(--blob-skew-x,0deg\)\)[^}]*scale\(var\(--blob-scale-x,1\),var\(--blob-scale-y,1\)\)/s.test(
+        source
+    ));
+    assert(/animation:identity-blob-breathe 9s[^;]*infinite;/s.test(
+        source
+    ));
+    assert(/0%\s*\{[^}]*translate\(-4px,0\) scale\(0\.985\)/s.test(source));
+    assert(/28%\s*\{[^}]*translate\(1px,-5px\) scale\(0\.994\)/s.test(source));
+    assert(/53%\s*\{[^}]*translate\(6px,1px\) scale\(1\.004\)/s.test(source));
+    assert(/78%\s*\{[^}]*translate\(0,5px\) scale\(1\.015\)/s.test(source));
+    assert(/100%\s*\{[^}]*translate\(-4px,0\) scale\(0\.985\)/s.test(source));
+});
+
+test("desktop identity preserves the authored axis and typographic scales", async () => {
+    const source = await fetch("../style.css").then((response) => (
+        response.text()
+    ));
+    assert(/--color-text:#3c3c3c;/.test(source));
+    assert(/--type-display:clamp\(4rem,5vw,6rem\);/.test(source));
+    assert(/--type-interface:1\.5rem;/.test(source));
+    assert(/--page-margin:150px;/.test(source));
+    assert(/font:400 var\(--type-interface\)\/1\.2 "Söhne Mono Buch",monospace;/.test(
+        source
+    ));
+    assert(/\.arrival-identity-title\s*\{[^}]*left:50%;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;[^}]*transform:translate\(-50%,-50%\);/s.test(
+        source
+    ));
+    assert(/\.arrival-identity-artist\s*\{[^}]*align-self:center;[^}]*justify-self:end;[^}]*text-align:right;/s.test(
+        source
+    ));
+    assert(/\.arrival-identity-language\s*\{[^}]*top:31\.2px;[^}]*left:40px;/s.test(
+        source
+    ));
+    assert(/\.arrival-identity-dates\s*\{[^}]*top:150px;[^}]*left:50%;[^}]*transform:translateX\(-50%\);/s.test(
+        source
+    ));
+    assert(/\.arrival-identity-venue\s*\{[^}]*left:50%;[^}]*bottom:120px;[^}]*transform:translateX\(-50%\);/s.test(
+        source
+    ));
 });
 
 test("normal page starts with Dev visible and its panel hidden", async () => {
@@ -178,7 +619,10 @@ test("menu has no visible heading, highlights active project, and closes", () =>
     );
 
     fixture.trigger.click();
-    equal(fixture.trigger.textContent, "×");
+    equal(
+        fixture.trigger.textContent,
+        window.matchMedia("(min-width: 768px)").matches ? "X" : "×"
+    );
     equal(fixture.trigger.getAttribute("aria-expanded"), "true");
     assert(!fixture.panel.hidden);
     assert(!fixture.panel.querySelector("h1,h2,h3,h4,h5,h6"));
@@ -219,6 +663,83 @@ test("menu project selection uses the existing READ entry pipeline", () => {
     );
     equal(controller.title, "Airbag");
     assert(fixture.panel.hidden);
+});
+
+test("desktop X reuses the existing Index close control", () => {
+    const fixture = createFixture();
+    bindConversationInterface(
+        fixture.bar,
+        fixture.application,
+        fixture.synchronizeViewport,
+        fixture.synchronizeNavigation
+    );
+
+    fixture.trigger.click();
+    fixture.trigger.click();
+    assert(fixture.panel.hidden);
+    equal(fixture.trigger.getAttribute("aria-expanded"), "false");
+});
+
+test("manual curtain movement can clear only the visual Index selection", () => {
+    const fixture = createFixture();
+    const controller = bindConversationInterface(
+        fixture.bar,
+        fixture.application,
+        fixture.synchronizeViewport,
+        fixture.synchronizeNavigation
+    );
+
+    fixture.trigger.click();
+    assert(fixture.list.querySelector('[aria-current="true"]'));
+    controller.clearProjectSelection();
+    assert(!fixture.list.querySelector('[aria-current="true"]'));
+    equal(fixture.application.currentProjectIndex, 1);
+
+    controller.showProject(fixture.projects[2]);
+    controller.synchronizeProjects();
+    equal(
+        fixture.list.querySelector('[aria-current="true"]')
+            ?.querySelector(".conversation-project-title")?.textContent,
+        "Bubles"
+    );
+});
+
+test("desktop drag threshold owns Index selection clearing", async () => {
+    const source = await fetch("../src/application/startSimone.js").then(
+        (response) => response.text()
+    );
+    assert(/drag\.dragLearned\s*=\s*true;\s*conversation\.clearProjectSelection\(\);/s.test(
+        source
+    ));
+});
+
+test("desktop Index rows use aligned compact Buch weight states", async () => {
+    const source = await fetch("../style.css").then((response) => (
+        response.text()
+    ));
+    assert(/\.conversation-project-list\s*\{[^}]*left:0;/s.test(source));
+    assert(/\.conversation-project-list button\s*\{[^}]*min-height:56px;[^}]*padding:10px 32px 10px 40px;[^}]*font:200 var\(--type-interface\)\/1\.2 "Söhne Mono Extraleicht"/s.test(
+        source
+    ));
+    assert(/button:hover,[\s\S]*button\[aria-current="true"\]\s*\{[^}]*font-family:"Söhne Mono Buch"[^}]*font-weight:400;/s.test(
+        source
+    ));
+    assert(/\.conversation-project-list\s*\{[^}]*border-top:0;/s.test(
+        source
+    ));
+    assert(/button:hover\s*\{[^}]*background:transparent;/s.test(source));
+    assert(/button\[aria-current="true"\]::before\s*\{[^}]*content:none;/s.test(
+        source
+    ));
+    assert(/#conversationBar\.is-menu-open\s*>\s*\.conversation-menu-trigger\s*\{[^}]*right:calc\(100% - var\(--index-content-width\) \+ 40px\);[^}]*left:auto;[^}]*opacity:1;/s.test(
+        source
+    ));
+    assert(/#conversationBar\s*>\s*\.curtain-index-label\s*\{[^}]*transform:translateY\(12px\);/s.test(
+        source
+    ));
+    assert(/\.conversation-project-title\s*\{[^}]*text-transform:uppercase;/s.test(
+        source
+    ));
 });
 
 function createFixture() {
@@ -273,6 +794,29 @@ function createFixture() {
 
 function equal(actual, expected) {
     assert(actual === expected, `Expected ${actual} to equal ${expected}`);
+}
+
+function approximatelyEqual(actual, expected, tolerance = 1e-12) {
+    assert(
+        Math.abs(actual - expected) <= tolerance,
+        `Expected ${actual} to be within ${tolerance} of ${expected}`
+    );
+}
+
+function createEntranceMotion() {
+    return new CurtainEntranceMotion({
+        initialOffset: CURTAIN_ENTRANCE_CONFIG.startingOffsetViewportWidths,
+        delayProgress: CURTAIN_ENTRANCE_CONFIG.delayProgress,
+        offsetRemainingAtSnap: CURTAIN_ENTRANCE_CONFIG.offsetRemainingAtSnap,
+        snapFlightDuration: CURTAIN_ENTRANCE_CONFIG.snapFlightDuration
+    });
+}
+
+function projectedColumn(periodIndex, targetX) {
+    return {
+        width: 10,
+        placement: { periodIndex, targetX }
+    };
 }
 
 function assert(condition, message = "Assertion failed") {

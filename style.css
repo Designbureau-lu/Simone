@@ -14,6 +14,20 @@
 
 @font-face{
 
+    font-family:"Noi Grotesk Light";
+
+    src:url("fonts/NoiGrotesk-Light.woff2") format("woff2");
+
+    font-style:normal;
+
+    font-weight:300;
+
+    font-display:swap;
+
+}
+
+@font-face{
+
     font-family:"Söhne Mono Extraleicht";
 
     src:url("fonts/test-soehne-mono-extraleicht.woff2") format("woff2");
@@ -23,6 +37,22 @@
     font-weight:200;
 
     font-display:swap;
+
+}
+
+:root{
+
+    --color-text:#3c3c3c;
+
+    --type-display:clamp(4rem,5vw,6rem);
+
+    --type-section:clamp(2.5rem,3.2vw,4rem);
+
+    --type-interface:1.5rem;
+
+    --type-body:1rem;
+
+    --page-margin:150px;
 
 }
 
@@ -38,6 +68,8 @@ body{
     --conversation-bar-height:104px;
 
     margin:0;
+
+    color:var(--color-text);
 
     font-family:"Söhne Mono Buch",monospace;
 
@@ -65,7 +97,7 @@ select{
 
 }
 
-.identity-lab{
+.arrival-screen{
 
     display:none;
 
@@ -73,54 +105,229 @@ select{
 
 @media (min-width:768px){
 
-    .identity-lab{
+    .curtain-sticky-stage{
 
-        display:block;
+        height:200vh;
 
-        min-width:0;
+        height:200dvh;
 
-        flex:1 1 auto;
+    }
+
+    .curtain-sticky-stage > .hero{
+
+        position:sticky;
+
+        top:0;
+
+    }
+
+    .arrival-screen{
+
+        display:flex;
+
+        box-sizing:border-box;
+
+        width:100%;
+
+        height:100vh;
+
+        height:100dvh;
+
+        align-items:center;
+
+        justify-content:center;
 
         overflow:hidden;
 
-        pointer-events:none;
+        background:#f0f0ed;
 
     }
 
-    .identity-lab[hidden]{
+    .arrival-screen-identity{
 
-        display:none;
-
-    }
-
-    .identity-lab-line{
-
-        display:grid;
-
-        grid-template-columns:repeat(var(--identity-cell-count),1ch);
-
-        width:max-content;
-
-        font:400 35px/42px "Söhne Mono Buch",monospace;
-
-        white-space:pre;
-
-    }
-
-    .conversation-bar > .identity-lab:not([hidden])
-        + .conversation-bar-text{
-
-        display:none;
-
-    }
-
-    .identity-lab-cell{
+        position:relative;
 
         display:block;
 
+        padding-inline:var(--page-margin);
+
+        color:var(--color-text);
+
     }
 
-    .identity-lab-cell.is-extraleicht{
+    .arrival-identity-blob{
+
+        position:absolute;
+
+        top:var(--blob-center-y,49vh);
+
+        left:var(--blob-center-x,50vw);
+
+        z-index:0;
+
+        width:clamp(360px,42vw,720px);
+
+        aspect-ratio:1;
+
+        pointer-events:none;
+
+        transform:translate3d(
+            -50%,
+            calc(-50% + var(--blob-scroll-separation,0px)),
+            0
+        );
+
+        transform-origin:center;
+
+    }
+
+    .arrival-identity-blob-pose{
+
+        width:100%;
+
+        height:100%;
+
+        transform:rotate(var(--blob-rotation,0deg))
+            skewX(var(--blob-skew-x,0deg))
+            scale(var(--blob-scale-x,1),var(--blob-scale-y,1));
+
+        transform-origin:center;
+
+    }
+
+    .arrival-identity-blob img{
+
+        display:block;
+
+        width:100%;
+
+        height:100%;
+
+        animation:identity-blob-breathe 9s
+            cubic-bezier(0.45,0,0.55,1) infinite;
+
+        transform-origin:center;
+
+    }
+
+    @keyframes identity-blob-breathe{
+
+        0%{
+
+            transform:translate(-4px,0) scale(0.985);
+
+        }
+
+        28%{
+
+            transform:translate(1px,-5px) scale(0.994);
+
+        }
+
+        53%{
+
+            transform:translate(6px,1px) scale(1.004);
+
+        }
+
+        78%{
+
+            transform:translate(0,5px) scale(1.015);
+
+        }
+
+        100%{
+
+            transform:translate(-4px,0) scale(0.985);
+
+        }
+
+    }
+
+    .arrival-identity-language,
+    .arrival-identity-dates,
+    .arrival-identity-venue{
+
+        position:absolute;
+
+        z-index:1;
+
+        margin:0;
+
+        font:400 var(--type-interface)/1.2 "Söhne Mono Buch",monospace;
+
+        white-space:nowrap;
+
+    }
+
+    .arrival-identity-language{
+
+        top:31.2px;
+
+        left:40px;
+
+        display:flex;
+
+        gap:1ch;
+
+    }
+
+    .arrival-identity-title{
+
+        position:absolute;
+
+        z-index:1;
+
+        top:50%;
+
+        left:50%;
+
+        display:grid;
+
+        grid-template-columns:max-content max-content;
+
+        column-gap:0.8ch;
+
+        margin:0;
+
+        transform:translate(-50%,-50%);
+
+        font-size:var(--type-display);
+
+        line-height:0.96;
+
+        letter-spacing:0;
+
+        white-space:nowrap;
+
+    }
+
+    .arrival-identity-artist,
+    .arrival-identity-prize{
+
+        display:flex;
+
+        flex-direction:column;
+
+    }
+
+    .arrival-identity-artist{
+
+        align-self:center;
+
+        justify-self:end;
+
+        text-align:right;
+
+        font-family:"Söhne Mono Buch",monospace;
+
+        font-weight:400;
+
+    }
+
+    .arrival-identity-prize{
+
+        justify-self:start;
 
         font-family:"Söhne Mono Extraleicht",monospace;
 
@@ -128,11 +335,134 @@ select{
 
     }
 
-    .identity-lab-cell.is-buch{
+    .arrival-identity-prize strong{
 
         font-family:"Söhne Mono Buch",monospace;
 
         font-weight:400;
+
+    }
+
+    .arrival-identity-dates{
+
+        top:150px;
+
+        left:50%;
+
+        transform:translateX(-50%);
+
+    }
+
+    .arrival-identity-venue{
+
+        left:50%;
+
+        bottom:120px;
+
+        transform:translateX(-50%);
+
+        text-align:center;
+
+    }
+
+}
+
+.curtain-index-label{
+
+    display:none;
+
+    color:var(--color-text);
+
+}
+
+@media (min-width:768px){
+
+    html{
+
+        scroll-snap-type:y proximity;
+
+    }
+
+    .arrival-screen,
+    .curtain-sticky-stage{
+
+        scroll-snap-align:start;
+
+        scroll-snap-stop:normal;
+
+    }
+
+    .arrival-screen-identity{
+
+        scroll-snap-stop:always;
+
+    }
+
+    #conversationBar > .curtain-index-label{
+
+        display:block;
+
+        min-width:0;
+
+        flex:1 1 auto;
+
+        font:400 var(--type-interface)/1.2 "Söhne Mono Buch",monospace;
+
+        pointer-events:none;
+
+        transform:translateY(12px);
+
+    }
+
+    #conversationBar > .conversation-bar-text{
+
+        display:none;
+
+    }
+
+    #conversationBar > .conversation-menu-trigger{
+
+        position:absolute;
+
+        top:50%;
+
+        left:40px;
+
+        z-index:2;
+
+        display:block;
+
+        width:5ch;
+
+        height:1.2em;
+
+        transform:translateY(calc(-50% + 12px));
+
+        opacity:0;
+
+        color:var(--color-text);
+
+        font:400 var(--type-interface)/1.2 "Söhne Mono Buch",monospace;
+
+    }
+
+    #conversationBar.is-menu-open > .conversation-menu-trigger{
+
+        right:calc(100% - var(--index-content-width) + 40px);
+
+        left:auto;
+
+        width:auto;
+
+        opacity:1;
+
+    }
+
+    .curtain-presentation[data-entrance-active]{
+
+        pointer-events:none;
+
+        will-change:transform;
 
     }
 
@@ -142,15 +472,311 @@ select{
 
     min-height:0;
 
+    overflow-x:clip;
+
 }
 
-.page-continuation{
-
-    min-height:100vh;
-
-    min-height:100dvh;
+.exhibition-information{
 
     background:#f0f0ed;
+
+    color:var(--color-text);
+
+}
+
+.editorial-section{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    gap:32px;
+
+    padding:clamp(96px,14vh,180px) max(40px,var(--page-margin));
+
+}
+
+.editorial-title,
+.visit-information h2{
+
+    margin:0;
+
+    color:var(--color-text);
+
+    letter-spacing:0;
+
+}
+
+.editorial-title{
+
+    font:400 var(--type-section)/0.98 "Söhne Mono Buch",monospace;
+
+}
+
+.visit-information h2{
+
+    font:200 var(--type-section)/0.98 "Söhne Mono Extraleicht",monospace;
+
+}
+
+.editorial-title-line{
+
+    display:block;
+
+    white-space:nowrap;
+
+}
+
+.editorial-title strong{
+
+    font-family:"Söhne Mono Buch",monospace;
+
+    font-weight:400;
+
+}
+
+.editorial-body{
+
+    width:min(50vw,56rem);
+
+    max-width:100%;
+
+    color:var(--color-text);
+
+    font:300 var(--type-body)/1.45 "Noi Grotesk Light",sans-serif;
+
+}
+
+.editorial-body p{
+
+    margin:0;
+
+}
+
+.editorial-body p + p{
+
+    margin-top:0.8em;
+
+}
+
+.editorial-actions{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:16px;
+
+}
+
+.information-pill{
+
+    min-height:48px;
+
+    box-sizing:border-box;
+
+    padding:10px 24px;
+
+    border:0;
+
+    border-radius:999px;
+
+    background:#ffffff;
+
+    color:var(--color-text);
+
+    font:400 0.85rem/1 "Söhne Mono Buch",monospace;
+
+    cursor:pointer;
+
+}
+
+.visit-information{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,minmax(0,1fr));
+
+    gap:clamp(64px,10vw,180px);
+
+    padding:clamp(80px,10vh,140px) max(40px,var(--page-margin));
+
+    background:#ffffff;
+
+}
+
+.visit-information-block{
+
+    text-align:center;
+
+}
+
+.visit-information-block p{
+
+    margin:32px 0 0;
+
+    color:var(--color-text);
+
+    font:400 var(--type-interface)/1.5 "Söhne Mono Buch",monospace;
+
+}
+
+.exhibition-footer{
+
+    display:grid;
+
+    grid-template-columns:minmax(0,1fr) minmax(280px,auto);
+
+    gap:48px;
+
+    align-items:end;
+
+    padding:clamp(80px,10vh,140px) max(40px,var(--page-margin));
+
+    background:#f0f0ed;
+
+}
+
+.exhibition-footer-logos{
+
+    display:block;
+
+    width:min(480px,40vw);
+
+    height:auto;
+
+}
+
+.exhibition-contact{
+
+    margin:0;
+
+    color:var(--color-text);
+
+    font:normal 300 var(--type-body)/1.45 "Noi Grotesk Light",sans-serif;
+
+    text-align:right;
+
+}
+
+.exhibition-contact a{
+
+    color:inherit;
+
+    text-decoration:none;
+
+}
+
+.exhibition-visit-action{
+
+    grid-column:2;
+
+    justify-self:end;
+
+}
+
+@media (min-width:768px){
+
+    :root{
+
+        --type-body:1.5rem;
+
+    }
+
+    .editorial-section{
+
+        display:grid;
+
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+
+        grid-template-areas:
+            ". title"
+            "body actions";
+
+        column-gap:clamp(64px,8vw,160px);
+
+    }
+
+    .editorial-title{
+
+        grid-area:title;
+
+        justify-self:end;
+
+        text-align:right;
+
+    }
+
+    .editorial-body{
+
+        grid-area:body;
+
+        width:100%;
+
+    }
+
+    .editorial-actions{
+
+        grid-area:actions;
+
+        justify-self:end;
+
+        align-self:start;
+
+        flex-direction:column;
+
+        align-items:flex-end;
+
+        justify-content:flex-end;
+
+    }
+
+}
+
+@media (max-width:767px){
+
+    .editorial-section,
+    .visit-information,
+    .exhibition-footer{
+
+        padding:64px 24px;
+
+    }
+
+    .editorial-body{
+
+        width:100%;
+
+    }
+
+    .visit-information,
+    .exhibition-footer{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .exhibition-footer-logos{
+
+        width:min(100%,480px);
+
+    }
+
+    .exhibition-contact{
+
+        text-align:left;
+
+    }
+
+    .exhibition-visit-action{
+
+        grid-column:1;
+
+        justify-self:start;
+
+    }
 
 }
 
@@ -463,7 +1089,7 @@ select{
 
 }
 
-.conversation-project-year{
+    .conversation-project-year{
 
     font-variant-numeric:tabular-nums;
 
@@ -492,13 +1118,23 @@ select{
 
     body{
 
-        --conversation-bar-height:128px;
+        --conversation-bar-height:96px;
+
+    }
+
+    .conversation-project-title{
+
+        text-transform:uppercase;
 
     }
 
     .conversation-bar{
 
+        --index-content-width:min(620px,100%);
+
         padding:28px 40px;
+
+        color:var(--color-text);
 
         font-size:44px;
 
@@ -518,27 +1154,48 @@ select{
 
     .conversation-project-list{
 
-        width:min(620px,100%);
+        width:var(--index-content-width);
 
-        right:0;
+        right:auto;
+
+        left:0;
 
         padding-top:12px;
+
+        color:var(--color-text);
+
+        border-top:0;
 
     }
 
     .conversation-project-list button{
 
-        min-height:72px;
+        min-height:56px;
 
-        padding:18px 32px;
+        padding:10px 32px 10px 40px;
 
-        font-size:20px;
+        font:200 var(--type-interface)/1.2 "Söhne Mono Extraleicht",monospace;
+
+    }
+
+    .conversation-project-list button:hover,
+    .conversation-project-list button[aria-current="true"]{
+
+        font-family:"Söhne Mono Buch",monospace;
+
+        font-weight:400;
+
+    }
+
+    .conversation-project-list button:hover{
+
+        background:transparent;
 
     }
 
     .conversation-project-list button[aria-current="true"]::before{
 
-        left:17px;
+        content:none;
 
     }
 
