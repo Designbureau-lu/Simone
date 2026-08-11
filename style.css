@@ -367,11 +367,284 @@ select{
 
 }
 
+@media (max-width:767px){
+
+    .arrival-screen-identity{
+
+        position:relative;
+
+        display:block;
+
+        width:100%;
+
+        height:100vh;
+
+        height:100dvh;
+
+        box-sizing:border-box;
+
+        overflow:hidden;
+
+        padding:24px;
+
+        background:#f0f0ed;
+
+        color:var(--color-text);
+
+    }
+
+    .arrival-identity-language,
+    .arrival-identity-dates,
+    .arrival-identity-venue{
+
+        position:absolute;
+
+        z-index:2;
+
+        margin:0;
+
+        color:var(--color-text);
+
+        font:400 1rem/1.2 "Söhne Mono Buch",monospace;
+
+        white-space:nowrap;
+
+    }
+
+    .arrival-identity-language{
+
+        top:24px;
+
+        left:24px;
+
+        display:flex;
+
+        gap:1ch;
+
+    }
+
+    .arrival-identity-dates{
+
+        top:88px;
+
+        left:50%;
+
+        transform:translateX(-50%);
+
+    }
+
+    .arrival-identity-title{
+
+        position:absolute;
+
+        z-index:2;
+
+        top:50%;
+
+        right:24px;
+
+        left:24px;
+
+        display:flex;
+
+        flex-direction:column;
+
+        gap:1.1em;
+
+        margin:0;
+
+        transform:translateY(-50%);
+
+        color:var(--color-text);
+
+        font-size:clamp(2.5rem,11vw,3.25rem);
+
+        line-height:0.96;
+
+        white-space:nowrap;
+
+    }
+
+    .arrival-identity-artist,
+    .arrival-identity-prize{
+
+        display:flex;
+
+        flex-direction:column;
+
+        width:max-content;
+
+        max-width:100%;
+
+    }
+
+    .arrival-identity-artist{
+
+        align-self:flex-start;
+
+        font-family:"Söhne Mono Buch",monospace;
+
+        font-weight:400;
+
+    }
+
+    .arrival-identity-prize{
+
+        align-self:flex-end;
+
+        font-family:"Söhne Mono Extraleicht",monospace;
+
+        font-weight:200;
+
+        text-align:right;
+
+    }
+
+    .arrival-identity-prize strong{
+
+        font-family:"Söhne Mono Buch",monospace;
+
+        font-weight:400;
+
+    }
+
+    .arrival-identity-venue{
+
+        right:24px;
+
+        bottom:24px;
+
+        left:24px;
+
+        text-align:center;
+
+    }
+
+    .arrival-identity-blob{
+
+        position:absolute;
+
+        top:52%;
+
+        left:50%;
+
+        z-index:1;
+
+        width:min(82vw,360px);
+
+        aspect-ratio:1;
+
+        pointer-events:none;
+
+        transform:translate(-50%,-50%);
+
+    }
+
+    .arrival-identity-blob-pose,
+    .arrival-identity-blob img{
+
+        display:block;
+
+        width:100%;
+
+        height:100%;
+
+    }
+
+    .arrival-identity-blob img{
+
+        animation:identity-blob-breathe-mobile 9s
+            cubic-bezier(0.45,0,0.55,1) infinite;
+
+        transform-origin:center;
+
+    }
+
+    @keyframes identity-blob-breathe-mobile{
+
+        0%,100%{transform:translate(-2px,0) scale(0.99);}
+
+        42%{transform:translate(2px,-2px) scale(1.005);}
+
+        76%{transform:translate(0,2px) scale(1.01);}
+
+    }
+
+}
+
 .curtain-index-label{
 
     display:none;
 
     color:var(--color-text);
+
+}
+
+@media (max-width:767px){
+
+    #conversationBar > .curtain-index-label{
+
+        display:block;
+
+        min-width:0;
+
+        flex:1 1 auto;
+
+        font:400 1.5rem/1.2 "Söhne Mono Buch",monospace;
+
+        pointer-events:none;
+
+    }
+
+    #conversationBar > .conversation-bar-text{
+
+        display:none;
+
+    }
+
+    #conversationBar > .conversation-menu-trigger{
+
+        position:absolute;
+
+        top:50%;
+
+        left:18px;
+
+        z-index:2;
+
+        display:block;
+
+        width:5ch;
+
+        height:1.2em;
+
+        transform:translateY(-50%);
+
+        opacity:0;
+
+        color:var(--color-text);
+
+        font:400 1.5rem/1.2 "Söhne Mono Buch",monospace;
+
+    }
+
+    #conversationBar.is-menu-open > .curtain-index-label{
+
+        visibility:hidden;
+
+    }
+
+    #conversationBar.is-menu-open > .conversation-menu-trigger{
+
+        opacity:1;
+
+    }
+
+    .conversation-title-line{
+
+        animation:none !important;
+
+    }
 
 }
 

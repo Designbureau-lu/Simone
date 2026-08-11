@@ -70,6 +70,34 @@ test("Screen 1 alone uses an always-stop snap target", async () => {
     ));
 });
 
+test("mobile Screen 1 is a normal full-viewport identity without entrance motion", async () => {
+    const style = await fetch("../style.css").then((response) => response.text());
+    const blobSource = await fetch(
+        "../src/prototypes/identity/startIdentityBlobPresentation.js"
+    ).then((response) => response.text());
+    const entranceSource = await fetch(
+        "../src/prototypes/arrival/startCurtainEntrance.js"
+    ).then((response) => response.text());
+
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:block;[^}]*height:100dvh;/s.test(
+        style
+    ));
+    assert(/identity-blob-breathe-mobile 9s/.test(style));
+    assert(/const DESKTOP_QUERY = "\(min-width: 768px\)";/.test(blobSource));
+    assert(/const DESKTOP_QUERY = "\(min-width: 768px\)";/.test(entranceSource));
+});
+
+test("mobile curtain header presents INDEX without the conversation title", async () => {
+    const style = await fetch("../style.css").then((response) => response.text());
+
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?#conversationBar > \.curtain-index-label\s*\{[^}]*display:block;[^}]*font:400 1\.5rem\/1\.2 "Söhne Mono Buch",monospace;/s.test(
+        style
+    ));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?#conversationBar > \.conversation-bar-text\s*\{[^}]*display:none;/s.test(
+        style
+    ));
+});
+
 test("INDEX reveal keeps the approved post-landing beat", () => {
     equal(CURTAIN_ENTRANCE_CONFIG.indexRevealDelay, 200);
     equal(CURTAIN_ENTRANCE_CONFIG.indexCharacterInterval, 35);
@@ -100,10 +128,7 @@ test("INDEX fixed cells become visible and readable after reveal", async () => {
             ? "matrix(1, 0, 0, 1, 0, 12)"
             : "none"
     );
-    equal(
-        style.display,
-        window.matchMedia("(min-width: 768px)").matches ? "block" : "none"
-    );
+    equal(style.display, "block");
 
     bar.remove();
 });

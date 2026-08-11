@@ -4,6 +4,17 @@ Updated: 2026-08-11
 
 ## Desktop milestone
 
+- Mobile adaptation has started with only Screen 1 and the curtain header.
+  Below 768 px, the existing live identity markup now forms a dedicated stacked
+  `100dvh` composition: SIMONE/DECKER aligns left, the four-line prize block
+  aligns right, metadata remains independently positioned, and the authored
+  blob sits stably behind the type with a CSS-only 9-second breath. Mobile has
+  no blob randomization, parallax, entrance choreography, sticky stage, or
+  scroll snap. The curtain header now exposes a left-aligned `1.5rem` Buch
+  INDEX trigger and hides the former animated conversation title. Touch
+  physics, Index panel contents, lower editorial layout, and every desktop rule
+  remain unchanged.
+
 - The page has three normal-flow parts: a `100dvh` live identity screen, the
   existing curtain inside a `200dvh` sticky stage, and the semantic exhibition
   information article. Root scrolling uses `y proximity`; Screen 1 and the
