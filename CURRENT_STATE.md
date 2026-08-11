@@ -5,10 +5,11 @@ Updated: 2026-08-11
 ## Desktop milestone
 
 - Mobile adaptation has started with only Screen 1 and the curtain header.
-  Below 768 px, the existing live identity markup now forms a dedicated stacked
-  `100dvh` composition: SIMONE/DECKER aligns left, the four-line prize block
-  aligns right, metadata remains independently positioned, and the authored
-  blob sits stably behind the type with a CSS-only 9-second breath. Mobile has
+  Below 768 px, the existing live identity markup now forms a dedicated
+  `100dvh` composition: the Buch artist block and mixed-weight four-line prize
+  block are optically centered together, metadata remains independently
+  positioned, and the authored blob sits stably behind the type, cropped by
+  roughly one-fifth at the right edge, with a CSS-only 9-second breath. Mobile has
   no blob randomization, parallax, entrance choreography, sticky stage, or
   scroll snap. The curtain header now exposes a left-aligned `1.5rem` Buch
   INDEX trigger and hides the former animated conversation title. Touch

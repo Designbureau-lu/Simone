@@ -83,6 +83,12 @@ test("mobile Screen 1 is a normal full-viewport identity without entrance motion
         style
     ));
     assert(/identity-blob-breathe-mobile 9s/.test(style));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*align-items:center;/s.test(
+        style
+    ));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-blob\s*\{[^}]*left:72%;[^}]*width:min\(96vw,380px\);/s.test(
+        style
+    ));
     assert(/const DESKTOP_QUERY = "\(min-width: 768px\)";/.test(blobSource));
     assert(/const DESKTOP_QUERY = "\(min-width: 768px\)";/.test(entranceSource));
 });
