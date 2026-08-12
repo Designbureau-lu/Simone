@@ -167,8 +167,11 @@ test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
     }
     for (const digits of digitSpans) {
         equal(getComputedStyle(digits).fontFamily,
-            '"Söhne Mono Buch", monospace');
-        equal(getComputedStyle(digits).fontWeight, "400");
+            window.matchMedia("(max-width: 767px)").matches
+                ? '"Söhne Mono Extraleicht", monospace'
+                : '"Söhne Mono Buch", monospace');
+        equal(getComputedStyle(digits).fontWeight,
+            window.matchMedia("(max-width: 767px)").matches ? "200" : "400");
     }
     livePrize.remove();
 });
@@ -183,6 +186,17 @@ test("mobile title spans symmetric margins using intrinsic flex children", async
         style
     ));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*justify-self:start;[^}]*display:flex;[^}]*justify-content:space-between;[^}]*width:calc\(100vw - 48px\);/s.test(
+        style
+    ));
+});
+
+test("mobile diagnostic variant renders the complete prize block Extraleicht", async () => {
+    const style = await fetch("../style.css").then((response) => response.text());
+
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-prize,\s*\.arrival-identity-prize-digits\s*\{[^}]*font-family:"Söhne Mono Extraleicht",monospace;[^}]*font-weight:200;/s.test(
+        style
+    ));
+    assert(/\.arrival-identity-prize-digits\s*\{[^}]*font-family:"Söhne Mono Buch",monospace;[^}]*font-weight:400;/s.test(
         style
     ));
 });

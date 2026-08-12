@@ -586,6 +586,15 @@ select{
 
     }
 
+    .arrival-identity-prize,
+    .arrival-identity-prize-digits{
+
+        font-family:"Söhne Mono Extraleicht",monospace;
+
+        font-weight:200;
+
+    }
+
     .arrival-identity-venue{
 
         position:relative;
