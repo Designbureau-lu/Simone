@@ -79,7 +79,7 @@ test("mobile Screen 1 and curtain are native snap targets with shared entrance m
         "../src/prototypes/arrival/startCurtainEntrance.js"
     ).then((response) => response.text());
 
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:grid;[^}]*height:100dvh;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:block;[^}]*height:100dvh;/s.test(
         style
     ));
     assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
@@ -115,13 +115,13 @@ test("identity typography and surrounding information use shared authoritative r
     assert(/\.arrival-identity-artist\s*\{[^}]*font-family:"Söhne Mono Buch",monospace;[^}]*font-weight:400;/s.test(
         style
     ));
-    assert(/\.arrival-identity-prize\s*\{[^}]*font-family:"Söhne Mono Extraleicht",monospace;[^}]*font-weight:200;/s.test(
+    assert(/\.arrival-identity-prize,\s*\.arrival-identity-prize-letters\s*\{[^}]*font-family:"Söhne Mono Extraleicht",monospace;[^}]*font-weight:200;/s.test(
         style
     ));
-    assert(/\.arrival-identity-prize strong\s*\{[^}]*font-family:"Söhne Mono Buch",monospace;[^}]*font-weight:400;/s.test(
+    assert(/\.arrival-identity-prize-digits\s*\{[^}]*font-family:"Söhne Mono Buch",monospace;[^}]*font-weight:400;/s.test(
         style
     ));
-    assert(/\.arrival-screen-identity\s*\{[^}]*grid-template-rows:minmax\(0,1fr\) auto minmax\(0,1fr\);/s.test(
+    assert(/\.arrival-identity-content\s*\{[^}]*grid-template-rows:minmax\(0,1fr\) auto minmax\(0,1fr\);/s.test(
         style
     ));
     assert(/\.arrival-identity-dates\s*\{[^}]*grid-row:1;[^}]*align-self:center;/s.test(
@@ -141,19 +141,21 @@ test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
     const prize = page.querySelector(".arrival-identity-prize");
     const pieces = Array.from(prize.querySelectorAll(":scope > span"));
 
-    equal(pieces[0].querySelector(":scope > span")?.textContent, "LETZE");
+    equal(pieces[0].querySelector(".arrival-identity-prize-letters")?.textContent, "LETZE");
     equal(pieces[0].querySelector("strong")?.textContent, "20");
-    equal(pieces[1].querySelector(":scope > span")?.textContent, "BUERGER");
-    equal(pieces[2].querySelector(":scope > span")?.textContent, "KONSCHT");
-    equal(pieces[3].querySelector(":scope > span")?.textContent, "PRAIS");
+    equal(pieces[1].textContent, "BUERGER");
+    equal(pieces[2].textContent, "KONSCHT");
+    equal(pieces[3].querySelector(".arrival-identity-prize-letters")?.textContent, "PRAIS");
     equal(pieces[3].querySelector("strong")?.textContent, "26");
 
     const livePrize = prize.cloneNode(true);
     document.body.append(livePrize);
     const letterSpans = Array.from(livePrize.querySelectorAll(
-        ":scope > span > span"
+        ".arrival-identity-prize-letters"
     ));
-    const digitSpans = Array.from(livePrize.querySelectorAll("strong"));
+    const digitSpans = Array.from(livePrize.querySelectorAll(
+        ".arrival-identity-prize-digits"
+    ));
     for (const letters of letterSpans) {
         equal(getComputedStyle(letters).fontFamily,
             '"Söhne Mono Extraleicht", monospace');
@@ -165,6 +167,23 @@ test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
         equal(getComputedStyle(digits).fontWeight, "400");
     }
     livePrize.remove();
+});
+
+test("mobile identity text is a normal-scroll layer separate from blob parallax", async () => {
+    const source = await fetch("../index.html").then((response) => response.text());
+    const page = new DOMParser().parseFromString(source, "text/html");
+    const screen = page.querySelector(".arrival-screen-identity");
+    const content = screen.querySelector(":scope > .arrival-identity-content");
+    const blob = screen.querySelector(":scope > .arrival-identity-blob");
+
+    assert(content);
+    assert(blob);
+    assert(content.querySelector(".arrival-identity-language"));
+    assert(content.querySelector(".arrival-identity-dates"));
+    assert(content.querySelector(".arrival-identity-title"));
+    assert(content.querySelector(".arrival-identity-venue"));
+    equal(blob.contains(content), false);
+    equal(content.contains(blob), false);
 });
 
 test("INDEX reveal keeps the approved post-landing beat", () => {

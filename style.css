@@ -111,7 +111,8 @@ select{
 
 }
 
-.arrival-identity-prize{
+.arrival-identity-prize,
+.arrival-identity-prize-letters{
 
     font-family:"Söhne Mono Extraleicht",monospace;
 
@@ -119,11 +120,37 @@ select{
 
 }
 
-.arrival-identity-prize strong{
+.arrival-identity-prize-digits{
 
     font-family:"Söhne Mono Buch",monospace;
 
     font-weight:400;
+
+}
+
+.arrival-identity-content{
+
+    position:absolute;
+
+    inset:0;
+
+    z-index:2;
+
+    display:grid;
+
+    grid-template-columns:minmax(0,1fr);
+
+    grid-template-rows:minmax(0,1fr) auto minmax(0,1fr);
+
+    box-sizing:border-box;
+
+    pointer-events:none;
+
+}
+
+.arrival-identity-language{
+
+    pointer-events:auto;
 
 }
 
@@ -205,15 +232,15 @@ select{
 
         position:relative;
 
-        display:grid;
-
-        grid-template-columns:minmax(0,1fr);
-
-        grid-template-rows:minmax(0,1fr) auto minmax(0,1fr);
-
-        padding-inline:var(--page-margin);
+        display:block;
 
         color:var(--color-text);
+
+    }
+
+    .arrival-identity-content{
+
+        padding-inline:var(--page-margin);
 
     }
 
@@ -422,11 +449,7 @@ select{
 
         position:relative;
 
-        display:grid;
-
-        grid-template-columns:minmax(0,1fr);
-
-        grid-template-rows:minmax(0,1fr) auto minmax(0,1fr);
+        display:block;
 
         width:100%;
 
@@ -438,11 +461,15 @@ select{
 
         overflow:hidden;
 
-        padding:0 24px;
-
         background:#f0f0ed;
 
         color:var(--color-text);
+
+    }
+
+    .arrival-identity-content{
+
+        padding-inline:24px;
 
     }
 
@@ -514,7 +541,7 @@ select{
 
         align-items:center;
 
-        justify-content:start;
+        justify-content:space-between;
 
         column-gap:0.5ch;
 
