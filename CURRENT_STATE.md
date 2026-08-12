@@ -4,10 +4,13 @@ Updated: 2026-08-12
 
 ## Desktop milestone
 
-- Below 768 px, Screen 1 and the curtain remain ordinary-flow `100dvh` sections
-  with no mobile scroll snap or sticky stage. The curtain now reuses the desktop
+- Below 768 px, Screen 1 and the curtain are ordinary-flow `100dvh` native snap
+  targets using root `y proximity`; the curtain is not sticky. The curtain reuses the desktop
   presentation-level entrance choreography; after landing, the existing mobile
-  touch lifecycle is authoritative. The live identity shares the desktop-authoritative Buch artist,
+  touch lifecycle is authoritative. Its canvas uses `touch-action: pan-y` and
+  waits for horizontal intent before pointer capture, so vertical gestures stay
+  native while horizontal drag and two-touch pinch retain their custom paths.
+  The live identity shares the desktop-authoritative Buch artist,
   Extraleicht prize letters, and Buch `20`/`26` rules. Its title is a dedicated
   mobile composition. The authored blob now receives one stable side-biased
   random pose per load and the same restrained `0.90` scroll-rate separation as
@@ -23,7 +26,7 @@ Updated: 2026-08-12
 - Desktop identity typography uses Söhne Mono evaluation fonts with
   `--color-text: #3c3c3c`, `--type-display: clamp(4rem, 5vw, 6rem)`,
   `--type-section: clamp(2.5rem, 3.2vw, 4rem)`, shared information token
-  `--type-information: 1.5rem`, and `--page-margin: 150px`. Date and venue now
+  `--type-information: 1.4rem`, and `--page-margin: 150px`. Date and venue now
   occupy equal flexible rows above and below the centered title, keeping each
   geometrically centered in the surrounding free space on desktop and mobile.
 - `assets/blop.svg` is presented unchanged behind the Screen 1 title. A stable
@@ -42,11 +45,11 @@ Updated: 2026-08-12
   duration; `sceneVisibleFactor` settles globally. The complete captured
   snapshot is restored before interaction unlocks. INDEX reveals 200 ms later,
   one fixed cell every 35 ms. No Scroll Snap Event drives application state.
-- The desktop curtain header is 96 px high. INDEX uses the shared `1.5rem` Söhne Mono Buch
+- The desktop curtain header is 96 px high. INDEX uses the shared `1.4rem` Söhne Mono Buch
   at a 40 px left inset and a 12 px optical downward adjustment. Its content box
   is `min(620px, 100%)`; the open `X` is 40 px inside that box's right edge.
   Project rows are uppercase, 56 px minimum height, padded 10 px vertically and
-  `40px` / `32px` horizontally, with `1.5rem` / `1.2` typography. Rows use
+  `40px` / `32px` horizontally, with `1.4rem` / `1.2` typography. Rows use
   Extraleicht normally and Buch for hover or selection, without markers or
   background highlights. Genuine visitor curtain movement clears only the
   visual project selection. The reusable `CharacterCellReplacement` utility is

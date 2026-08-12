@@ -520,11 +520,6 @@ export function bindCurtainDragging(
         const targetX = (
             pointer.clientX - bounds.left - canvas.clientLeft
         ) * canvasScale;
-        const interaction = application.beginTouchExploration(targetX);
-        if (!interaction) {
-            return false;
-        }
-
         touchExploration = {
             pointerId: pointer.pointerId,
             startX: pointer.clientX,
@@ -534,16 +529,29 @@ export function bindCurtainDragging(
             displacementScale: application.interactionDisplacementScale(
                 width
             ),
-            interaction,
+            targetX,
+            interaction:null,
             project: application.projectAtPresentationX(targetX),
             smoothedVelocity: 0,
             temporaryReveal: 0,
             temporaryDirectionalBias: 0,
             dragLearned: false,
+            gestureIntent:"pending",
             clickRevealAllowed
         };
-        canvas.classList.add("is-dragging");
         return true;
+    };
+
+    const activateTouchExploration = () => {
+        if (!touchExploration) {
+            return false;
+        }
+        if (!touchExploration.interaction) {
+            touchExploration.interaction = application.beginTouchExploration(
+                touchExploration.targetX
+            );
+        }
+        return Boolean(touchExploration.interaction);
     };
 
     const beginTouchPinch = () => {
@@ -575,6 +583,10 @@ export function bindCurtainDragging(
             initialDistance,
             displacementScale: application.interactionDisplacementScale(width)
         };
+        for (const pointer of pointers) {
+            canvas.setPointerCapture(pointer.pointerId);
+        }
+        canvas.classList.add("is-dragging");
         return true;
     };
 
@@ -605,13 +617,12 @@ export function bindCurtainDragging(
 
             const pointer = touchPointerFrom(event);
             touchPointers.set(event.pointerId, pointer);
-            canvas.setPointerCapture(event.pointerId);
             if (touchPointers.size === 1) {
                 beginTouchExploration(pointer);
             } else {
                 beginTouchPinch();
+                event.preventDefault();
             }
-            event.preventDefault();
             return;
         }
 
@@ -675,6 +686,31 @@ export function bindCurtainDragging(
 
         if (touchExploration
             && event.pointerId === touchExploration.pointerId) {
+            if (touchExploration.gestureIntent === "pending") {
+                const totalHorizontalMovement = event.clientX
+                    - touchExploration.startX;
+                const totalVerticalMovement = event.clientY
+                    - touchExploration.startY;
+                const horizontalDistance = Math.abs(totalHorizontalMovement);
+                const verticalDistance = Math.abs(totalVerticalMovement);
+                if (verticalDistance > CURTAIN_CLICK_TOLERANCE
+                    && verticalDistance > horizontalDistance) {
+                    touchExploration = null;
+                    canvas.classList.remove("is-dragging");
+                    return;
+                }
+                if (horizontalDistance <= CURTAIN_CLICK_TOLERANCE
+                    || horizontalDistance <= verticalDistance) {
+                    return;
+                }
+                if (!activateTouchExploration()) {
+                    touchExploration = null;
+                    return;
+                }
+                touchExploration.gestureIntent = "horizontal";
+                canvas.setPointerCapture(event.pointerId);
+                canvas.classList.add("is-dragging");
+            }
             const horizontalMovement = event.clientX
                 - touchExploration.lastX;
             const projectedMovement = horizontalMovement
@@ -846,6 +882,10 @@ export function bindCurtainDragging(
         }
 
         const completed = touchExploration;
+        if (!completed.interaction && !activateTouchExploration()) {
+            touchExploration = null;
+            return;
+        }
         const clickReveal = allowClickReveal
             && completed.clickRevealAllowed
             && isCurtainClick(

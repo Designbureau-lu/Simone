@@ -260,6 +260,43 @@ test("touch input transitions directly between pan and pinch", () => {
     canvas.dispatchEvent(touchEvent("pointerup", 5, 150, 100, 138));
 });
 
+test("vertical touch intent remains native and never starts curtain exploration", () => {
+    const canvas = createTouchCanvas();
+    const calls = [];
+    const application = {
+        viewport: { projectedExtent: 400 },
+        beginTouchExploration() {
+            calls.push("begin");
+            return { visibleFactors: [0.5] };
+        },
+        interactionDisplacementScale: () => 1,
+        projectAtPresentationX: () => null,
+        updateTouchExploration() {
+            calls.push("update");
+        },
+        settleTouchExploration() {
+            calls.push("settle");
+        }
+    };
+    const conversation = {
+        markDragLearned() {},
+        showDragHint() {},
+        markExplorationInactive() {}
+    };
+    bindCurtainDragging(canvas, application, () => {}, conversation);
+
+    const down = touchEvent("pointerdown", 11, 180, 100, 0);
+    const move = touchEvent("pointermove", 11, 182, 116, 16);
+    canvas.dispatchEvent(down);
+    canvas.dispatchEvent(move);
+    canvas.dispatchEvent(touchEvent("pointercancel", 11, 182, 116, 20));
+
+    equal(down.defaultPrevented, false);
+    equal(move.defaultPrevented, false);
+    equal(calls.length, 0);
+    equal(canvas.hasPointerCapture(11), false);
+});
+
 test("temporary touch reveal is symmetric and restores its base state", () => {
     const field = new CurtainField({ resetCurtainState: 0.5 });
     const parameters = new SurfaceParameters();

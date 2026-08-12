@@ -70,7 +70,7 @@ test("Screen 1 alone uses an always-stop snap target", async () => {
     ));
 });
 
-test("mobile Screen 1 uses ordinary scrolling and reuses curtain entrance motion", async () => {
+test("mobile Screen 1 and curtain are native snap targets with shared entrance motion", async () => {
     const style = await fetch("../style.css").then((response) => response.text());
     const blobSource = await fetch(
         "../src/prototypes/identity/startIdentityBlobPresentation.js"
@@ -82,7 +82,8 @@ test("mobile Screen 1 uses ordinary scrolling and reuses curtain entrance motion
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:grid;[^}]*height:100dvh;/s.test(
         style
     ));
-    assert(!/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:/s.test(style));
+    assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
+    assert(/\.arrival-screen-identity,\s*\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;[^}]*scroll-snap-stop:always;/s.test(style));
     assert(/animation:identity-blob-breathe 10s/.test(style));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*align-items:center;/s.test(
         style
@@ -132,6 +133,38 @@ test("identity typography and surrounding information use shared authoritative r
     assert(/\.arrival-identity-venue\s*\{[^}]*grid-row:3;[^}]*align-self:center;/s.test(
         style
     ));
+});
+
+test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
+    const source = await fetch("../index.html").then((response) => response.text());
+    const page = new DOMParser().parseFromString(source, "text/html");
+    const prize = page.querySelector(".arrival-identity-prize");
+    const pieces = Array.from(prize.querySelectorAll(":scope > span"));
+
+    equal(pieces[0].querySelector(":scope > span")?.textContent, "LETZE");
+    equal(pieces[0].querySelector("strong")?.textContent, "20");
+    equal(pieces[1].querySelector(":scope > span")?.textContent, "BUERGER");
+    equal(pieces[2].querySelector(":scope > span")?.textContent, "KONSCHT");
+    equal(pieces[3].querySelector(":scope > span")?.textContent, "PRAIS");
+    equal(pieces[3].querySelector("strong")?.textContent, "26");
+
+    const livePrize = prize.cloneNode(true);
+    document.body.append(livePrize);
+    const letterSpans = Array.from(livePrize.querySelectorAll(
+        ":scope > span > span"
+    ));
+    const digitSpans = Array.from(livePrize.querySelectorAll("strong"));
+    for (const letters of letterSpans) {
+        equal(getComputedStyle(letters).fontFamily,
+            '"Söhne Mono Extraleicht", monospace');
+        equal(getComputedStyle(letters).fontWeight, "200");
+    }
+    for (const digits of digitSpans) {
+        equal(getComputedStyle(digits).fontFamily,
+            '"Söhne Mono Buch", monospace');
+        equal(getComputedStyle(digits).fontWeight, "400");
+    }
+    livePrize.remove();
 });
 
 test("INDEX reveal keeps the approved post-landing beat", () => {
@@ -502,7 +535,7 @@ test("desktop identity preserves the authored axis and typographic scales", asyn
     ));
     assert(/--color-text:#3c3c3c;/.test(source));
     assert(/--type-display:clamp\(4rem,5vw,6rem\);/.test(source));
-    assert(/--type-information:1\.5rem;/.test(source));
+    assert(/--type-information:1\.4rem;/.test(source));
     assert(/--page-margin:150px;/.test(source));
     assert(/font:400 var\(--type-information\)\/1\.2 "Söhne Mono Buch",monospace;/.test(
         source
@@ -814,10 +847,10 @@ test("mobile editorial and Index inherit the approved desktop visual language", 
         response.text()
     ));
 
-    assert(/\.visit-information h2\s*\{[^}]*font:200 var\(--type-section\)\/0\.98 "Söhne Mono Extraleicht",monospace;/s.test(
+    assert(/\.visit-information h2\s*\{[^}]*font:400 var\(--type-section\)\/0\.98 "Söhne Mono Buch",monospace;/s.test(
         source
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?--type-body:1\.1rem;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?--type-body:1\.2rem;/s.test(
         source
     ));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.editorial-title,\s*\.editorial-actions\s*\{[^}]*align-self:flex-end;[^}]*text-align:right;/s.test(
@@ -829,7 +862,17 @@ test("mobile editorial and Index inherit the approved desktop visual language", 
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.conversation-project-list button\s*\{[^}]*font:200 var\(--type-information\)\/1\.2[^}]*"Söhne Mono Extraleicht",monospace;/s.test(
         source
     ));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.conversation-project-list button\s*\{[^}]*min-height:52px;[^}]*padding:8px 24px;/s.test(
+        source
+    ));
     assert(/@media \(max-width:767px\)[\s\S]*?button\[aria-current="true"\]::before\s*\{[^}]*content:none;/s.test(
+        source
+    ));
+});
+
+test("curtain canvas preserves native vertical touch panning", async () => {
+    const source = await fetch("../style.css").then((response) => response.text());
+    assert(/\.curtain-presentation canvas\s*\{[^}]*touch-action:pan-y;/s.test(
         source
     ));
 });
