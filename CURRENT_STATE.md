@@ -1,20 +1,17 @@
 # SIMONE Current State
 
-Updated: 2026-08-11
+Updated: 2026-08-12
 
 ## Desktop milestone
 
-- Mobile adaptation has started with only Screen 1 and the curtain header.
-  Below 768 px, the existing live identity markup now forms a dedicated
-  `100dvh` composition: the Buch artist block and mixed-weight four-line prize
-  block are optically centered together, metadata remains independently
-  positioned, and the authored blob sits stably behind the type, cropped by
-  roughly one-fifth at the right edge, with a CSS-only 9-second breath. Mobile has
-  no blob randomization, parallax, entrance choreography, sticky stage, or
-  scroll snap. The curtain header now exposes a left-aligned `1.5rem` Buch
-  INDEX trigger and hides the former animated conversation title. Touch
-  physics, Index panel contents, lower editorial layout, and every desktop rule
-  remain unchanged.
+- Below 768 px, Screen 1 and the curtain are native `100dvh` snap targets using
+  `y proximity`; the curtain remains non-sticky and has no desktop entrance
+  choreography. The live identity shares the desktop-authoritative Buch artist,
+  Extraleicht prize letters, and Buch `20`/`26` rules. Its title is a dedicated
+  mobile composition. The authored blob now receives one stable side-biased
+  random pose per load and the same restrained `0.90` scroll-rate separation as
+  desktop. Touch physics, Index panel contents, and lower editorial layout are
+  unchanged.
 
 - The page has three normal-flow parts: a `100dvh` live identity screen, the
   existing curtain inside a `200dvh` sticky stage, and the semantic exhibition
@@ -24,15 +21,17 @@ Updated: 2026-08-11
   rendering remain the approved production implementation.
 - Desktop identity typography uses Söhne Mono evaluation fonts with
   `--color-text: #3c3c3c`, `--type-display: clamp(4rem, 5vw, 6rem)`,
-  `--type-section: clamp(2.5rem, 3.2vw, 4rem)`, `--type-interface: 1.5rem`,
-  and `--page-margin: 150px`. Language is at `40px` / `31.2px`, the date is
-  centered at `top: 150px`, and the venue is centered at `bottom: 120px`.
+  `--type-section: clamp(2.5rem, 3.2vw, 4rem)`, shared information token
+  `--type-information: 1.6rem`, and `--page-margin: 150px`. Date and venue now
+  occupy equal flexible rows above and below the centered title, keeping each
+  geometrically centered in the surrounding free space on desktop and mobile.
 - `assets/blop.svg` is presented unchanged behind the Screen 1 title. A stable
-  per-load pose chooses a left `28–42vw` or right `58–72vw` center and a
-  `38–60vh` vertical center. Procedural pose ranges are scaleX `0.97–1.03`,
+  desktop per-load pose chooses a left `11–17vw` or right `83–89vw` center;
+  mobile uses left `24–38vw` or right `62–76vw`. Both use a `38–60vh` vertical
+  center. Procedural pose ranges are scaleX `0.97–1.03`,
   scaleY `0.95–1.05`, rotation `-4–4deg`, and skewX `-2–2deg`. Its asymmetric
-  9-second breath scales `0.985–1.015`, drifts within about ±6 px horizontally
-  and ±5 px vertically, and does not animate rotation. The blob travels at 90%
+  8-second breath scales `0.975–1.025`, drifts within about ±8 px horizontally
+  and ±6 px vertically, and does not animate rotation. The blob travels at 90%
   of page scroll speed; the pose is not rerandomized on scroll or resize.
 - The curtain entrance starts at `1.10` viewport widths with a 10% scroll dead
   zone and a `0.55` viewport-width pre-flight target. At sticky-stage alignment,
@@ -42,11 +41,11 @@ Updated: 2026-08-11
   duration; `sceneVisibleFactor` settles globally. The complete captured
   snapshot is restored before interaction unlocks. INDEX reveals 200 ms later,
   one fixed cell every 35 ms. No Scroll Snap Event drives application state.
-- The desktop curtain header is 96 px high. INDEX uses `1.5rem` Söhne Mono Buch
+- The desktop curtain header is 96 px high. INDEX uses the shared `1.6rem` Söhne Mono Buch
   at a 40 px left inset and a 12 px optical downward adjustment. Its content box
   is `min(620px, 100%)`; the open `X` is 40 px inside that box's right edge.
   Project rows are uppercase, 56 px minimum height, padded 10 px vertically and
-  `40px` / `32px` horizontally, with `1.5rem` / `1.2` typography. Rows use
+  `40px` / `32px` horizontally, with `1.6rem` / `1.2` typography. Rows use
   Extraleicht normally and Buch for hover or selection, without markers or
   background highlights. Genuine visitor curtain movement clears only the
   visual project selection. The reusable `CharacterCellReplacement` utility is

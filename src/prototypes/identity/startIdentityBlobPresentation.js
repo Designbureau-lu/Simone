@@ -1,11 +1,20 @@
-const DESKTOP_QUERY = "(min-width: 768px)";
+const MOBILE_QUERY = "(max-width: 767px)";
 
 export const IDENTITY_BLOB_CONFIG = Object.freeze({
-    centerX: Object.freeze({
-        left: Object.freeze([28, 42]),
-        right: Object.freeze([58, 72])
+    desktop: Object.freeze({
+        centerX: Object.freeze({
+            left: Object.freeze([11, 17]),
+            right: Object.freeze([83, 89])
+        }),
+        centerY: Object.freeze([38, 60])
     }),
-    centerY: Object.freeze([38, 60]),
+    mobile: Object.freeze({
+        centerX: Object.freeze({
+            left: Object.freeze([24, 38]),
+            right: Object.freeze([62, 76])
+        }),
+        centerY: Object.freeze([38, 60])
+    }),
     scaleX: Object.freeze([0.97, 1.03]),
     scaleY: Object.freeze([0.95, 1.05]),
     rotation: Object.freeze([-4, 4]),
@@ -14,15 +23,15 @@ export const IDENTITY_BLOB_CONFIG = Object.freeze({
 });
 
 export function startIdentityBlobPresentation() {
-    if (!window.matchMedia(DESKTOP_QUERY).matches) {
-        return null;
-    }
     const blob = document.querySelector("[data-identity-blob]");
     if (!(blob instanceof HTMLElement)) {
         return null;
     }
 
-    const presentation = createIdentityBlobPresentation();
+    const presentation = createIdentityBlobPresentation(
+        Math.random,
+        window.matchMedia(MOBILE_QUERY).matches ? "mobile" : "desktop"
+    );
     applyPresentation(blob, presentation);
     let frameId = null;
     const updateScrollSeparation = () => {
@@ -43,15 +52,20 @@ export function startIdentityBlobPresentation() {
     return Object.freeze({ presentation });
 }
 
-export function createIdentityBlobPresentation(random = Math.random) {
+export function createIdentityBlobPresentation(
+    random = Math.random,
+    layout = "desktop"
+) {
+    const layoutConfig = IDENTITY_BLOB_CONFIG[layout]
+        ?? IDENTITY_BLOB_CONFIG.desktop;
     const horizontalSide = random() < 0.5 ? "left" : "right";
     return Object.freeze({
         horizontalSide,
         centerX: randomBetween(
-            IDENTITY_BLOB_CONFIG.centerX[horizontalSide],
+            layoutConfig.centerX[horizontalSide],
             random
         ),
-        centerY: randomBetween(IDENTITY_BLOB_CONFIG.centerY, random),
+        centerY: randomBetween(layoutConfig.centerY, random),
         scaleX: randomBetween(IDENTITY_BLOB_CONFIG.scaleX, random),
         scaleY: randomBetween(IDENTITY_BLOB_CONFIG.scaleY, random),
         rotation: randomBetween(IDENTITY_BLOB_CONFIG.rotation, random),
