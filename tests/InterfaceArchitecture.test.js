@@ -70,7 +70,7 @@ test("Screen 1 alone uses an always-stop snap target", async () => {
     ));
 });
 
-test("mobile Screen 1 is a full-viewport snap target without curtain entrance motion", async () => {
+test("mobile Screen 1 uses ordinary scrolling and reuses curtain entrance motion", async () => {
     const style = await fetch("../style.css").then((response) => response.text());
     const blobSource = await fetch(
         "../src/prototypes/identity/startIdentityBlobPresentation.js"
@@ -82,23 +82,19 @@ test("mobile Screen 1 is a full-viewport snap target without curtain entrance mo
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:grid;[^}]*height:100dvh;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(
-        style
-    ));
-    assert(/\.arrival-screen-identity,\s*\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;/s.test(
-        style
-    ));
-    assert(/animation:identity-blob-breathe 8s/.test(style));
+    assert(!/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:/s.test(style));
+    assert(/animation:identity-blob-breathe 10s/.test(style));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*align-items:center;/s.test(
         style
     ));
-    assert(/font-size:clamp\(1\.7rem,7\.5vw,2\.5rem\);/.test(style));
+    assert(/font-size:clamp\(2\.25rem,10vw,3\.25rem\);/.test(style));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-blob\s*\{[^}]*left:var\(--blob-center-x,72vw\);[^}]*width:96vw;/s.test(
         style
     ));
     assert(/mobile: Object\.freeze\(/.test(blobSource));
     assert(!/if \(!window\.matchMedia\(DESKTOP_QUERY\)\.matches\)/.test(blobSource));
-    assert(/const DESKTOP_QUERY = "\(min-width: 768px\)";/.test(entranceSource));
+    assert(!/const DESKTOP_QUERY/.test(entranceSource));
+    assert(/presentation\.dataset\.entranceActive/.test(entranceSource));
 });
 
 test("mobile curtain header presents INDEX without the conversation title", async () => {
@@ -140,7 +136,7 @@ test("identity typography and surrounding information use shared authoritative r
 
 test("INDEX reveal keeps the approved post-landing beat", () => {
     equal(CURTAIN_ENTRANCE_CONFIG.indexRevealDelay, 200);
-    equal(CURTAIN_ENTRANCE_CONFIG.indexCharacterInterval, 35);
+    equal(CURTAIN_ENTRANCE_CONFIG.indexCharacterInterval, 10);
 });
 
 test("INDEX fixed cells become visible and readable after reveal", async () => {
@@ -456,7 +452,7 @@ test("identity blob uses stable side-biased desktop and mobile presentations", (
 
     equal(JSON.stringify(minimum), JSON.stringify({
         horizontalSide: "left",
-        centerX: 11,
+        centerX: 28,
         centerY: 38,
         scaleX: 0.97,
         scaleY: 0.95,
@@ -465,7 +461,7 @@ test("identity blob uses stable side-biased desktop and mobile presentations", (
     }));
     equal(JSON.stringify(maximum), JSON.stringify({
         horizontalSide: "right",
-        centerX: 89,
+        centerX: 72,
         centerY: 60,
         scaleX: 1.03,
         scaleY: 1.05,
@@ -484,13 +480,13 @@ test("desktop identity blob separates pose, breathing, and scroll transforms", a
         response.text()
     ));
 
-    assert(/\.arrival-identity-blob\s*\{[^}]*z-index:0;[^}]*width:42vw;[^}]*--blob-scroll-separation/s.test(
+    assert(/\.arrival-identity-blob\s*\{[^}]*z-index:0;[^}]*width:clamp\(360px,42vw,720px\);[^}]*--blob-scroll-separation/s.test(
         source
     ));
     assert(/\.arrival-identity-blob-pose\s*\{[^}]*rotate\(var\(--blob-rotation,0deg\)\)[^}]*skewX\(var\(--blob-skew-x,0deg\)\)[^}]*scale\(var\(--blob-scale-x,1\),var\(--blob-scale-y,1\)\)/s.test(
         source
     ));
-    assert(/animation:identity-blob-breathe 8s[^;]*infinite;/s.test(
+    assert(/animation:identity-blob-breathe 10s[^;]*infinite;/s.test(
         source
     ));
     assert(/0%\s*\{[^}]*translate\(-7px,0\) scale\(0\.975\)/s.test(source));
@@ -506,7 +502,7 @@ test("desktop identity preserves the authored axis and typographic scales", asyn
     ));
     assert(/--color-text:#3c3c3c;/.test(source));
     assert(/--type-display:clamp\(4rem,5vw,6rem\);/.test(source));
-    assert(/--type-information:1\.6rem;/.test(source));
+    assert(/--type-information:1\.5rem;/.test(source));
     assert(/--page-margin:150px;/.test(source));
     assert(/font:400 var\(--type-information\)\/1\.2 "Söhne Mono Buch",monospace;/.test(
         source
@@ -809,6 +805,31 @@ test("desktop Index rows use aligned compact Buch weight states", async () => {
         source
     ));
     assert(/\.conversation-project-title\s*\{[^}]*text-transform:uppercase;/s.test(
+        source
+    ));
+});
+
+test("mobile editorial and Index inherit the approved desktop visual language", async () => {
+    const source = await fetch("../style.css").then((response) => (
+        response.text()
+    ));
+
+    assert(/\.visit-information h2\s*\{[^}]*font:200 var\(--type-section\)\/0\.98 "Söhne Mono Extraleicht",monospace;/s.test(
+        source
+    ));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?--type-body:1\.1rem;/s.test(
+        source
+    ));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.editorial-title,\s*\.editorial-actions\s*\{[^}]*align-self:flex-end;[^}]*text-align:right;/s.test(
+        source
+    ));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.conversation-project-title\s*\{[^}]*text-transform:uppercase;/s.test(
+        source
+    ));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.conversation-project-list button\s*\{[^}]*font:200 var\(--type-information\)\/1\.2[^}]*"Söhne Mono Extraleicht",monospace;/s.test(
+        source
+    ));
+    assert(/@media \(max-width:767px\)[\s\S]*?button\[aria-current="true"\]::before\s*\{[^}]*content:none;/s.test(
         source
     ));
 });

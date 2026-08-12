@@ -3,8 +3,8 @@ const MOBILE_QUERY = "(max-width: 767px)";
 export const IDENTITY_BLOB_CONFIG = Object.freeze({
     desktop: Object.freeze({
         centerX: Object.freeze({
-            left: Object.freeze([11, 17]),
-            right: Object.freeze([83, 89])
+            left: Object.freeze([28, 42]),
+            right: Object.freeze([58, 72])
         }),
         centerY: Object.freeze([38, 60])
     }),

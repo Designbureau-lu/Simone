@@ -3,8 +3,6 @@ import {
     CharacterCellReplacement
 } from "../identity/CharacterCellReplacement.js";
 
-const DESKTOP_QUERY = "(min-width: 768px)";
-
 export const CURTAIN_ENTRANCE_CONFIG = Object.freeze({
     delayProgress: 0.10,
     startingOffsetViewportWidths: 1.10,
@@ -14,17 +12,13 @@ export const CURTAIN_ENTRANCE_CONFIG = Object.freeze({
     settlementDuration: 600,
     periodSettlementStagger: 12,
     indexRevealDelay: 200,
-    indexCharacterInterval: 35,
+    indexCharacterInterval: 10,
     frameDeltaClamp: 32
 });
 
 const ENTRANCE = CURTAIN_ENTRANCE_CONFIG;
 
 export function startCurtainEntrance(application) {
-    const desktop = window.matchMedia(DESKTOP_QUERY);
-    if (!desktop.matches) {
-        return;
-    }
     const stage = document.querySelector(".curtain-sticky-stage");
     const presentation = document.getElementById("curtainPresentation");
     const indexLabel = document.querySelector(".curtain-index-label");
@@ -72,11 +66,6 @@ export function startCurtainEntrance(application) {
 
     const updateScrollTarget = () => {
         if (landed) {
-            return;
-        }
-        if (!desktop.matches) {
-            restoreSnapshot();
-            finishEntrance();
             return;
         }
         scrollProgress = entranceScrollProgress(stage);

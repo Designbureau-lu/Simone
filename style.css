@@ -48,7 +48,7 @@
 
     --type-section:clamp(2.5rem,3.2vw,4rem);
 
-    --type-information:1.6rem;
+    --type-information:1.5rem;
 
     --type-body:1rem;
 
@@ -227,7 +227,7 @@ select{
 
         z-index:0;
 
-        width:42vw;
+        width:clamp(360px,42vw,720px);
 
         aspect-ratio:1;
 
@@ -265,7 +265,7 @@ select{
 
         height:100%;
 
-        animation:identity-blob-breathe 8s
+        animation:identity-blob-breathe 10s
             cubic-bezier(0.45,0,0.55,1) infinite;
 
         transform-origin:center;
@@ -395,27 +395,6 @@ select{
 
 @media (max-width:767px){
 
-    html{
-
-        scroll-snap-type:y proximity;
-
-    }
-
-    .arrival-screen-identity,
-    .curtain-sticky-stage{
-
-        scroll-snap-align:start;
-
-        scroll-snap-stop:normal;
-
-    }
-
-    .arrival-screen-identity{
-
-        scroll-snap-stop:always;
-
-    }
-
     .arrival-screen-identity{
 
         position:relative;
@@ -520,7 +499,7 @@ select{
 
         color:var(--color-text);
 
-        font-size:clamp(1.7rem,7.5vw,2.5rem);
+        font-size:clamp(2.25rem,10vw,3.25rem);
 
         line-height:0.96;
 
@@ -624,7 +603,7 @@ select{
 
     .arrival-identity-blob img{
 
-        animation:identity-blob-breathe 8s
+        animation:identity-blob-breathe 10s
             cubic-bezier(0.45,0,0.55,1) infinite;
 
         transform-origin:center;
@@ -792,13 +771,13 @@ select{
 
     }
 
-    .curtain-presentation[data-entrance-active]{
+}
 
-        pointer-events:none;
+.curtain-presentation[data-entrance-active]{
 
-        will-change:transform;
+    pointer-events:none;
 
-    }
+    will-change:transform;
 
 }
 
@@ -851,7 +830,7 @@ select{
 
 .visit-information h2{
 
-    font:200 var(--type-information)/1.2 "Söhne Mono Extraleicht",monospace;
+    font:200 var(--type-section)/0.98 "Söhne Mono Extraleicht",monospace;
 
 }
 
@@ -1071,6 +1050,12 @@ select{
 
 @media (max-width:767px){
 
+    :root{
+
+        --type-body:1.1rem;
+
+    }
+
     .editorial-section,
     .visit-information,
     .exhibition-footer{
@@ -1082,6 +1067,27 @@ select{
     .editorial-body{
 
         width:100%;
+
+    }
+
+    .editorial-title,
+    .editorial-actions{
+
+        align-self:flex-end;
+
+        text-align:right;
+
+    }
+
+    .editorial-actions{
+
+        justify-content:flex-end;
+
+    }
+
+    .visit-information h2{
+
+        font-size:clamp(2rem,10vw,3rem);
 
     }
 
@@ -1524,6 +1530,51 @@ select{
     .conversation-project-list button:hover{
 
         background:transparent;
+
+    }
+
+    .conversation-project-list button[aria-current="true"]::before{
+
+        content:none;
+
+    }
+
+}
+
+@media (max-width:767px){
+
+    .conversation-project-title{
+
+        text-transform:uppercase;
+
+    }
+
+    .conversation-project-list{
+
+        border-top:0;
+
+    }
+
+    .conversation-project-list button{
+
+        min-height:56px;
+
+        padding:10px 24px;
+
+        font:200 var(--type-information)/1.2
+            "Söhne Mono Extraleicht",monospace;
+
+    }
+
+    .conversation-project-list button:hover,
+    .conversation-project-list button:focus-visible,
+    .conversation-project-list button[aria-current="true"]{
+
+        background:transparent;
+
+        font-family:"Söhne Mono Buch",monospace;
+
+        font-weight:400;
 
     }
 
