@@ -40,6 +40,34 @@
 
 }
 
+@font-face{
+
+    font-family:"TEST SOEHNE EXTRALIGHT";
+
+    src:url("fonts/test-soehne-mono-extraleicht.woff2") format("woff2");
+
+    font-style:normal;
+
+    font-weight:400;
+
+    font-display:swap;
+
+}
+
+@font-face{
+
+    font-family:"TEST SOEHNE BOOK";
+
+    src:url("fonts/test-soehne-mono-buch.woff2") format("woff2");
+
+    font-style:normal;
+
+    font-weight:400;
+
+    font-display:swap;
+
+}
+
 :root{
 
     --color-text:#3c3c3c;
@@ -587,11 +615,20 @@ select{
     }
 
     .arrival-identity-prize,
-    .arrival-identity-prize-digits{
+    .arrival-identity-prize *{
 
-        font-family:"Söhne Mono Extraleicht",monospace;
+        font-family:"TEST SOEHNE EXTRALIGHT",monospace;
 
-        font-weight:200;
+        font-weight:400;
+
+    }
+
+    .arrival-identity-artist,
+    .arrival-identity-artist *{
+
+        font-family:"TEST SOEHNE BOOK",monospace;
+
+        font-weight:400;
 
     }
 
