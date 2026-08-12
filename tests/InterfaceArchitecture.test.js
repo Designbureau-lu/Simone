@@ -205,7 +205,7 @@ test("DEV specimen uses four direct independent font families", async () => {
     ));
     assert(!/\.arrival-identity-(?:artist|prize)[^{]*\{[^}]*font-family:"DEV /s.test(style));
     assert(/\.identity-font-specimen > span\s*\{[^}]*opacity:1;[^}]*transform:none;[^}]*animation:none;[^}]*letter-spacing:normal;[^}]*text-shadow:none;[^}]*font-synthesis:none;/s.test(style));
-    equal((markup.match(/HAMBURGEFONTSIV 0123456789/g) ?? []).length, 4);
+    equal((markup.match(/HAMBURGEFONTSIV 0123456789/g) ?? []).length, 6);
 });
 
 test("mobile identity text is a normal-scroll layer separate from blob parallax", async () => {
@@ -707,7 +707,9 @@ test("DEV identity diagnostic reports viewport and computed font state", () => {
             <span data-font-specimen="extraleicht">Extraleicht</span>
             <span data-font-specimen="book">Book</span>
             <span data-font-specimen="extrafett">Extrafett</span>
-            <span data-font-specimen="noi-light">Noi Light</span>
+            <span data-font-specimen="noi-light">Specimen</span>
+            <span data-font-specimen="serif">Specimen</span>
+            <span data-font-specimen="monospace">Specimen</span>
         </div>
         <pre data-identity-font-diagnostic></pre>
     `;
@@ -720,9 +722,23 @@ test("DEV identity diagnostic reports viewport and computed font state", () => {
         : "LAYOUT DESKTOP (>=768px)"));
     assert(report.includes(`VIEWPORT ${window.innerWidth} × ${window.innerHeight} CSS px`));
     assert(report.includes(`DPR ${window.devicePixelRatio}`));
-    for (const label of ["EXTRALIGHT", "BOOK", "EXTRAFETT", "NOI LIGHT"]) {
-        assert(report.includes(`${label}:`));
+    for (const label of [
+        "EXTRALIGHT", "BOOK", "EXTRAFETT", "NOI LIGHT",
+        "SERIF CONTROL", "MONOSPACE CONTROL"
+    ]) {
+        assert(report.includes(label));
     }
+    assert(report.includes(" family:"));
+    assert(report.includes(" weight:"));
+    assert(report.includes(" style:"));
+    assert(report.includes(" features:"));
+    assert(report.includes(" variations:"));
+    assert(report.includes(" synthesis:"));
+    assert(report.includes(" source: /fonts/test-soehne-mono-extraleicht.woff2"));
+    assert(report.includes(" width:"));
+    const widths = Array.from(report.matchAll(/ width: ([\d.]+) px/g), (match) => Number(match[1]));
+    equal(widths.length, 6);
+    assert(widths.every((width) => width > 0));
     assert(report.includes("DEV EXTRALIGHT 200:"));
     assert(report.includes("DEV BOOK 400:"));
     assert(report.includes("DEV EXTRAFETT 800:"));

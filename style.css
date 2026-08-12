@@ -1850,6 +1850,22 @@ select{
 
 }
 
+.identity-font-specimen [data-font-specimen="serif"]{
+
+    font-family:serif;
+
+    font-weight:400;
+
+}
+
+.identity-font-specimen [data-font-specimen="monospace"]{
+
+    font-family:monospace;
+
+    font-weight:400;
+
+}
+
 .developer-viewport-control{
 
     display:flex;
