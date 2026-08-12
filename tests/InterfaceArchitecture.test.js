@@ -189,21 +189,23 @@ test("mobile title spans symmetric margins using intrinsic flex children", async
 
 test("DEV specimen uses four direct independent font families", async () => {
     const style = await fetch("../style.css").then((response) => response.text());
+    const markup = await fetch("../index.html").then((response) => response.text());
 
-    assert(/font-family:"DEV SOEHNE EXTRALIGHT";[\s\S]*?test-soehne-mono-extraleicht\.woff2[\s\S]*?font-weight:200;/s.test(
+    assert(/font-family:"DEV SOEHNE EXTRALIGHT";[\s\S]*?url\("\/fonts\/test-soehne-mono-extraleicht\.woff2"\)[\s\S]*?font-weight:200;/s.test(
         style
     ));
-    assert(/font-family:"DEV SOEHNE BOOK";[\s\S]*?test-soehne-mono-buch\.woff2[\s\S]*?font-weight:400;/s.test(
+    assert(/font-family:"DEV SOEHNE BOOK";[\s\S]*?url\("\/fonts\/test-soehne-mono-buch\.woff2"\)[\s\S]*?font-weight:400;/s.test(
         style
     ));
-    assert(/font-family:"DEV SOEHNE EXTRAFETT";[\s\S]*?test-soehne-mono-extrafett\.woff2[\s\S]*?font-weight:800;/s.test(
+    assert(/font-family:"DEV SOEHNE EXTRAFETT";[\s\S]*?url\("\/fonts\/test-soehne-mono-extrafett\.woff2"\)[\s\S]*?font-weight:800;/s.test(
         style
     ));
-    assert(/font-family:"DEV NOI LIGHT";[\s\S]*?NoiGrotesk-Light\.woff2[\s\S]*?font-weight:300;/s.test(
+    assert(/font-family:"DEV NOI LIGHT";[\s\S]*?url\("\/fonts\/NoiGrotesk-Light\.woff2"\)[\s\S]*?font-weight:300;/s.test(
         style
     ));
     assert(!/\.arrival-identity-(?:artist|prize)[^{]*\{[^}]*font-family:"DEV /s.test(style));
     assert(/\.identity-font-specimen > span\s*\{[^}]*opacity:1;[^}]*transform:none;[^}]*animation:none;[^}]*letter-spacing:normal;[^}]*text-shadow:none;[^}]*font-synthesis:none;/s.test(style));
+    equal((markup.match(/HAMBURGEFONTSIV 0123456789/g) ?? []).length, 4);
 });
 
 test("mobile identity text is a normal-scroll layer separate from blob parallax", async () => {

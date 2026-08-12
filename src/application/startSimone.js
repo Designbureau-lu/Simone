@@ -510,6 +510,12 @@ export function bindIdentityFontDiagnostic(panel) {
         ["EXTRAFETT", '[data-font-specimen="extrafett"]'],
         ["NOI LIGHT", '[data-font-specimen="noi-light"]']
     ]);
+    const specimenFonts = Object.freeze([
+        '200 16px "DEV SOEHNE EXTRALIGHT"',
+        '400 16px "DEV SOEHNE BOOK"',
+        '800 16px "DEV SOEHNE EXTRAFETT"',
+        '300 16px "DEV NOI LIGHT"'
+    ]);
     const update = () => {
         const lines = [
             `LAYOUT ${window.innerWidth < 768 ? "MOBILE (<768px)" : "DESKTOP (>=768px)"}`,
@@ -543,7 +549,12 @@ export function bindIdentityFontDiagnostic(panel) {
         return output.textContent;
     };
     window.addEventListener("resize", update);
-    document.fonts?.ready.then(update);
+    if (document.fonts) {
+        Promise.all(specimenFonts.map((font) => document.fonts.load(
+            font,
+            "HAMBURGEFONTSIV 0123456789"
+        ))).then(update);
+    }
     update();
     return Object.freeze({ update });
 }
