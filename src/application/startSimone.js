@@ -505,12 +505,10 @@ export function bindIdentityFontDiagnostic(panel) {
         return null;
     }
     const samples = Object.freeze([
-        ["LETZE", ".arrival-identity-prize-letters"],
-        ["20", ".arrival-identity-prize-digits"],
-        ["BUERGER", ".arrival-identity-prize > :nth-child(2)"],
-        ["KONSCHT", ".arrival-identity-prize > :nth-child(3)"],
-        ["PRAIS", ".arrival-identity-prize > :nth-child(4) .arrival-identity-prize-letters"],
-        ["26", ".arrival-identity-prize > :nth-child(4) .arrival-identity-prize-digits"]
+        ["EXTRALIGHT", '[data-font-specimen="extraleicht"]'],
+        ["BOOK", '[data-font-specimen="book"]'],
+        ["EXTRAFETT", '[data-font-specimen="extrafett"]'],
+        ["NOI LIGHT", '[data-font-specimen="noi-light"]']
     ]);
     const update = () => {
         const lines = [
@@ -529,17 +527,17 @@ export function bindIdentityFontDiagnostic(panel) {
             lines.push(`${label}: ${style.fontFamily} · ${style.fontWeight}`);
         }
         lines.push("FONT FACE STATUS");
-        lines.push(`Extraleicht 200: ${fontFaceIsLoaded(
-            '200 16px "Söhne Mono Extraleicht"'
+        lines.push(`DEV EXTRALIGHT 200: ${fontFaceIsLoaded(
+            '200 16px "DEV SOEHNE EXTRALIGHT"'
         ) ? "loaded" : "missing"}`);
-        lines.push(`Buch 400: ${fontFaceIsLoaded(
-            '400 16px "Söhne Mono Buch"'
+        lines.push(`DEV BOOK 400: ${fontFaceIsLoaded(
+            '400 16px "DEV SOEHNE BOOK"'
         ) ? "loaded" : "missing"}`);
-        lines.push(`TEST EXTRALIGHT 200: ${fontFaceIsLoaded(
-            '200 16px "TEST SOEHNE EXTRALIGHT"'
+        lines.push(`DEV EXTRAFETT 800: ${fontFaceIsLoaded(
+            '800 16px "DEV SOEHNE EXTRAFETT"'
         ) ? "loaded" : "missing"}`);
-        lines.push(`TEST BOOK 400: ${fontFaceIsLoaded(
-            '400 16px "TEST SOEHNE BOOK"'
+        lines.push(`DEV NOI LIGHT 300: ${fontFaceIsLoaded(
+            '300 16px "DEV NOI LIGHT"'
         ) ? "loaded" : "missing"}`);
         output.textContent = lines.join("\n");
         return output.textContent;

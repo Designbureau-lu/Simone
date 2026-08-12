@@ -162,19 +162,13 @@ test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
     ));
     for (const letters of letterSpans) {
         equal(getComputedStyle(letters).fontFamily,
-            window.matchMedia("(max-width: 767px)").matches
-                ? '"TEST SOEHNE EXTRALIGHT", monospace'
-                : '"Söhne Mono Extraleicht", monospace');
-        equal(getComputedStyle(letters).fontWeight,
-            "200");
+            '"Söhne Mono Extraleicht", monospace');
+        equal(getComputedStyle(letters).fontWeight, "200");
     }
     for (const digits of digitSpans) {
         equal(getComputedStyle(digits).fontFamily,
-            window.matchMedia("(max-width: 767px)").matches
-                ? '"TEST SOEHNE EXTRALIGHT", monospace'
-                : '"Söhne Mono Buch", monospace');
-        equal(getComputedStyle(digits).fontWeight,
-            window.matchMedia("(max-width: 767px)").matches ? "200" : "400");
+            '"Söhne Mono Buch", monospace');
+        equal(getComputedStyle(digits).fontWeight, "400");
     }
     livePrize.remove();
 });
@@ -193,21 +187,23 @@ test("mobile title spans symmetric margins using intrinsic flex children", async
     ));
 });
 
-test("mobile diagnostic bypasses weight matching with independent test families", async () => {
+test("DEV specimen uses four direct independent font families", async () => {
     const style = await fetch("../style.css").then((response) => response.text());
 
-    assert(/font-family:"TEST SOEHNE EXTRALIGHT";[\s\S]*?test-soehne-mono-extraleicht\.woff2[\s\S]*?font-weight:200;/s.test(
+    assert(/font-family:"DEV SOEHNE EXTRALIGHT";[\s\S]*?test-soehne-mono-extraleicht\.woff2[\s\S]*?font-weight:200;/s.test(
         style
     ));
-    assert(/font-family:"TEST SOEHNE BOOK";[\s\S]*?test-soehne-mono-buch\.woff2[\s\S]*?font-weight:400;/s.test(
+    assert(/font-family:"DEV SOEHNE BOOK";[\s\S]*?test-soehne-mono-buch\.woff2[\s\S]*?font-weight:400;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-prize,\s*\.arrival-identity-prize \*\s*\{[^}]*font-family:"TEST SOEHNE EXTRALIGHT",monospace;[^}]*font-weight:200;[^}]*font-synthesis:none;/s.test(
+    assert(/font-family:"DEV SOEHNE EXTRAFETT";[\s\S]*?test-soehne-mono-extrafett\.woff2[\s\S]*?font-weight:800;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-artist,\s*\.arrival-identity-artist \*\s*\{[^}]*font-family:"TEST SOEHNE BOOK",monospace;[^}]*font-weight:400;[^}]*font-synthesis:none;/s.test(
+    assert(/font-family:"DEV NOI LIGHT";[\s\S]*?NoiGrotesk-Light\.woff2[\s\S]*?font-weight:300;/s.test(
         style
     ));
+    assert(!/\.arrival-identity-(?:artist|prize)[^{]*\{[^}]*font-family:"DEV /s.test(style));
+    assert(/\.identity-font-specimen > span\s*\{[^}]*opacity:1;[^}]*transform:none;[^}]*animation:none;[^}]*letter-spacing:normal;[^}]*text-shadow:none;[^}]*font-synthesis:none;/s.test(style));
 });
 
 test("mobile identity text is a normal-scroll layer separate from blob parallax", async () => {
@@ -704,16 +700,16 @@ test("debug panel closes to a small reopen control and restores focus", () => {
 
 test("DEV identity diagnostic reports viewport and computed font state", () => {
     const panel = document.createElement("aside");
-    panel.innerHTML = `<pre data-identity-font-diagnostic></pre>`;
-    const prize = document.createElement("span");
-    prize.className = "arrival-identity-prize";
-    prize.innerHTML = `
-        <span><span class="arrival-identity-prize-letters">LETZE</span><strong class="arrival-identity-prize-digits">20</strong></span>
-        <span class="arrival-identity-prize-letters">BUERGER</span>
-        <span class="arrival-identity-prize-letters">KONSCHT</span>
-        <span><span class="arrival-identity-prize-letters">PRAIS</span><strong class="arrival-identity-prize-digits">26</strong></span>
+    panel.innerHTML = `
+        <div class="identity-font-specimen">
+            <span data-font-specimen="extraleicht">Extraleicht</span>
+            <span data-font-specimen="book">Book</span>
+            <span data-font-specimen="extrafett">Extrafett</span>
+            <span data-font-specimen="noi-light">Noi Light</span>
+        </div>
+        <pre data-identity-font-diagnostic></pre>
     `;
-    document.body.append(panel, prize);
+    document.body.append(panel);
 
     const diagnostic = bindIdentityFontDiagnostic(panel);
     const report = diagnostic.update();
@@ -722,16 +718,15 @@ test("DEV identity diagnostic reports viewport and computed font state", () => {
         : "LAYOUT DESKTOP (>=768px)"));
     assert(report.includes(`VIEWPORT ${window.innerWidth} × ${window.innerHeight} CSS px`));
     assert(report.includes(`DPR ${window.devicePixelRatio}`));
-    for (const label of ["LETZE", "20", "BUERGER", "KONSCHT", "PRAIS", "26"]) {
+    for (const label of ["EXTRALIGHT", "BOOK", "EXTRAFETT", "NOI LIGHT"]) {
         assert(report.includes(`${label}:`));
     }
-    assert(report.includes("Extraleicht 200:"));
-    assert(report.includes("Buch 400:"));
-    assert(report.includes("TEST EXTRALIGHT 200:"));
-    assert(report.includes("TEST BOOK 400:"));
+    assert(report.includes("DEV EXTRALIGHT 200:"));
+    assert(report.includes("DEV BOOK 400:"));
+    assert(report.includes("DEV EXTRAFETT 800:"));
+    assert(report.includes("DEV NOI LIGHT 300:"));
 
     panel.remove();
-    prize.remove();
 });
 
 test("conversation title follows default, Explore, project, and inactive states", () => {

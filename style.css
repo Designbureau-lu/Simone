@@ -42,7 +42,7 @@
 
 @font-face{
 
-    font-family:"TEST SOEHNE EXTRALIGHT";
+    font-family:"DEV SOEHNE EXTRALIGHT";
 
     src:url("fonts/test-soehne-mono-extraleicht.woff2") format("woff2");
 
@@ -56,13 +56,41 @@
 
 @font-face{
 
-    font-family:"TEST SOEHNE BOOK";
+    font-family:"DEV SOEHNE BOOK";
 
     src:url("fonts/test-soehne-mono-buch.woff2") format("woff2");
 
     font-style:normal;
 
     font-weight:400;
+
+    font-display:swap;
+
+}
+
+@font-face{
+
+    font-family:"DEV SOEHNE EXTRAFETT";
+
+    src:url("fonts/test-soehne-mono-extrafett.woff2") format("woff2");
+
+    font-style:normal;
+
+    font-weight:800;
+
+    font-display:swap;
+
+}
+
+@font-face{
+
+    font-family:"DEV NOI LIGHT";
+
+    src:url("fonts/NoiGrotesk-Light.woff2") format("woff2");
+
+    font-style:normal;
+
+    font-weight:300;
 
     font-display:swap;
 
@@ -611,28 +639,6 @@ select{
         align-items:flex-start;
 
         text-align:left;
-
-    }
-
-    .arrival-identity-prize,
-    .arrival-identity-prize *{
-
-        font-family:"TEST SOEHNE EXTRALIGHT",monospace;
-
-        font-weight:200;
-
-        font-synthesis:none;
-
-    }
-
-    .arrival-identity-artist,
-    .arrival-identity-artist *{
-
-        font-family:"TEST SOEHNE BOOK",monospace;
-
-        font-weight:400;
-
-        font-synthesis:none;
 
     }
 
@@ -1773,6 +1779,72 @@ select{
     font:10px/1.35 "Söhne Mono Buch",monospace;
 
     white-space:pre-wrap;
+
+}
+
+.identity-font-specimen{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:4px;
+
+    margin-bottom:10px;
+
+}
+
+.identity-font-specimen > span{
+
+    opacity:1;
+
+    transform:none;
+
+    animation:none;
+
+    letter-spacing:normal;
+
+    text-shadow:none;
+
+    font-size:14px;
+
+    line-height:1.2;
+
+    font-style:normal;
+
+    font-synthesis:none;
+
+}
+
+.identity-font-specimen [data-font-specimen="extraleicht"]{
+
+    font-family:"DEV SOEHNE EXTRALIGHT";
+
+    font-weight:200;
+
+}
+
+.identity-font-specimen [data-font-specimen="book"]{
+
+    font-family:"DEV SOEHNE BOOK";
+
+    font-weight:400;
+
+}
+
+.identity-font-specimen [data-font-specimen="extrafett"]{
+
+    font-family:"DEV SOEHNE EXTRAFETT";
+
+    font-weight:800;
+
+}
+
+.identity-font-specimen [data-font-specimen="noi-light"]{
+
+    font-family:"DEV NOI LIGHT";
+
+    font-weight:300;
 
 }
 
