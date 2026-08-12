@@ -48,7 +48,7 @@
 
     font-style:normal;
 
-    font-weight:400;
+    font-weight:200;
 
     font-display:swap;
 
@@ -619,7 +619,9 @@ select{
 
         font-family:"TEST SOEHNE EXTRALIGHT",monospace;
 
-        font-weight:400;
+        font-weight:200;
+
+        font-synthesis:none;
 
     }
 
@@ -629,6 +631,8 @@ select{
         font-family:"TEST SOEHNE BOOK",monospace;
 
         font-weight:400;
+
+        font-synthesis:none;
 
     }
 

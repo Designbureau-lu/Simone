@@ -166,7 +166,7 @@ test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
                 ? '"TEST SOEHNE EXTRALIGHT", monospace'
                 : '"Söhne Mono Extraleicht", monospace');
         equal(getComputedStyle(letters).fontWeight,
-            window.matchMedia("(max-width: 767px)").matches ? "400" : "200");
+            "200");
     }
     for (const digits of digitSpans) {
         equal(getComputedStyle(digits).fontFamily,
@@ -174,7 +174,7 @@ test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
                 ? '"TEST SOEHNE EXTRALIGHT", monospace'
                 : '"Söhne Mono Buch", monospace');
         equal(getComputedStyle(digits).fontWeight,
-            "400");
+            window.matchMedia("(max-width: 767px)").matches ? "200" : "400");
     }
     livePrize.remove();
 });
@@ -196,16 +196,16 @@ test("mobile title spans symmetric margins using intrinsic flex children", async
 test("mobile diagnostic bypasses weight matching with independent test families", async () => {
     const style = await fetch("../style.css").then((response) => response.text());
 
-    assert(/font-family:"TEST SOEHNE EXTRALIGHT";[\s\S]*?test-soehne-mono-extraleicht\.woff2[\s\S]*?font-weight:400;/s.test(
+    assert(/font-family:"TEST SOEHNE EXTRALIGHT";[\s\S]*?test-soehne-mono-extraleicht\.woff2[\s\S]*?font-weight:200;/s.test(
         style
     ));
     assert(/font-family:"TEST SOEHNE BOOK";[\s\S]*?test-soehne-mono-buch\.woff2[\s\S]*?font-weight:400;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-prize,\s*\.arrival-identity-prize \*\s*\{[^}]*font-family:"TEST SOEHNE EXTRALIGHT",monospace;[^}]*font-weight:400;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-prize,\s*\.arrival-identity-prize \*\s*\{[^}]*font-family:"TEST SOEHNE EXTRALIGHT",monospace;[^}]*font-weight:200;[^}]*font-synthesis:none;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-artist,\s*\.arrival-identity-artist \*\s*\{[^}]*font-family:"TEST SOEHNE BOOK",monospace;[^}]*font-weight:400;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-artist,\s*\.arrival-identity-artist \*\s*\{[^}]*font-family:"TEST SOEHNE BOOK",monospace;[^}]*font-weight:400;[^}]*font-synthesis:none;/s.test(
         style
     ));
 });
@@ -727,7 +727,7 @@ test("DEV identity diagnostic reports viewport and computed font state", () => {
     }
     assert(report.includes("Extraleicht 200:"));
     assert(report.includes("Buch 400:"));
-    assert(report.includes("TEST EXTRALIGHT 400:"));
+    assert(report.includes("TEST EXTRALIGHT 200:"));
     assert(report.includes("TEST BOOK 400:"));
 
     panel.remove();

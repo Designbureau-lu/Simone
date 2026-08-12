@@ -535,8 +535,8 @@ export function bindIdentityFontDiagnostic(panel) {
         lines.push(`Buch 400: ${fontFaceIsLoaded(
             '400 16px "Söhne Mono Buch"'
         ) ? "loaded" : "missing"}`);
-        lines.push(`TEST EXTRALIGHT 400: ${fontFaceIsLoaded(
-            '400 16px "TEST SOEHNE EXTRALIGHT"'
+        lines.push(`TEST EXTRALIGHT 200: ${fontFaceIsLoaded(
+            '200 16px "TEST SOEHNE EXTRALIGHT"'
         ) ? "loaded" : "missing"}`);
         lines.push(`TEST BOOK 400: ${fontFaceIsLoaded(
             '400 16px "TEST SOEHNE BOOK"'
