@@ -85,7 +85,10 @@ test("mobile Screen 1 and curtain are native snap targets with shared entrance m
     assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
     assert(/\.arrival-screen-identity,\s*\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;[^}]*scroll-snap-stop:always;/s.test(style));
     assert(/animation:identity-blob-breathe 10s/.test(style));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*align-items:center;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:flex;[^}]*align-items:center;[^}]*justify-content:space-between;[^}]*gap:0;/s.test(
+        style
+    ));
+    assert(!/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*grid-template-columns:/s.test(
         style
     ));
     assert(/font-size:clamp\(2\.25rem,10vw,3\.25rem\);/.test(style));
@@ -167,6 +170,20 @@ test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
         equal(getComputedStyle(digits).fontWeight, "400");
     }
     livePrize.remove();
+});
+
+test("mobile title spans symmetric margins using intrinsic flex children", async () => {
+    const style = await fetch("../style.css").then((response) => response.text());
+
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-content\s*\{[^}]*padding-inline:24px;/s.test(
+        style
+    ));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-language\s*\{[^}]*left:24px;/s.test(
+        style
+    ));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*justify-self:start;[^}]*display:flex;[^}]*justify-content:space-between;[^}]*width:calc\(100vw - 48px\);/s.test(
+        style
+    ));
 });
 
 test("mobile identity text is a normal-scroll layer separate from blob parallax", async () => {

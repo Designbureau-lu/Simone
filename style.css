@@ -535,15 +535,13 @@ select{
 
         justify-self:start;
 
-        display:grid;
-
-        grid-template-columns:max-content max-content;
+        display:flex;
 
         align-items:center;
 
         justify-content:space-between;
 
-        column-gap:0.5ch;
+        gap:0;
 
         margin:0;
 
