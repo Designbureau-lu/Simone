@@ -12,13 +12,22 @@ Updated: 2026-08-12
   native while horizontal drag and two-touch pinch retain their custom paths.
   The live identity shares the desktop-authoritative Buch artist,
   Extraleicht prize letters, and Buch `20`/`26` rules. Its title is a dedicated
-  mobile intrinsic-flex composition spanning symmetric 24 px edges, without
-  equal columns or a designed central gutter. All identity text lives in a
+  mobile intrinsic two-column composition with the desktop-authoritative
+  `0.8ch` internal gap. The complete typographic object—not its individual
+  blocks—is centered and its font size is derived from its combined monospace
+  width to span symmetric 24 px edges. It uses neither equal columns nor
+  independently anchored viewport edges. All identity text lives in a
   normal-scroll content layer; only its sibling blob presentation receives
   parallax. The authored blob receives one stable side-biased
   random pose per load and the same restrained `0.90` scroll-rate separation as
   desktop. Touch physics, Index panel contents, and lower editorial layout are
   unchanged.
+
+- The permanent development panel reports the active mobile/desktop layout,
+  CSS viewport dimensions, device pixel ratio, computed production identity
+  families and weights, and frame-performance information. The isolated font
+  specimen and its DEV-only faces/loading probes have been removed; production
+  identity font files and rules remain authoritative.
 
 - The page has three normal-flow parts: a `100dvh` live identity screen, the
   existing curtain inside a `200dvh` sticky stage, and the semantic exhibition

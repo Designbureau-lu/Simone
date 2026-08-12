@@ -86,13 +86,10 @@ test("mobile Screen 1 and curtain are native snap targets with shared entrance m
     assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
     assert(/\.arrival-screen-identity,\s*\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;[^}]*scroll-snap-stop:always;/s.test(style));
     assert(/animation:identity-blob-breathe 10s/.test(style));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:flex;[^}]*align-items:center;[^}]*justify-content:space-between;[^}]*gap:0;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*align-items:center;[^}]*column-gap:0\.8ch;/s.test(
         style
     ));
-    assert(!/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*grid-template-columns:/s.test(
-        style
-    ));
-    assert(/font-size:clamp\(2\.25rem,10vw,3\.25rem\);/.test(style));
+    assert(/font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/.test(style));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-blob\s*\{[^}]*left:var\(--blob-center-x,72vw\);[^}]*width:96vw;/s.test(
         style
     ));
@@ -173,7 +170,7 @@ test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
     livePrize.remove();
 });
 
-test("mobile title spans symmetric margins using intrinsic flex children", async () => {
+test("mobile title fits one intrinsic composition between symmetric margins", async () => {
     const style = await fetch("../style.css").then((response) => response.text());
 
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-content\s*\{[^}]*padding-inline:24px;/s.test(
@@ -182,30 +179,12 @@ test("mobile title spans symmetric margins using intrinsic flex children", async
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-language\s*\{[^}]*left:24px;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*justify-self:start;[^}]*display:flex;[^}]*justify-content:space-between;[^}]*width:calc\(100vw - 48px\);/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*position:absolute;[^}]*top:50%;[^}]*left:50%;[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;[^}]*width:max-content;[^}]*transform:translate\(-50%,-50%\);[^}]*font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/s.test(
         style
     ));
-});
-
-test("DEV specimen uses four direct independent font families", async () => {
-    const style = await fetch("../style.css").then((response) => response.text());
-    const markup = await fetch("../index.html").then((response) => response.text());
-
-    assert(/font-family:"DEV SOEHNE EXTRALIGHT";[\s\S]*?url\("fonts\/test-soehne-mono-extraleicht\.woff2"\)[\s\S]*?font-weight:200;/s.test(
+    assert(!/@media \(max-width:767px\)[\s\S]*?\.arrival-identity-title\s*\{[^}]*justify-content:space-between;/s.test(
         style
     ));
-    assert(/font-family:"DEV SOEHNE BOOK";[\s\S]*?url\("fonts\/test-soehne-mono-buch\.woff2"\)[\s\S]*?font-weight:400;/s.test(
-        style
-    ));
-    assert(/font-family:"DEV SOEHNE EXTRAFETT";[\s\S]*?url\("fonts\/test-soehne-mono-extrafett\.woff2"\)[\s\S]*?font-weight:800;/s.test(
-        style
-    ));
-    assert(/font-family:"DEV NOI LIGHT";[\s\S]*?url\("fonts\/NoiGrotesk-Light\.woff2"\)[\s\S]*?font-weight:300;/s.test(
-        style
-    ));
-    assert(!/\.arrival-identity-(?:artist|prize)[^{]*\{[^}]*font-family:"DEV /s.test(style));
-    assert(/\.identity-font-specimen > span\s*\{[^}]*opacity:1;[^}]*transform:none;[^}]*animation:none;[^}]*letter-spacing:normal;[^}]*text-shadow:none;[^}]*font-synthesis:none;/s.test(style));
-    equal((markup.match(/HAMBURGEFONTSIV 0123456789/g) ?? []).length, 4);
 });
 
 test("mobile identity text is a normal-scroll layer separate from blob parallax", async () => {
@@ -700,15 +679,9 @@ test("debug panel closes to a small reopen control and restores focus", () => {
     reopen.remove();
 });
 
-test("DEV identity diagnostic reports viewport and computed font state", () => {
+test("permanent DEV environment diagnostic reports viewport and production fonts", () => {
     const panel = document.createElement("aside");
     panel.innerHTML = `
-        <div class="identity-font-specimen">
-            <span data-font-specimen="extraleicht">Extraleicht</span>
-            <span data-font-specimen="book">Book</span>
-            <span data-font-specimen="extrafett">Extrafett</span>
-            <span data-font-specimen="noi-light">Specimen</span>
-        </div>
         <pre data-identity-font-diagnostic></pre>
     `;
     document.body.append(panel);
@@ -723,12 +696,7 @@ test("DEV identity diagnostic reports viewport and computed font state", () => {
     for (const label of ["LETZE", "20", "BUERGER", "KONSCHT", "PRAIS", "26"]) {
         assert(report.includes(`${label}:`));
     }
-    assert(report.includes("DEV SPECIMEN FACES"));
-    assert(report.includes("EXTRALIGHT:"));
-    assert(report.includes("BOOK:"));
-    assert(report.includes("EXTRAFETT:"));
-    assert(report.includes("NOI LIGHT:"));
-    assert(report.includes("fonts/test-soehne-mono-extraleicht.woff2"));
+    assert(!report.includes("DEV SPECIMEN FACES"));
 
     panel.remove();
 });
