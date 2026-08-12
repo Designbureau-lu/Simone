@@ -504,41 +504,40 @@ export function bindIdentityFontDiagnostic(panel) {
     if (!(output instanceof HTMLPreElement)) {
         return null;
     }
-    const samples = Object.freeze([
+    const productionSamples = Object.freeze([
+        Object.freeze({ label: "LETZE", selector: ".arrival-identity-prize-letters" }),
+        Object.freeze({ label: "20", selector: ".arrival-identity-prize-digits" }),
+        Object.freeze({ label: "BUERGER", selector: ".arrival-identity-prize > :nth-child(2)" }),
+        Object.freeze({ label: "KONSCHT", selector: ".arrival-identity-prize > :nth-child(3)" }),
+        Object.freeze({ label: "PRAIS", selector: ".arrival-identity-prize > :nth-child(4) .arrival-identity-prize-letters" }),
+        Object.freeze({ label: "26", selector: ".arrival-identity-prize > :nth-child(4) .arrival-identity-prize-digits" })
+    ]);
+    const specimenFonts = Object.freeze([
         Object.freeze({
             label: "EXTRALIGHT",
             selector: '[data-font-specimen="extraleicht"]',
             face: '200 16px "DEV SOEHNE EXTRALIGHT"',
-            source: "/fonts/test-soehne-mono-extraleicht.woff2"
+            source: "fonts/test-soehne-mono-extraleicht.woff2"
         }),
         Object.freeze({
             label: "BOOK",
             selector: '[data-font-specimen="book"]',
             face: '400 16px "DEV SOEHNE BOOK"',
-            source: "/fonts/test-soehne-mono-buch.woff2"
+            source: "fonts/test-soehne-mono-buch.woff2"
         }),
         Object.freeze({
             label: "EXTRAFETT",
             selector: '[data-font-specimen="extrafett"]',
             face: '800 16px "DEV SOEHNE EXTRAFETT"',
-            source: "/fonts/test-soehne-mono-extrafett.woff2"
+            source: "fonts/test-soehne-mono-extrafett.woff2"
         }),
         Object.freeze({
             label: "NOI LIGHT",
             selector: '[data-font-specimen="noi-light"]',
             face: '300 16px "DEV NOI LIGHT"',
-            source: "/fonts/NoiGrotesk-Light.woff2"
-        }),
-        Object.freeze({
-            label: "SERIF CONTROL",
-            selector: '[data-font-specimen="serif"]'
-        }),
-        Object.freeze({
-            label: "MONOSPACE CONTROL",
-            selector: '[data-font-specimen="monospace"]'
+            source: "fonts/NoiGrotesk-Light.woff2"
         })
     ]);
-    const specimenFonts = Object.freeze(samples.filter(({ face }) => face));
     const update = () => {
         const lines = [
             `LAYOUT ${window.innerWidth < 768 ? "MOBILE (<768px)" : "DESKTOP (>=768px)"}`,
@@ -546,39 +545,24 @@ export function bindIdentityFontDiagnostic(panel) {
             `DPR ${window.devicePixelRatio}`,
             "COMPUTED FONTS"
         ];
-        for (const { label, selector, face, source } of samples) {
+        for (const { label, selector } of productionSamples) {
             const element = document.querySelector(selector);
             if (!(element instanceof HTMLElement)) {
                 lines.push(`${label}: unavailable`);
                 continue;
             }
             const style = getComputedStyle(element);
-            lines.push(label);
-            lines.push(` family: ${style.fontFamily}`);
-            lines.push(` weight: ${style.fontWeight}`);
-            lines.push(` style: ${style.fontStyle}`);
-            lines.push(` features: ${style.fontFeatureSettings}`);
-            lines.push(` variations: ${style.fontVariationSettings}`);
-            lines.push(` synthesis: ${style.fontSynthesis}`);
-            if (face) {
-                lines.push(` face: ${face}`);
-                lines.push(` source: ${source}`);
-            }
-            lines.push(` width: ${measuredSpecimenWidth(element).toFixed(2)} px`);
+            lines.push(`${label}: ${style.fontFamily} · ${style.fontWeight}`);
         }
-        lines.push("FONT FACE STATUS");
-        lines.push(`DEV EXTRALIGHT 200: ${fontFaceIsLoaded(
-            '200 16px "DEV SOEHNE EXTRALIGHT"'
-        ) ? "loaded" : "missing"}`);
-        lines.push(`DEV BOOK 400: ${fontFaceIsLoaded(
-            '400 16px "DEV SOEHNE BOOK"'
-        ) ? "loaded" : "missing"}`);
-        lines.push(`DEV EXTRAFETT 800: ${fontFaceIsLoaded(
-            '800 16px "DEV SOEHNE EXTRAFETT"'
-        ) ? "loaded" : "missing"}`);
-        lines.push(`DEV NOI LIGHT 300: ${fontFaceIsLoaded(
-            '300 16px "DEV NOI LIGHT"'
-        ) ? "loaded" : "missing"}`);
+        lines.push("DEV SPECIMEN FACES");
+        for (const { label, selector, face, source } of specimenFonts) {
+            const element = document.querySelector(selector);
+            const style = element instanceof HTMLElement
+                ? getComputedStyle(element)
+                : null;
+            lines.push(`${label}: ${style?.fontFamily ?? "unavailable"} · ${style?.fontWeight ?? "—"}`);
+            lines.push(` ${fontFaceIsLoaded(face) ? "loaded" : "missing"} · ${source}`);
+        }
         output.textContent = lines.join("\n");
         return output.textContent;
     };
@@ -595,36 +579,6 @@ export function bindIdentityFontDiagnostic(panel) {
 
 function fontFaceIsLoaded(font) {
     return document.fonts?.check(font) === true;
-}
-
-function measuredSpecimenWidth(element) {
-    const visibleWidth = element.getBoundingClientRect().width;
-    if (visibleWidth > 0 && getComputedStyle(element).display === "inline-block") {
-        return visibleWidth;
-    }
-    const sourceStyle = getComputedStyle(element);
-    const measurement = document.createElement("span");
-    measurement.textContent = element.textContent;
-    measurement.style.position = "fixed";
-    measurement.style.inset = "0 auto auto 0";
-    measurement.style.display = "inline-block";
-    measurement.style.width = "max-content";
-    measurement.style.whiteSpace = "nowrap";
-    measurement.style.visibility = "hidden";
-    measurement.style.pointerEvents = "none";
-    measurement.style.fontFamily = sourceStyle.fontFamily;
-    measurement.style.fontSize = sourceStyle.fontSize;
-    measurement.style.fontWeight = sourceStyle.fontWeight;
-    measurement.style.fontStyle = sourceStyle.fontStyle;
-    measurement.style.fontFeatureSettings = sourceStyle.fontFeatureSettings;
-    measurement.style.fontVariationSettings = sourceStyle.fontVariationSettings;
-    measurement.style.fontSynthesis = sourceStyle.fontSynthesis;
-    measurement.style.letterSpacing = sourceStyle.letterSpacing;
-    measurement.style.lineHeight = sourceStyle.lineHeight;
-    document.body.append(measurement);
-    const width = measurement.getBoundingClientRect().width;
-    measurement.remove();
-    return width;
 }
 
 export function bindCurtainDragging(

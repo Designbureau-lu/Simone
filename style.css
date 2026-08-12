@@ -44,7 +44,7 @@
 
     font-family:"DEV SOEHNE EXTRALIGHT";
 
-    src:url("/fonts/test-soehne-mono-extraleicht.woff2") format("woff2");
+    src:url("fonts/test-soehne-mono-extraleicht.woff2") format("woff2");
 
     font-style:normal;
 
@@ -58,7 +58,7 @@
 
     font-family:"DEV SOEHNE BOOK";
 
-    src:url("/fonts/test-soehne-mono-buch.woff2") format("woff2");
+    src:url("fonts/test-soehne-mono-buch.woff2") format("woff2");
 
     font-style:normal;
 
@@ -72,7 +72,7 @@
 
     font-family:"DEV SOEHNE EXTRAFETT";
 
-    src:url("/fonts/test-soehne-mono-extrafett.woff2") format("woff2");
+    src:url("fonts/test-soehne-mono-extrafett.woff2") format("woff2");
 
     font-style:normal;
 
@@ -86,7 +86,7 @@
 
     font-family:"DEV NOI LIGHT";
 
-    src:url("/fonts/NoiGrotesk-Light.woff2") format("woff2");
+    src:url("fonts/NoiGrotesk-Light.woff2") format("woff2");
 
     font-style:normal;
 
@@ -1847,22 +1847,6 @@ select{
     font-family:"DEV NOI LIGHT";
 
     font-weight:300;
-
-}
-
-.identity-font-specimen [data-font-specimen="serif"]{
-
-    font-family:serif;
-
-    font-weight:400;
-
-}
-
-.identity-font-specimen [data-font-specimen="monospace"]{
-
-    font-family:monospace;
-
-    font-weight:400;
 
 }
 

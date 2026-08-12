@@ -191,21 +191,21 @@ test("DEV specimen uses four direct independent font families", async () => {
     const style = await fetch("../style.css").then((response) => response.text());
     const markup = await fetch("../index.html").then((response) => response.text());
 
-    assert(/font-family:"DEV SOEHNE EXTRALIGHT";[\s\S]*?url\("\/fonts\/test-soehne-mono-extraleicht\.woff2"\)[\s\S]*?font-weight:200;/s.test(
+    assert(/font-family:"DEV SOEHNE EXTRALIGHT";[\s\S]*?url\("fonts\/test-soehne-mono-extraleicht\.woff2"\)[\s\S]*?font-weight:200;/s.test(
         style
     ));
-    assert(/font-family:"DEV SOEHNE BOOK";[\s\S]*?url\("\/fonts\/test-soehne-mono-buch\.woff2"\)[\s\S]*?font-weight:400;/s.test(
+    assert(/font-family:"DEV SOEHNE BOOK";[\s\S]*?url\("fonts\/test-soehne-mono-buch\.woff2"\)[\s\S]*?font-weight:400;/s.test(
         style
     ));
-    assert(/font-family:"DEV SOEHNE EXTRAFETT";[\s\S]*?url\("\/fonts\/test-soehne-mono-extrafett\.woff2"\)[\s\S]*?font-weight:800;/s.test(
+    assert(/font-family:"DEV SOEHNE EXTRAFETT";[\s\S]*?url\("fonts\/test-soehne-mono-extrafett\.woff2"\)[\s\S]*?font-weight:800;/s.test(
         style
     ));
-    assert(/font-family:"DEV NOI LIGHT";[\s\S]*?url\("\/fonts\/NoiGrotesk-Light\.woff2"\)[\s\S]*?font-weight:300;/s.test(
+    assert(/font-family:"DEV NOI LIGHT";[\s\S]*?url\("fonts\/NoiGrotesk-Light\.woff2"\)[\s\S]*?font-weight:300;/s.test(
         style
     ));
     assert(!/\.arrival-identity-(?:artist|prize)[^{]*\{[^}]*font-family:"DEV /s.test(style));
     assert(/\.identity-font-specimen > span\s*\{[^}]*opacity:1;[^}]*transform:none;[^}]*animation:none;[^}]*letter-spacing:normal;[^}]*text-shadow:none;[^}]*font-synthesis:none;/s.test(style));
-    equal((markup.match(/HAMBURGEFONTSIV 0123456789/g) ?? []).length, 6);
+    equal((markup.match(/HAMBURGEFONTSIV 0123456789/g) ?? []).length, 4);
 });
 
 test("mobile identity text is a normal-scroll layer separate from blob parallax", async () => {
@@ -708,8 +708,6 @@ test("DEV identity diagnostic reports viewport and computed font state", () => {
             <span data-font-specimen="book">Book</span>
             <span data-font-specimen="extrafett">Extrafett</span>
             <span data-font-specimen="noi-light">Specimen</span>
-            <span data-font-specimen="serif">Specimen</span>
-            <span data-font-specimen="monospace">Specimen</span>
         </div>
         <pre data-identity-font-diagnostic></pre>
     `;
@@ -722,27 +720,15 @@ test("DEV identity diagnostic reports viewport and computed font state", () => {
         : "LAYOUT DESKTOP (>=768px)"));
     assert(report.includes(`VIEWPORT ${window.innerWidth} × ${window.innerHeight} CSS px`));
     assert(report.includes(`DPR ${window.devicePixelRatio}`));
-    for (const label of [
-        "EXTRALIGHT", "BOOK", "EXTRAFETT", "NOI LIGHT",
-        "SERIF CONTROL", "MONOSPACE CONTROL"
-    ]) {
-        assert(report.includes(label));
+    for (const label of ["LETZE", "20", "BUERGER", "KONSCHT", "PRAIS", "26"]) {
+        assert(report.includes(`${label}:`));
     }
-    assert(report.includes(" family:"));
-    assert(report.includes(" weight:"));
-    assert(report.includes(" style:"));
-    assert(report.includes(" features:"));
-    assert(report.includes(" variations:"));
-    assert(report.includes(" synthesis:"));
-    assert(report.includes(" source: /fonts/test-soehne-mono-extraleicht.woff2"));
-    assert(report.includes(" width:"));
-    const widths = Array.from(report.matchAll(/ width: ([\d.]+) px/g), (match) => Number(match[1]));
-    equal(widths.length, 6);
-    assert(widths.every((width) => width > 0));
-    assert(report.includes("DEV EXTRALIGHT 200:"));
-    assert(report.includes("DEV BOOK 400:"));
-    assert(report.includes("DEV EXTRAFETT 800:"));
-    assert(report.includes("DEV NOI LIGHT 300:"));
+    assert(report.includes("DEV SPECIMEN FACES"));
+    assert(report.includes("EXTRALIGHT:"));
+    assert(report.includes("BOOK:"));
+    assert(report.includes("EXTRAFETT:"));
+    assert(report.includes("NOI LIGHT:"));
+    assert(report.includes("fonts/test-soehne-mono-extraleicht.woff2"));
 
     panel.remove();
 });
