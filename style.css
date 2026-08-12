@@ -1704,6 +1704,28 @@ select{
 
 }
 
+.identity-font-diagnostic{
+
+    margin-top:14px;
+
+    padding-top:12px;
+
+    border-top:1px solid rgba(0,0,0,0.18);
+
+}
+
+.identity-font-diagnostic pre{
+
+    margin:0;
+
+    overflow-wrap:anywhere;
+
+    font:10px/1.35 "Söhne Mono Buch",monospace;
+
+    white-space:pre-wrap;
+
+}
+
 .developer-viewport-control{
 
     display:flex;

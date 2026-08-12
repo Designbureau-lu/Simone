@@ -94,6 +94,7 @@ export function startSimone() {
         ).matches === true
     });
     bindDebugPanel(debugPanelElement, debugReopenElement);
+    bindIdentityFontDiagnostic(debugPanelElement);
     bindSurfaceControls(controls, application);
     const synchronizeViewportControl = bindViewportControl(
         viewportPosition,
@@ -496,6 +497,55 @@ export function bindDebugPanel(panel, reopen) {
         panel.hidden = false;
         close.focus();
     });
+}
+
+export function bindIdentityFontDiagnostic(panel) {
+    const output = panel.querySelector("[data-identity-font-diagnostic]");
+    if (!(output instanceof HTMLPreElement)) {
+        return null;
+    }
+    const samples = Object.freeze([
+        ["LETZE", ".arrival-identity-prize-letters"],
+        ["20", ".arrival-identity-prize-digits"],
+        ["BUERGER", ".arrival-identity-prize > :nth-child(2)"],
+        ["KONSCHT", ".arrival-identity-prize > :nth-child(3)"],
+        ["PRAIS", ".arrival-identity-prize > :nth-child(4) .arrival-identity-prize-letters"],
+        ["26", ".arrival-identity-prize > :nth-child(4) .arrival-identity-prize-digits"]
+    ]);
+    const update = () => {
+        const lines = [
+            `LAYOUT ${window.innerWidth < 768 ? "MOBILE (<768px)" : "DESKTOP (>=768px)"}`,
+            `VIEWPORT ${window.innerWidth} × ${window.innerHeight} CSS px`,
+            `DPR ${window.devicePixelRatio}`,
+            "COMPUTED FONTS"
+        ];
+        for (const [label, selector] of samples) {
+            const element = document.querySelector(selector);
+            if (!(element instanceof HTMLElement)) {
+                lines.push(`${label}: unavailable`);
+                continue;
+            }
+            const style = getComputedStyle(element);
+            lines.push(`${label}: ${style.fontFamily} · ${style.fontWeight}`);
+        }
+        lines.push("FONT FACE STATUS");
+        lines.push(`Extraleicht 200: ${fontFaceIsLoaded(
+            '200 16px "Söhne Mono Extraleicht"'
+        ) ? "loaded" : "missing"}`);
+        lines.push(`Buch 400: ${fontFaceIsLoaded(
+            '400 16px "Söhne Mono Buch"'
+        ) ? "loaded" : "missing"}`);
+        output.textContent = lines.join("\n");
+        return output.textContent;
+    };
+    window.addEventListener("resize", update);
+    document.fonts?.ready.then(update);
+    update();
+    return Object.freeze({ update });
+}
+
+function fontFaceIsLoaded(font) {
+    return document.fonts?.check(font) === true;
 }
 
 export function bindCurtainDragging(

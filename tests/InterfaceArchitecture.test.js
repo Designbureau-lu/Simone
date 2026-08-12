@@ -1,5 +1,6 @@
 import {
     bindDebugPanel,
+    bindIdentityFontDiagnostic,
     bindConversationInterface,
     createTitleTransition
 } from "../src/application/startSimone.js";
@@ -676,6 +677,36 @@ test("debug panel closes to a small reopen control and restores focus", () => {
     equal(document.activeElement, panel.querySelector("[data-debug-close]"));
     panel.remove();
     reopen.remove();
+});
+
+test("DEV identity diagnostic reports viewport and computed font state", () => {
+    const panel = document.createElement("aside");
+    panel.innerHTML = `<pre data-identity-font-diagnostic></pre>`;
+    const prize = document.createElement("span");
+    prize.className = "arrival-identity-prize";
+    prize.innerHTML = `
+        <span><span class="arrival-identity-prize-letters">LETZE</span><strong class="arrival-identity-prize-digits">20</strong></span>
+        <span class="arrival-identity-prize-letters">BUERGER</span>
+        <span class="arrival-identity-prize-letters">KONSCHT</span>
+        <span><span class="arrival-identity-prize-letters">PRAIS</span><strong class="arrival-identity-prize-digits">26</strong></span>
+    `;
+    document.body.append(panel, prize);
+
+    const diagnostic = bindIdentityFontDiagnostic(panel);
+    const report = diagnostic.update();
+    assert(report.includes(window.innerWidth < 768
+        ? "LAYOUT MOBILE (<768px)"
+        : "LAYOUT DESKTOP (>=768px)"));
+    assert(report.includes(`VIEWPORT ${window.innerWidth} × ${window.innerHeight} CSS px`));
+    assert(report.includes(`DPR ${window.devicePixelRatio}`));
+    for (const label of ["LETZE", "20", "BUERGER", "KONSCHT", "PRAIS", "26"]) {
+        assert(report.includes(`${label}:`));
+    }
+    assert(report.includes("Extraleicht 200:"));
+    assert(report.includes("Buch 400:"));
+
+    panel.remove();
+    prize.remove();
 });
 
 test("conversation title follows default, Explore, project, and inactive states", () => {
