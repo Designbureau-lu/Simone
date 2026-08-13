@@ -6,7 +6,11 @@ const tests = [];
 
 test("meter reports active frame measurements", () => {
     const element = createMeter();
-    const overview = new FramePerformanceOverview(element, "Test");
+    const overview = new FramePerformanceOverview(
+        element,
+        "Test",
+        createCanvas()
+    );
 
     overview.update(report());
     assert(element.querySelector("[data-performance-output]")
@@ -20,7 +24,11 @@ test("meter reports active frame measurements", () => {
 
 test("reset samples keeps the active report visible", () => {
     const element = createMeter();
-    const overview = new FramePerformanceOverview(element, "Test");
+    const overview = new FramePerformanceOverview(
+        element,
+        "Test",
+        createCanvas()
+    );
 
     overview.update(report());
     element.querySelector("[data-reset-worst]").click();
@@ -28,13 +36,70 @@ test("reset samples keeps the active report visible", () => {
     assert(element.textContent.includes("Samples"));
 });
 
+test("five-second capture freezes the existing report sample summary", () => {
+    const element = createMeter();
+    const canvas = createCanvas();
+    const overview = new FramePerformanceOverview(element, "Test", canvas);
+    const originalSetTimeout = window.setTimeout;
+    const originalClearTimeout = window.clearTimeout;
+    let finishCapture = null;
+
+    window.setTimeout = (callback, duration) => {
+        equal(duration, 5000);
+        finishCapture = callback;
+        return 1;
+    };
+    window.clearTimeout = () => {};
+
+    try {
+        element.querySelector("[data-capture-performance]").click();
+        overview.update(report());
+        overview.update({...report(), totalTime: 20, renderingTime: 8});
+        finishCapture();
+
+        const captured = element.querySelector("[data-performance-output]")
+            .textContent;
+        assert(captured.includes("CAPTURE 5s — COMPLETE"));
+        assert(captured.includes("Browser / UA"));
+        assert(captured.includes("Viewport CSS"));
+        assert(captured.includes("Canvas CSS"));
+        assert(captured.includes("Canvas backing"));
+        assert(captured.includes("Samples"));
+        assert(captured.includes("2"));
+
+        overview.update({...report(), totalTime: 99});
+        equal(
+            element.querySelector("[data-performance-output]").textContent,
+            captured
+        );
+        element.querySelector("[data-reset-worst]").click();
+        assert(!element.textContent.includes("CAPTURE 5s — COMPLETE"));
+    } finally {
+        window.setTimeout = originalSetTimeout;
+        window.clearTimeout = originalClearTimeout;
+        canvas.remove();
+    }
+});
+
 function createMeter() {
     const element = document.createElement("aside");
     element.innerHTML = `
-        <div data-performance-body><pre data-performance-output></pre><button type="button" data-reset-worst></button></div>
+        <div data-performance-body>
+            <pre data-performance-output></pre>
+            <button type="button" data-capture-performance></button>
+            <button type="button" data-reset-worst></button>
+        </div>
     `;
     document.body.append(element);
     return element;
+}
+
+function createCanvas() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1000;
+    canvas.height = 500;
+    document.body.append(canvas);
+    return canvas;
 }
 
 function report() {

@@ -31,7 +31,10 @@ Updated: 2026-08-13
 
 - The permanent development panel reports the active mobile/desktop layout,
   CSS viewport dimensions, device pixel ratio, computed production identity
-  families and weights, and frame-performance information. The isolated font
+  families and weights, and frame-performance information. Its permanent
+  `CAPTURE 5s` control records the existing renderer reports for five seconds,
+  then freezes a real-device browser, viewport, Canvas, timing, missed-frame,
+  and workload summary for photographing without remote debugging. The isolated font
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.
 

@@ -87,7 +87,8 @@ export function startSimone() {
         viewingSurface: new ViewingSurface(canvas),
         performanceOverview: new FramePerformanceOverview(
             performanceOverviewElement,
-            currentBrowserName()
+            currentBrowserName(),
+            canvas
         ),
         useLeadingProjectAlignment: window.matchMedia?.(
             "(pointer: coarse)"
