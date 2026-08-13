@@ -4,15 +4,16 @@ Updated: 2026-08-13
 
 ## Desktop milestone
 
-- Below 768 px, Screen 1 and the curtain are consecutive `100dvh` targets in a
-  viewport-height mobile intro scroller using native `y mandatory` snap. The
-  root document has no mobile snap strictness, so scrolling chains naturally
-  from the aligned Curtain into the editorial article. The curtain is not
+- Below 768 px, Screen 1 and the curtain are ordinary-flow `100dvh` native snap
+  targets using the single root `y proximity` scroller; the curtain is not
   sticky. The curtain reuses the desktop
   presentation-level entrance choreography; after landing, the existing mobile
   touch lifecycle is authoritative. Its canvas uses `touch-action: pan-y` and
-  waits for horizontal intent before pointer capture, so vertical gestures stay
-  native while horizontal drag and two-touch pinch retain their custom paths.
+  waits through a 12 px dead zone before pointer capture. Vertical intent
+  requires `1.35×` dominance; horizontal intent requires `1.05×` dominance.
+  Pending moves remain native and unprevented, so intentional vertical gestures
+  stay native while horizontal drag and two-touch pinch retain their custom
+  paths.
   The live identity shares the desktop-authoritative Buch artist,
   Extraleicht prize letters, and Buch `20`/`26` rules. Its title is a dedicated
   mobile intrinsic two-column composition with the desktop-authoritative

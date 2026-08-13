@@ -3,7 +3,8 @@ import {
     bindCurtainDragging,
     horizontalReframeDirection,
     isCurtainClick,
-    lowPass
+    lowPass,
+    touchGestureIntent
 } from "../src/application/startSimone.js";
 import { Viewport } from "../src/viewport/Viewport.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
@@ -33,6 +34,17 @@ test("Moses click tolerance preserves drag as the dominant gesture", () => {
     assert(isCurtainClick(3, 4));
     assert(!isCurtainClick(4, 4));
     assert(!isCurtainClick(6, 0));
+});
+
+test("touch intent uses asymmetric dominance beyond a 12px dead zone", () => {
+    equal(touchGestureIntent(12, 0), "pending");
+    equal(touchGestureIntent(0, 12), "pending");
+    equal(touchGestureIntent(13, 0), "horizontal");
+    equal(touchGestureIntent(0, 13), "vertical");
+    equal(touchGestureIntent(14, 13), "horizontal");
+    equal(touchGestureIntent(13, 14), "pending");
+    equal(touchGestureIntent(10, 14), "vertical");
+    equal(touchGestureIntent(10.5, 14), "pending");
 });
 
 test("touch response smoothing follows without overshoot", () => {

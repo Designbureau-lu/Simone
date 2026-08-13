@@ -32,19 +32,11 @@ export function startIdentityBlobPresentation() {
         Math.random,
         window.matchMedia(MOBILE_QUERY).matches ? "mobile" : "desktop"
     );
-    const introScroller = document.querySelector(".mobile-intro-snap");
-    const scrollSource = window.matchMedia(MOBILE_QUERY).matches
-        && introScroller instanceof HTMLElement
-        ? introScroller
-        : window;
     applyPresentation(blob, presentation);
     let frameId = null;
     const updateScrollSeparation = () => {
         frameId = null;
-        const scrollPosition = scrollSource instanceof Window
-            ? scrollSource.scrollY
-            : scrollSource.scrollTop;
-        const separation = scrollPosition
+        const separation = window.scrollY
             * (1 - IDENTITY_BLOB_CONFIG.scrollRate);
         blob.style.setProperty("--blob-scroll-separation", `${separation}px`);
     };
@@ -53,7 +45,7 @@ export function startIdentityBlobPresentation() {
             frameId = window.requestAnimationFrame(updateScrollSeparation);
         }
     };
-    scrollSource.addEventListener("scroll", scheduleScrollSeparation, {
+    window.addEventListener("scroll", scheduleScrollSeparation, {
         passive: true
     });
     updateScrollSeparation();

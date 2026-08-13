@@ -732,14 +732,16 @@ export function bindCurtainDragging(
                     - touchExploration.startY;
                 const horizontalDistance = Math.abs(totalHorizontalMovement);
                 const verticalDistance = Math.abs(totalVerticalMovement);
-                if (verticalDistance > CURTAIN_CLICK_TOLERANCE
-                    && verticalDistance > horizontalDistance) {
+                const gestureIntent = touchGestureIntent(
+                    horizontalDistance,
+                    verticalDistance
+                );
+                if (gestureIntent === "vertical") {
                     touchExploration = null;
                     canvas.classList.remove("is-dragging");
                     return;
                 }
-                if (horizontalDistance <= CURTAIN_CLICK_TOLERANCE
-                    || horizontalDistance <= verticalDistance) {
+                if (gestureIntent === "pending") {
                     return;
                 }
                 if (!activateTouchExploration()) {
@@ -1233,6 +1235,20 @@ export function isCurtainClick(horizontalMovement, verticalMovement) {
         <= CURTAIN_CLICK_TOLERANCE;
 }
 
+export function touchGestureIntent(horizontalDistance, verticalDistance) {
+    if (verticalDistance > TOUCH_GESTURE_INTENT_DEAD_ZONE
+        && verticalDistance
+            > horizontalDistance * TOUCH_VERTICAL_DOMINANCE_RATIO) {
+        return "vertical";
+    }
+    if (horizontalDistance > TOUCH_GESTURE_INTENT_DEAD_ZONE
+        && horizontalDistance
+            > verticalDistance * TOUCH_HORIZONTAL_DOMINANCE_RATIO) {
+        return "horizontal";
+    }
+    return "pending";
+}
+
 export function lowPass(
     currentValue,
     targetValue,
@@ -1341,6 +1357,9 @@ function formatPosition(value) {
 const HORIZONTAL_REFRAME_EDGE_FRACTION = 0.2;
 const MINIMUM_EXPLORATORY_DRAG_FRACTION = 0.1;
 const CURTAIN_CLICK_TOLERANCE = 5;
+const TOUCH_GESTURE_INTENT_DEAD_ZONE = 12;
+const TOUCH_VERTICAL_DOMINANCE_RATIO = 1.35;
+const TOUCH_HORIZONTAL_DOMINANCE_RATIO = 1.05;
 const TOUCH_EXPLORATION_MAXIMUM_SAMPLE_DURATION = 50;
 const DESKTOP_CURTAIN_INERTIA_MAXIMUM_SAMPLE_DURATION = 50;
 const DESKTOP_CURTAIN_INERTIA_VELOCITY_SMOOTHING = 45;

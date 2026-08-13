@@ -83,8 +83,7 @@ test("mobile Screen 1 and curtain are native snap targets with shared entrance m
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:block;[^}]*height:100dvh;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?html\s*\{[^}]*scroll-snap-type:none;/s.test(style));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.mobile-intro-snap\s*\{[^}]*height:100dvh;[^}]*overflow-y:auto;[^}]*scroll-snap-type:y mandatory;[^}]*overscroll-behavior-y:auto;/s.test(style));
+    assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
     assert(/\.arrival-screen-identity,\s*\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;[^}]*scroll-snap-stop:always;/s.test(style));
     assert(/animation:identity-blob-breathe 10s/.test(style));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*align-items:center;[^}]*column-gap:0\.8ch;/s.test(
@@ -95,23 +94,10 @@ test("mobile Screen 1 and curtain are native snap targets with shared entrance m
         style
     ));
     assert(/mobile: Object\.freeze\(/.test(blobSource));
-    assert(/const scrollSource = window\.matchMedia\(MOBILE_QUERY\)\.matches/.test(blobSource));
     assert(!/if \(!window\.matchMedia\(DESKTOP_QUERY\)\.matches\)/.test(blobSource));
     assert(!/const DESKTOP_QUERY/.test(entranceSource));
-    assert(/scrollSource\.addEventListener\("scroll", updateScrollTarget/.test(entranceSource));
+    assert(/window\.addEventListener\("scroll", updateScrollTarget/.test(entranceSource));
     assert(/presentation\.dataset\.entranceActive/.test(entranceSource));
-});
-
-test("mobile mandatory snap scope contains only identity and curtain", async () => {
-    const source = await fetch("../index.html").then((response) => response.text());
-    const page = new DOMParser().parseFromString(source, "text/html");
-    const intro = page.querySelector(".mobile-intro-snap");
-    assert(intro);
-    equal(intro.children.length, 2);
-    assert(intro.children[0].matches(".arrival-screen-identity"));
-    assert(intro.children[1].matches(".curtain-sticky-stage"));
-    equal(intro.querySelector(".exhibition-information"), null);
-    assert(intro.nextElementSibling.matches(".exhibition-information"));
 });
 
 test("mobile curtain header presents INDEX without the conversation title", async () => {
