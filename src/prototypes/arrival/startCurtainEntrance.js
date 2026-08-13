@@ -20,6 +20,7 @@ const ENTRANCE = CURTAIN_ENTRANCE_CONFIG;
 
 export function startCurtainEntrance(application) {
     const stage = document.querySelector(".curtain-sticky-stage");
+    const introScroller = document.querySelector(".mobile-intro-snap");
     const presentation = document.getElementById("curtainPresentation");
     const indexLabel = document.querySelector(".curtain-index-label");
     if (!(stage instanceof HTMLElement)
@@ -27,6 +28,10 @@ export function startCurtainEntrance(application) {
         || !(indexLabel instanceof HTMLElement)) {
         return;
     }
+    const scrollSource = window.matchMedia("(max-width: 767px)").matches
+        && introScroller instanceof HTMLElement
+        ? introScroller
+        : window;
 
     let frameId = null;
     let previousTimestamp = null;
@@ -226,7 +231,7 @@ export function startCurtainEntrance(application) {
         horizontalMotion.finish();
         presentation.style.removeProperty("transform");
         presentation.removeAttribute("data-entrance-active");
-        window.removeEventListener("scroll", updateScrollTarget);
+        scrollSource.removeEventListener("scroll", updateScrollTarget);
         window.removeEventListener("resize", updateScrollTarget);
         indexRevealTimer = window.setTimeout(() => {
             indexRevealTimer = null;
@@ -237,7 +242,9 @@ export function startCurtainEntrance(application) {
     presentation.dataset.entranceActive = "";
     setPresentationOffset(presentation, horizontalMotion.currentOffset);
     indexLabel.textContent = "";
-    window.addEventListener("scroll", updateScrollTarget, { passive: true });
+    scrollSource.addEventListener("scroll", updateScrollTarget, {
+        passive: true
+    });
     window.addEventListener("resize", updateScrollTarget);
     updateScrollTarget();
 }

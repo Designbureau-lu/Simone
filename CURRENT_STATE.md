@@ -1,11 +1,14 @@
 # SIMONE Current State
 
-Updated: 2026-08-12
+Updated: 2026-08-13
 
 ## Desktop milestone
 
-- Below 768 px, Screen 1 and the curtain are ordinary-flow `100dvh` native snap
-  targets using root `y proximity`; the curtain is not sticky. The curtain reuses the desktop
+- Below 768 px, Screen 1 and the curtain are consecutive `100dvh` targets in a
+  viewport-height mobile intro scroller using native `y mandatory` snap. The
+  root document has no mobile snap strictness, so scrolling chains naturally
+  from the aligned Curtain into the editorial article. The curtain is not
+  sticky. The curtain reuses the desktop
   presentation-level entrance choreography; after landing, the existing mobile
   touch lifecycle is authoritative. Its canvas uses `touch-action: pan-y` and
   waits for horizontal intent before pointer capture, so vertical gestures stay
