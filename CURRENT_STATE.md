@@ -4,9 +4,11 @@ Updated: 2026-08-13
 
 ## Desktop milestone
 
-- Below 768 px, Screen 1 and the curtain are ordinary-flow `100dvh` native snap
-  targets using the single root `y proximity` scroller; the curtain is not
-  sticky. The curtain reuses the desktop
+- Below 768 px, Screen 1 uses `100dvh` and the Curtain uses `100lvh`; both are
+  ordinary-flow native snap targets in the single root `y proximity` scroller.
+  The Curtain stage and its Hero presentation share the large viewport height
+  so Safari chrome may overlay the stable curtain rather than resize it. The
+  curtain is not sticky. It reuses the desktop
   presentation-level entrance choreography; after landing, the existing mobile
   touch lifecycle is authoritative. Its canvas uses `touch-action: pan-y` and
   waits through a 12 px dead zone before pointer capture. Vertical intent

@@ -437,11 +437,12 @@ select{
 
     }
 
-    .curtain-sticky-stage{
+    .curtain-sticky-stage,
+    .curtain-sticky-stage > .hero{
 
         height:100vh;
 
-        height:100dvh;
+        height:100lvh;
 
     }
 
