@@ -4,10 +4,10 @@ Updated: 2026-08-13
 
 ## Desktop milestone
 
-- Below 768 px, Screen 1 uses `100dvh` and the Curtain uses `100lvh`; both are
+- Below 768 px, Screen 1 uses `100dvh` and the Curtain uses `100svh`; both are
   ordinary-flow native snap targets in the single root `y proximity` scroller.
-  The Curtain stage and its Hero presentation share the large viewport height
-  so Safari chrome may overlay the stable curtain rather than resize it. The
+  The Curtain stage and its Hero presentation share the small viewport height
+  so Safari chrome changes do not resize the curtain. The
   curtain is not sticky. It reuses the desktop
   presentation-level entrance choreography; after landing, the existing mobile
   touch lifecycle is authoritative. Its canvas uses `touch-action: pan-y` and

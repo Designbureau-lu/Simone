@@ -83,7 +83,7 @@ test("mobile Screen 1 and curtain are native snap targets with shared entrance m
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:block;[^}]*height:100dvh;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.curtain-sticky-stage,\s*\.curtain-sticky-stage > \.hero\s*\{[^}]*height:100vh;[^}]*height:100lvh;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.curtain-sticky-stage,\s*\.curtain-sticky-stage > \.hero\s*\{[^}]*height:100vh;[^}]*height:100svh;/s.test(
         style
     ));
     assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
