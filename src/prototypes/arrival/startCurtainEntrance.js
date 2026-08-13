@@ -4,7 +4,7 @@ import {
 } from "../identity/CharacterCellReplacement.js";
 
 export const CURTAIN_ENTRANCE_CONFIG = Object.freeze({
-    delayProgress: 0.10,
+    delayProgress: 0.04,
     startingOffsetViewportWidths: 1.10,
     offsetRemainingAtSnap: 0.55,
     snapFlightDuration: 280,

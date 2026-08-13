@@ -43,8 +43,8 @@ test("touch intent uses asymmetric dominance beyond a 12px dead zone", () => {
     equal(touchGestureIntent(0, 13), "vertical");
     equal(touchGestureIntent(14, 13), "horizontal");
     equal(touchGestureIntent(13, 14), "pending");
-    equal(touchGestureIntent(10, 14), "vertical");
-    equal(touchGestureIntent(10.5, 14), "pending");
+    equal(touchGestureIntent(8, 14), "vertical");
+    equal(touchGestureIntent(9, 14), "pending");
 });
 
 test("touch response smoothing follows without overshoot", () => {

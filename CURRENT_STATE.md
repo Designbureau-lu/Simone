@@ -12,7 +12,7 @@ Updated: 2026-08-13
   presentation-level entrance choreography; after landing, the existing mobile
   touch lifecycle is authoritative. Its canvas uses `touch-action: pan-y` and
   waits through a 12 px dead zone before pointer capture. Vertical intent
-  requires `1.35×` dominance; horizontal intent requires `1.05×` dominance.
+  requires `1.6×` dominance; horizontal intent requires `1.05×` dominance.
   Pending moves remain native and unprevented, so intentional vertical gestures
   stay native while horizontal drag and two-touch pinch retain their custom
   paths.
@@ -55,7 +55,7 @@ Updated: 2026-08-13
   10-second breath scales `0.975–1.025`, drifts within about ±8 px horizontally
   and ±6 px vertically, and does not animate rotation. The blob travels at 90%
   of page scroll speed; the pose is not rerandomized on scroll or resize.
-- The curtain entrance starts at `1.10` viewport widths with a 10% scroll dead
+- The curtain entrance starts at `1.10` viewport widths with a 4% scroll dead
   zone and a `0.55` viewport-width pre-flight target. At sticky-stage alignment,
   an independent 280 ms linear flight reaches exact zero. Curtain factors stay
   at `0.85` during travel. Impact immediately starts captured visible Periods

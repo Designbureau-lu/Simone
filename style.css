@@ -355,6 +355,8 @@ select{
 
         white-space:nowrap;
 
+        transform:translateY(10px);
+
     }
 
     .arrival-identity-artist,
@@ -546,7 +548,7 @@ select{
 
         width:max-content;
 
-        transform:translate(-50%,-50%);
+        transform:translate(-50%,calc(-50% + 10px));
 
         color:var(--color-text);
 

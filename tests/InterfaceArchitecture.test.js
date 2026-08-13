@@ -32,12 +32,12 @@ test("human scroll directly controls the pre-snap curtain position", () => {
     assert(motion.currentOffset > motion.offsetRemainingAtSnap);
 });
 
-test("curtain entrance retains a short ten-percent onset dead zone", () => {
+test("curtain entrance retains a short four-percent onset dead zone", () => {
     const motion = createEntranceMotion();
-    equal(CURTAIN_ENTRANCE_CONFIG.delayProgress, 0.10);
-    motion.updateScrollProgress(0.09);
+    equal(CURTAIN_ENTRANCE_CONFIG.delayProgress, 0.04);
+    motion.updateScrollProgress(0.03);
     equal(motion.currentOffset, motion.initialOffset);
-    motion.updateScrollProgress(0.11);
+    motion.updateScrollProgress(0.05);
     assert(motion.currentOffset < motion.initialOffset);
 });
 
@@ -183,7 +183,7 @@ test("mobile title fits one intrinsic composition between symmetric margins", as
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-language\s*\{[^}]*left:24px;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*position:absolute;[^}]*top:50%;[^}]*left:50%;[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;[^}]*width:max-content;[^}]*transform:translate\(-50%,-50%\);[^}]*font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*position:absolute;[^}]*top:50%;[^}]*left:50%;[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;[^}]*width:max-content;[^}]*transform:translate\(-50%,calc\(-50% \+ 10px\)\);[^}]*font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/s.test(
         style
     ));
     assert(!/@media \(max-width:767px\)[\s\S]*?\.arrival-identity-title\s*\{[^}]*justify-content:space-between;/s.test(
