@@ -355,7 +355,7 @@ select{
 
         white-space:nowrap;
 
-        transform:translateY(10px);
+        transform:translateY(clamp(36px,4.6vh,50px));
 
     }
 
@@ -548,7 +548,7 @@ select{
 
         width:max-content;
 
-        transform:translate(-50%,calc(-50% + 10px));
+        transform:translate(-50%,calc(-50% + 50px));
 
         color:var(--color-text);
 
@@ -687,6 +687,8 @@ select{
 
         pointer-events:none;
 
+        transform:translateY(24px);
+
     }
 
     #conversationBar > .conversation-bar-text{
@@ -711,7 +713,7 @@ select{
 
         height:1.2em;
 
-        transform:translateY(-50%);
+        transform:translateY(calc(-50% + 24px));
 
         opacity:0;
 
