@@ -1111,6 +1111,12 @@ select{
 
     }
 
+    .exhibition-information > .editorial-section:first-child{
+
+        margin-top:-140px;
+
+    }
+
     .editorial-section,
     .visit-information,
     .exhibition-footer{
