@@ -3,6 +3,7 @@ import {
     bindIdentityFontDiagnostic,
     bindConversationInterface,
     createTitleTransition,
+    artworkRepresentationUrlWithoutOverride,
     selectedArtworkRepresentationId
 } from "../src/application/startSimone.js";
 import {
@@ -621,8 +622,8 @@ test("debug controls expose the canonical renderer defaults", async () => {
     equal(page.getElementById("carrierDistanceNumber").value, "120");
     equal(page.getElementById("modelTransitionNumber").value, "50");
     equal(page.getElementById("drawCallProbeMode").value, "normal");
-    equal(page.getElementById("artworkSourceRepresentation").value, "b");
-    assert(page.querySelector(
+    equal(page.getElementById("artworkSourceRepresentation").value, "a");
+    assert(!page.querySelector(
         "#artworkSourceRepresentation option[value='a']"
     ).disabled);
     assert(!page.querySelector(
@@ -640,6 +641,13 @@ test("DEV artwork source selection is explicit and rejects missing tiers", () =>
     equal(
         selectedArtworkRepresentationId(
             ["a", "b"],
+            "https://example.test/"
+        ),
+        "a"
+    );
+    equal(
+        selectedArtworkRepresentationId(
+            ["a", "b"],
             "https://example.test/?debug-artwork-source=a"
         ),
         "a"
@@ -654,6 +662,12 @@ test("DEV artwork source selection is explicit and rejects missing tiers", () =>
         rejected = true;
     }
     assert(rejected);
+    equal(
+        artworkRepresentationUrlWithoutOverride(
+            "https://example.test/?dev=1&debug-artwork-source=b#curtain"
+        ),
+        "https://example.test/?dev=1#curtain"
+    );
 });
 
 test("debug panel is ordered, titleless, and excludes temporary navigation", async () => {

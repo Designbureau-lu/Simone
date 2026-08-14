@@ -25,10 +25,8 @@ export function artworkSegmentsFromManifest(
 
         return Object.freeze({
             name: segment.id,
-            url: new URL(
-                encodeURIComponent(representation.src),
-                imageDirectory
-            ).href,
+            url: new URL(encodedRelativePath(representation.src), imageDirectory)
+                .href,
             width: segment.width,
             height: segment.height,
             sourceWidth: representation.width,
@@ -150,4 +148,15 @@ function validateRepresentation(representation, segment, ids) {
 
 function positiveInteger(value) {
     return Number.isSafeInteger(value) && value > 0;
+}
+
+function encodedRelativePath(path) {
+    const components = path.split("/");
+    if (path.startsWith("/")
+        || components.some((component) => (
+            component === "" || component === "." || component === ".."
+        ))) {
+        throw new TypeError("Artwork representation path is invalid.");
+    }
+    return components.map(encodeURIComponent).join("/");
 }

@@ -47,13 +47,15 @@ Updated: 2026-08-14
   raster representations. Every segment remains `5000 × 2500` logical units,
   so artwork width stays 60,000 columns and geometry, Viewport, Carrier
   Distance, navigation, interaction, destination Canvas, and normal draw-call
-  count are representation-invariant. The repository currently contains only
-  `SOURCE B`, the authentic `2500 × 1250` replacement raster, sampled at `0.5`
-  in both axes without independently rounding source coordinates. DEV exposes
-  `SOURCE A` as unavailable until genuine `5000 × 2500` assets are supplied;
-  it never duplicates or upscales SOURCE B. The source selector reloads the
-  page, remains independent of the 2:1 draw-call probe, and reports selected
-  representation, logical dimensions, raster dimensions, and scale.
+  count are representation-invariant. `SOURCE A` uses the genuine
+  `5000 × 2500` exports in `public/images/source-a/` and is the default for a
+  normal or freshly reloaded page. `SOURCE B` uses the corresponding
+  `2500 × 1250` rasters in `public/images/source-b/`, sampled at `0.5` in both
+  axes without independently rounding source coordinates. The DEV source
+  selector performs a one-load override, remains independent of the 2:1
+  draw-call probe, and reports selected representation, logical dimensions,
+  raster dimensions, and scale. The override is removed from browser history
+  after selection, so a later reload returns to SOURCE A.
 - Real Android 10 Chrome measurement of the preceding full-coordinate scene
   recorded 43.2 ms frame median / 79.2 ms p95 and 34.8 ms rendering median /
   55.2 ms p95 at 1,080 draw calls, despite fewer destination pixels than fast

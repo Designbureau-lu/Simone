@@ -224,6 +224,7 @@ export async function loadManifestArtwork(
         const representationId = selectedArtworkRepresentationId(
             availableRepresentationIds
         );
+        clearArtworkRepresentationOverride();
         if (representationControl) {
             bindArtworkRepresentationControl(
                 representationControl,
@@ -279,7 +280,7 @@ export function selectedArtworkRepresentationId(
 ) {
     const requested = new URL(locationUrl).searchParams.get(
         "debug-artwork-source"
-    ) ?? "b";
+    ) ?? "a";
     if (!availableIds.includes(requested)) {
         throw new RangeError(
             `Artwork representation "${requested}" is not available for `
@@ -287,6 +288,24 @@ export function selectedArtworkRepresentationId(
         );
     }
     return requested;
+}
+
+function clearArtworkRepresentationOverride() {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("debug-artwork-source")) {
+        return;
+    }
+    window.history.replaceState(
+        window.history.state,
+        "",
+        artworkRepresentationUrlWithoutOverride(url.href)
+    );
+}
+
+export function artworkRepresentationUrlWithoutOverride(locationUrl) {
+    const url = new URL(locationUrl);
+    url.searchParams.delete("debug-artwork-source");
+    return url.href;
 }
 
 function bindArtworkRepresentationControl(control, availableIds, selectedId) {

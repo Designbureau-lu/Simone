@@ -112,8 +112,8 @@ const manifestSource = JSON.stringify({
             logicalWidth: 4,
             logicalHeight: 2,
             representations: [
-                { id: "a", src: "First A.jpg", width: 4, height: 2, byteSize: 100 },
-                { id: "b", src: "First B.jpg", width: 2, height: 1, byteSize: 50 }
+                { id: "a", src: "source-a/First A.jpg", width: 4, height: 2, byteSize: 100 },
+                { id: "b", src: "source-b/First B.jpg", width: 2, height: 1, byteSize: 50 }
             ]
         },
         {
@@ -121,8 +121,8 @@ const manifestSource = JSON.stringify({
             logicalWidth: 4,
             logicalHeight: 2,
             representations: [
-                { id: "a", src: "Second A.jpg", width: 4, height: 2, byteSize: 100 },
-                { id: "b", src: "Second B.jpg", width: 2, height: 1, byteSize: 50 }
+                { id: "a", src: "source-a/Second A.jpg", width: 4, height: 2, byteSize: 100 },
+                { id: "b", src: "source-b/Second B.jpg", width: 2, height: 1, byteSize: 50 }
             ]
         }
     ]
@@ -135,7 +135,7 @@ const metadata = artworkSegmentsFromManifest(
 check(metadata.length === 2, "structured metadata segment count changed");
 check(
     metadata[1].url
-        === "https://example.test/simone/public/images/Second%20A.jpg",
+        === "https://example.test/simone/public/images/source-a/Second%20A.jpg",
     "structured metadata URL resolution changed"
 );
 check(
