@@ -129,9 +129,11 @@ Canvas
 
 **Responsibilities**
 
-- Define logical artwork structure independently of source-image dimensions.
+- Define the 4,400-unit-per-segment semantic READ grid independently of the
+  5,000-unit intrinsic artwork and curtain geometry.
 - Parse UTF-8 project-span metadata.
-- Convert cumulative logical unit ranges into artwork coordinates.
+- Convert cumulative semantic unit ranges explicitly into intrinsic artwork
+  coordinates when navigation needs them.
 - Disable semantic navigation when project spans exceed loaded capacity.
 
 **Current layout**
@@ -140,6 +142,10 @@ Canvas
 - Column width: 400 px.
 - Repetitions per loaded image: 10.
 - Unit width: gutter width + column width.
+
+These values describe semantic project placement only. They do not set the
+physical width of the artwork-bearing curtain. Each segment occupies its full
+5,000-column intrinsic geometry span, irrespective of raster representation.
 
 **Interaction-mode boundary**
 

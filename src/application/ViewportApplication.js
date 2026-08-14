@@ -11,9 +11,6 @@ const VIEWPORT_SAMPLING_GUARD_PERIODS = 4;
 
 /** SIMONE application using virtual geometry and viewing-space output. */
 export class ViewportApplication extends SimoneApplication {
-    #logicalSourceXs = null;
-    #logicalSourceArtwork = null;
-    #logicalSourceImageWidth = null;
     #currentSurface = null;
     #sampledSourceRange = null;
     #artworkSegmentScheduler = null;
@@ -171,7 +168,7 @@ export class ViewportApplication extends SimoneApplication {
         const periodGeometryStartedAt = performance.now();
         const virtualFrame = surface.frameFor(
             {
-                width: this.logicalArtworkWidth,
+                width: this.geometryArtworkWidth,
                 height: this.artwork.height
             },
             this.curtainField
@@ -427,9 +424,8 @@ export class ViewportApplication extends SimoneApplication {
     }
 
     #placementAt(surface, sourceX) {
-        const logicalSourceXs = this.#logicalSourceXsForArtwork();
         return surface.mapColumn(
-            { sourceX: logicalSourceXs[sourceX] },
+            { sourceX },
             this.curtainField
         );
     }
@@ -440,24 +436,16 @@ export class ViewportApplication extends SimoneApplication {
             return Object.freeze({ start: 0, end: 0 });
         }
 
-        const logicalStart = Math.min(
+        const intrinsicStart = Math.min(
             periodSamplingRange.logicalStart,
-            this.logicalArtworkWidth
+            this.geometryArtworkWidth
         );
-        const logicalEnd = Math.min(
+        const intrinsicEnd = Math.min(
             periodSamplingRange.logicalEnd,
-            this.logicalArtworkWidth
+            this.geometryArtworkWidth
         );
-        const start = this.artwork.sourceXForLogicalX(
-            logicalStart,
-            this.logicalImageWidth
-        );
-        const end = logicalEnd === this.logicalArtworkWidth
-            ? this.artwork.width
-            : this.artwork.sourceXForLogicalX(
-                logicalEnd,
-                this.logicalImageWidth
-            );
+        const start = Math.floor(intrinsicStart);
+        const end = Math.ceil(intrinsicEnd);
 
         return Object.freeze({
             start: Math.max(0, start - 1),
@@ -500,24 +488,6 @@ export class ViewportApplication extends SimoneApplication {
         });
     }
 
-    #logicalSourceXsForArtwork() {
-        if (this.#logicalSourceArtwork === this.artwork
-            && this.#logicalSourceImageWidth === this.logicalImageWidth) {
-            return this.#logicalSourceXs;
-        }
-
-        const logicalSourceXs = new Float64Array(this.artwork.width);
-        for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
-            logicalSourceXs[sourceX] = this.artwork.logicalXForSourceX(
-                sourceX,
-                this.logicalImageWidth
-            );
-        }
-        this.#logicalSourceXs = logicalSourceXs;
-        this.#logicalSourceArtwork = this.artwork;
-        this.#logicalSourceImageWidth = this.logicalImageWidth;
-        return logicalSourceXs;
-    }
 }
 
 export function predictedInertialCameraTravel(

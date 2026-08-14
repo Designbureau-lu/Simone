@@ -44,8 +44,9 @@ export class SimoneApplication {
         this.projectedColumns = Object.freeze([]);
         this.projectedContentBounds = null;
         this.imageCount = 0;
-        this.logicalArtworkWidth = 0;
-        this.logicalImageWidth = 0;
+        this.semanticArtworkWidth = 0;
+        this.semanticImageWidth = 0;
+        this.geometryArtworkWidth = 0;
         this.sceneVisibleFactor = curtainField.resetCurtainState;
         this.horizontalReframeFrame = null;
         this.resetCurtainFrame = null;
@@ -74,8 +75,9 @@ export class SimoneApplication {
         this.artwork = artwork;
         this.imageCount = this.artwork.imageCount;
         const layout = resolveArtworkLayout(artworkLayout);
-        this.logicalImageWidth = layout.repetitionsPerImage * layout.unitWidth;
-        this.logicalArtworkWidth = this.imageCount * this.logicalImageWidth;
+        this.semanticImageWidth = layout.repetitionsPerImage * layout.unitWidth;
+        this.semanticArtworkWidth = this.imageCount * this.semanticImageWidth;
+        this.geometryArtworkWidth = this.artwork.width;
         this.viewport.setProjectedWindow(0, 0);
         this.#configureCurtainField();
         this.render();
@@ -370,14 +372,11 @@ export class SimoneApplication {
     }
 
     projectProjectionFor(project) {
-        const logicalArtworkWidth = this.logicalArtworkWidth;
+        const semanticArtworkWidth = this.semanticArtworkWidth;
         const actualAssembledArtworkWidth = this.artwork.width;
-        const sourceX = this.artwork.sourceXForLogicalX(
-            project.artworkStart,
-            this.logicalImageWidth
-        );
+        const sourceX = this.sourceXForSemanticX(project.artworkStart);
         const scaleFactor = actualAssembledArtworkWidth
-            / logicalArtworkWidth;
+            / semanticArtworkWidth;
         const projectedColumn = this.projectedColumnAt(sourceX);
         if (!projectedColumn) {
             return null;
@@ -388,10 +387,7 @@ export class SimoneApplication {
             project.artworkStart + project.artworkEnd
         ) / 2;
         const centerSourceX = Number.isFinite(semanticCenter)
-            ? this.artwork.sourceXForLogicalX(
-                semanticCenter,
-                this.logicalImageWidth
-            )
+            ? this.sourceXForSemanticX(semanticCenter)
             : null;
         const centerProjectedColumn = centerSourceX === null
             ? null
@@ -412,7 +408,8 @@ export class SimoneApplication {
         );
 
         return Object.freeze({
-            logicalArtworkWidth,
+            semanticArtworkWidth,
+            geometryArtworkWidth: this.geometryArtworkWidth,
             actualAssembledArtworkWidth,
             renderedArtworkWidth,
             projectArtworkStart: project.artworkStart,
@@ -601,14 +598,8 @@ export class SimoneApplication {
         }
 
         return this.projectNavigation.projects.find((project) => {
-            const start = this.artwork.sourceXForLogicalX(
-                project.artworkStart,
-                this.logicalImageWidth
-            );
-            const end = this.artwork.sourceXForLogicalX(
-                project.artworkEnd,
-                this.logicalImageWidth
-            );
+            const start = this.sourceXForSemanticX(project.artworkStart);
+            const end = this.sourceXForSemanticX(project.artworkEnd);
             return sourceX >= start && sourceX < end;
         }) ?? null;
     }
@@ -1057,10 +1048,7 @@ export class SimoneApplication {
             return null;
         }
 
-        const grabSourceX = this.artwork.sourceXForLogicalX(
-            project.artworkStart,
-            this.logicalImageWidth
-        );
+        const grabSourceX = this.sourceXForSemanticX(project.artworkStart);
         const grabColumn = this.projectedColumnAt(grabSourceX);
         if (!grabColumn) {
             return null;
@@ -1120,14 +1108,8 @@ export class SimoneApplication {
             return;
         }
 
-        const firstSourceX = this.artwork.sourceXForLogicalX(
-            project.artworkStart,
-            this.logicalImageWidth
-        );
-        const lastSourceX = this.artwork.sourceXForLogicalX(
-            project.artworkEnd - 1,
-            this.logicalImageWidth
-        );
+        const firstSourceX = this.sourceXForSemanticX(project.artworkStart);
+        const lastSourceX = this.sourceXForSemanticX(project.artworkEnd - 1);
         const firstPeriodIndex = this.projectedColumnAt(firstSourceX)
             ?.placement.periodIndex;
         const lastPeriodIndex = this.projectedColumnAt(lastSourceX)
@@ -1186,7 +1168,7 @@ export class SimoneApplication {
         const appearance = this.shading.appearanceFor();
 
         const contentFrame = surface.frameFor(
-            this.#logicalArtworkFrame(),
+            this.#intrinsicArtworkFrame(),
             this.curtainField
         );
         const projectedColumns = this.#projectGeometry(surface);
@@ -1303,10 +1285,7 @@ export class SimoneApplication {
             const column = this.artwork.columnAt(sourceX);
             const geometryColumn = Object.freeze({
                 ...column,
-                sourceX: this.artwork.logicalXForSourceX(
-                    sourceX,
-                    this.logicalImageWidth
-                )
+                sourceX: column.artworkX
             });
             placements[sourceX] = surface.mapColumn(
                 geometryColumn,
@@ -1337,16 +1316,23 @@ export class SimoneApplication {
 
     #configureCurtainField() {
         this.curtainField.configureFor(
-            this.logicalArtworkWidth,
+            this.geometryArtworkWidth,
             this.parameters.carrierDistance
         );
     }
 
-    #logicalArtworkFrame() {
+    #intrinsicArtworkFrame() {
         return Object.freeze({
-            width: this.logicalArtworkWidth,
+            width: this.geometryArtworkWidth,
             height: this.artwork.height
         });
+    }
+
+    sourceXForSemanticX(semanticX) {
+        return this.artwork.sourceXForSemanticX(
+            semanticX,
+            this.semanticImageWidth
+        );
     }
 
 }

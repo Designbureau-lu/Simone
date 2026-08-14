@@ -43,11 +43,16 @@ Updated: 2026-08-14
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.
 
-- Artwork metadata now separates one authoritative logical segment from its
-  raster representations. Every segment remains `5000 × 2500` logical units,
-  so artwork width stays 60,000 columns and geometry, Viewport, Carrier
-  Distance, navigation, interaction, destination Canvas, and normal draw-call
-  count are representation-invariant. `SOURCE A` uses the genuine
+- Artwork metadata now separates one authoritative intrinsic segment from its
+  raster representations and from READ's semantic navigation grid. Every
+  segment remains `5000 × 2500` intrinsic units, and the curtain geometry maps
+  its 5,000 immutable columns directly across those 5,000 units. The complete
+  surface is therefore 60,000 units wide and contains 500 Periods at the
+  approved 120-unit Carrier Distance; a completely flat segment reconstructs
+  at its source 2:1 aspect ratio. READ metadata remains unchanged at 4,400
+  semantic units per segment (`10 × (400 + 40)`) and is converted explicitly
+  to intrinsic source/geometry coordinates only at navigation boundaries.
+  `SOURCE A` uses the genuine
   `5000 × 2500` exports in `public/images/source-a/` and is the default for a
   normal or freshly reloaded page. `SOURCE B` uses the corresponding
   `2500 × 1250` rasters in `public/images/source-b/`, sampled at `0.5` in both

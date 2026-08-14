@@ -174,23 +174,32 @@ export class ImmutableArtwork {
         return this.#columns[sourceX] ?? null;
     }
 
-    logicalXForSourceX(sourceX, logicalImageWidth) {
+    semanticXForSourceX(sourceX, semanticImageWidth) {
         const segmentIndex = this.#segmentIndexForSourceX(sourceX);
         const segment = this.#segments[segmentIndex];
-        return segmentIndex * logicalImageWidth
+        return segmentIndex * semanticImageWidth
             + (sourceX - segment.sourceStart)
-                / segment.width * logicalImageWidth;
+                / segment.width * semanticImageWidth;
     }
 
-    sourceXForLogicalX(logicalX, logicalImageWidth) {
+    sourceXForSemanticX(semanticX, semanticImageWidth) {
+        const semanticArtworkWidth = this.#segments.length
+            * semanticImageWidth;
+        if (semanticX >= semanticArtworkWidth) {
+            return this.width;
+        }
+        if (semanticX <= 0) {
+            return 0;
+        }
         const segmentIndex = Math.min(
-            Math.floor(logicalX / logicalImageWidth),
+            Math.floor(semanticX / semanticImageWidth),
             this.#segments.length - 1
         );
         const segment = this.#segments[segmentIndex];
-        const localLogicalX = logicalX - segmentIndex * logicalImageWidth;
+        const localSemanticX = semanticX
+            - segmentIndex * semanticImageWidth;
         return segment.sourceStart + Math.floor(
-            localLogicalX / logicalImageWidth * segment.width
+            localSemanticX / semanticImageWidth * segment.width
         );
     }
 

@@ -990,9 +990,9 @@ test("drag cancels Moses and restores its exact pre-click curtain state", () => 
 test("clicked projected artwork resolves to its semantic project", () => {
     const application = createApplication(createViewport(0));
     application.artwork = {
-        sourceXForLogicalX: (logicalX) => logicalX
+        sourceXForSemanticX: (semanticX) => semanticX
     };
-    application.logicalImageWidth = 1000;
+    application.semanticImageWidth = 1000;
     application.projectNavigation = {
         enabled: true,
         projects: [
@@ -1515,9 +1515,10 @@ test("selected project opens as one uniform semantic period span", () => {
     application.curtainField = field;
     application.render = () => {};
     application.artwork.width = 1000;
-    application.artwork.sourceXForLogicalX = (logicalX) => logicalX;
-    application.logicalArtworkWidth = 1000;
-    application.logicalImageWidth = 1000;
+    application.artwork.sourceXForSemanticX = (semanticX) => semanticX;
+    application.semanticArtworkWidth = 1000;
+    application.semanticImageWidth = 1000;
+    application.geometryArtworkWidth = 1000;
     application.projectedContentBounds = { start: 0, end: 900 };
     application.projectedColumns = Array.from(
         { length: 1000 },
@@ -1575,9 +1576,10 @@ test("semantic project navigation moves both ways without wrapping", () => {
     application.render = () => {};
     application.projectedColumns = [];
     application.artwork.width = 1000;
-    application.artwork.sourceXForLogicalX = (logicalX) => logicalX;
-    application.logicalArtworkWidth = 1000;
-    application.logicalImageWidth = 1000;
+    application.artwork.sourceXForSemanticX = (semanticX) => semanticX;
+    application.semanticArtworkWidth = 1000;
+    application.semanticImageWidth = 1000;
+    application.geometryArtworkWidth = 1000;
     application.projectedContentBounds = { start: 0, end: 900 };
     application.projectedColumns[0] = {
         placement: { targetX: 0, periodIndex: 0 }
@@ -1709,11 +1711,12 @@ test("later project spans cannot change an earlier projected boundary", () => {
     const application = createApplication(createViewport(100));
     const project = { title: "Bubles", artworkStart: 1320 };
     application.artwork.width = 5000;
-    application.artwork.sourceXForLogicalX = (logicalX) => Math.floor(
-        logicalX * 5000 / 4400
+    application.artwork.sourceXForSemanticX = (semanticX) => Math.floor(
+        semanticX * 5000 / 4400
     );
-    application.logicalArtworkWidth = 4400;
-    application.logicalImageWidth = 4400;
+    application.semanticArtworkWidth = 4400;
+    application.semanticImageWidth = 4400;
+    application.geometryArtworkWidth = 5000;
     application.projectedColumns = [];
     application.projectedColumns[1500] = {
         placement: { targetX: 1335.92 }
@@ -1735,6 +1738,23 @@ test("later project spans cannot change an earlier projected boundary", () => {
     equal(before.projectArtworkStart, 1320);
     equal(before.sourceX, 1500);
     closeTo(before.requestedNextTarget, after.requestedNextTarget);
+});
+
+test("intrinsic geometry stays separate from semantic navigation width", () => {
+    const application = createApplication(createViewport(0));
+    application.curtainField = new CurtainField();
+    application.parameters = new SurfaceParameters();
+    application.render = () => {};
+    application.initializeArtwork({
+        width: 60_000,
+        height: 2_500,
+        imageCount: 12
+    });
+
+    equal(application.semanticImageWidth, 4_400);
+    equal(application.semanticArtworkWidth, 52_800);
+    equal(application.geometryArtworkWidth, 60_000);
+    equal(application.curtainField.periods.length, 500);
 });
 
 test("viewport preserves the left bound and permits trailing white space", () => {
@@ -1789,10 +1809,11 @@ function semanticNavigationApplication(useLeadingProjectAlignment) {
     );
     application.artwork = {
         width: 1400,
-        sourceXForLogicalX: (logicalX) => logicalX
+        sourceXForSemanticX: (semanticX) => semanticX
     };
-    application.logicalArtworkWidth = 1400;
-    application.logicalImageWidth = 1400;
+    application.semanticArtworkWidth = 1400;
+    application.semanticImageWidth = 1400;
+    application.geometryArtworkWidth = 1400;
     application.projectedContentBounds = { start: 0, end: 1000 };
     application.projectedColumns = Array.from(
         { length: 1401 },

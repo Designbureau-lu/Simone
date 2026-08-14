@@ -209,10 +209,10 @@ check(
     "decoded metadata artwork changed final column rendering descriptors"
 );
 check(
-    metadataArtwork.logicalXForSourceX(4, 100)
-        === legacyArtwork.logicalXForSourceX(4, 100)
-        && metadataArtwork.sourceXForLogicalX(120, 100)
-            === legacyArtwork.sourceXForLogicalX(120, 100),
+    metadataArtwork.semanticXForSourceX(4, 100)
+        === legacyArtwork.semanticXForSourceX(4, 100)
+        && metadataArtwork.sourceXForSemanticX(120, 100)
+            === legacyArtwork.sourceXForSemanticX(120, 100),
     "metadata artwork coordinate conversion differs from the legacy model"
 );
 
@@ -308,6 +308,46 @@ check(
         && sourceBArtwork.columnAt(2000).sourceWidth === 0.5,
     "representation parity changed something other than raster sampling"
 );
+const flatParameters = new SurfaceParameters();
+const flatField = new CurtainField({ resetCurtainState: 1 });
+flatField.configureFor(sourceAArtwork.width, flatParameters.carrierDistance);
+flatField.resolve(flatParameters);
+const flatSurface = new CircularFoldSurface();
+flatSurface.frameFor({
+    width: sourceAArtwork.width,
+    height: sourceAArtwork.height
+}, flatField);
+const flatFirst = flatSurface.mapColumn({ sourceX: 0 }, flatField);
+const flatLast = flatSurface.mapColumn({ sourceX: 4999 }, flatField);
+const flatDestinationWidth = flatLast.targetX - flatFirst.targetX + 1;
+check(
+    flatDestinationWidth === 5000
+        && flatDestinationWidth / sourceAArtwork.height === 2
+        && flatDestinationWidth / sourceAArtwork.width === 1,
+    "flat intrinsic geometry does not reconstruct the segment at 2:1"
+);
+check(
+    [0, 1, 2200, 4399, 4999].every((sourceX, index, values) => (
+        index === 0
+        || flatSurface.mapColumn({ sourceX }, flatField).targetX
+            > flatSurface.mapColumn({ sourceX: values[index - 1] }, flatField)
+                .targetX
+    )),
+    "flat source columns are not monotonic across 5000 geometry units"
+);
+check(
+    sourceAArtwork.sourceXForSemanticX(0, 4400) === 0
+        && sourceAArtwork.sourceXForSemanticX(1320, 4400) === 1500
+        && sourceAArtwork.sourceXForSemanticX(2200, 4400) === 2500
+        && sourceAArtwork.sourceXForSemanticX(4400, 4400) === 5000,
+    "semantic 4400-unit project boundaries do not map to intrinsic geometry"
+);
+const fullInstallationField = new CurtainField();
+fullInstallationField.configureFor(60_000, 120);
+check(
+    fullInstallationField.periods.length === 500,
+    "intrinsic 60000-unit installation does not create 500 Periods"
+);
 let decodedDimensionMismatchRejected = false;
 try {
     sourceBArtwork.setSegmentSource(0, canvasSource(5000, 2500));
@@ -336,8 +376,8 @@ const sourceBNavigation = createProjectNavigation({
 check(
     JSON.stringify(sourceANavigation.projects)
         === JSON.stringify(sourceBNavigation.projects)
-        && sourceAArtwork.sourceXForLogicalX(2200, 4400)
-            === sourceBArtwork.sourceXForLogicalX(2200, 4400),
+        && sourceAArtwork.sourceXForSemanticX(2200, 4400)
+            === sourceBArtwork.sourceXForSemanticX(2200, 4400),
     "raster representation changed project or viewport navigation targets"
 );
 check(
@@ -560,12 +600,12 @@ function decodedRepresentation(manifest, id) {
 function representativePlacement(artwork, sourceX) {
     const parameters = new SurfaceParameters();
     const field = new CurtainField();
-    field.configureFor(4400, parameters.carrierDistance);
+    field.configureFor(artwork.width, parameters.carrierDistance);
     field.resolve(parameters);
     const surface = new CircularFoldSurface();
-    surface.frameFor({ width: 4400, height: artwork.height }, field);
+    surface.frameFor({ width: artwork.width, height: artwork.height }, field);
     return surface.mapColumn({
-        sourceX: artwork.logicalXForSourceX(sourceX, 4400)
+        sourceX
     }, field);
 }
 
