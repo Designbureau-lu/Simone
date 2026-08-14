@@ -26,6 +26,10 @@ export function artworkSegmentsFromManifest(source, applicationBaseUrl) {
             || segment.width <= 0
             || !Number.isSafeInteger(segment.height)
             || segment.height <= 0
+            || !validOptionalExtent(segment.sourceWidth)
+            || !validOptionalExtent(segment.sourceHeight)
+            || ((segment.sourceWidth === undefined)
+                !== (segment.sourceHeight === undefined))
             || (segment.byteSize !== undefined
                 && (!Number.isSafeInteger(segment.byteSize)
                     || segment.byteSize <= 0))) {
@@ -37,7 +41,14 @@ export function artworkSegmentsFromManifest(source, applicationBaseUrl) {
             url: new URL(encodeURIComponent(segment.src), imageDirectory).href,
             width: segment.width,
             height: segment.height,
+            sourceWidth: segment.sourceWidth ?? segment.width,
+            sourceHeight: segment.sourceHeight ?? segment.height,
             byteSize: segment.byteSize ?? null
         });
     }));
+}
+
+function validOptionalExtent(value) {
+    return value === undefined
+        || (Number.isSafeInteger(value) && value > 0);
 }

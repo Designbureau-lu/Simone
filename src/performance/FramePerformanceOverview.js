@@ -161,6 +161,7 @@ export class FramePerformanceOverview {
                 current?.destinationPixelCount
             )),
             valueRow("MODE", probeModeLabel(current?.drawCallProbeMode)),
+            valueRow("SOURCE", current?.sourceDescription ?? "—"),
             "",
             `${"".padEnd(18)}${"Median".padStart(10)}`
                 + `${"p95".padStart(10)}`,

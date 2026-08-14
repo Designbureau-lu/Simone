@@ -43,6 +43,20 @@ Updated: 2026-08-13
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.
 
+- The current artwork is a temporary source-resolution diagnostic. Each of the
+  twelve segments retains its authoritative `5000 × 2500` logical dimensions,
+  so artwork width remains 60,000 columns and the approved geometry, Viewport,
+  Carrier Distance, interaction, destination Canvas, and normal draw-call count
+  remain unchanged. The decoded JPEG for each segment is `2500 × 1250`; logical
+  source coordinates map to bitmap coordinates at `0.5` in both axes. The DEV
+  capture identifies this explicitly as `HALF-RES 2500×1250 / LOGICAL
+  5000×2500`. This is a diagnostic state, not an approved optimization.
+- Real Android 10 Chrome measurement of the preceding full-coordinate scene
+  recorded 43.2 ms frame median / 79.2 ms p95 and 34.8 ms rendering median /
+  55.2 ms p95 at 1,080 draw calls, despite fewer destination pixels than fast
+  desktop Chrome emulation. This strengthens the narrow-`drawImage()` workload
+  hypothesis without identifying Chrome's internal raster/compositor cause.
+
 - The page has three normal-flow parts: a `100dvh` live identity screen, the
   existing curtain inside a `200dvh` sticky stage, and the semantic exhibition
   information article. Root scrolling uses `y proximity`; Screen 1 and the

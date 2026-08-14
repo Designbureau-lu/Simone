@@ -1,8 +1,9 @@
 /**
  * Immutable description of one continuous source artwork.
  *
- * Artwork is sacred: this model exposes references to exact vertical source
- * columns. It never resamples, generates, edits, or interprets source pixels.
+ * Artwork is sacred: this model exposes immutable vertical source mappings.
+ * Temporary diagnostic metadata may map logical columns into a lower-resolution
+ * decoded source without changing the authoritative artwork coordinate system.
  */
 export class ImmutableArtwork {
     #segments;
@@ -29,6 +30,8 @@ export class ImmutableArtwork {
             url: null,
             width: sourceWidthFor(source),
             height: sourceHeightFor(source),
+            sourceWidth: sourceWidthFor(source),
+            sourceHeight: sourceHeightFor(source),
             source
         }));
         this.#initialize(descriptors);
@@ -50,6 +53,8 @@ export class ImmutableArtwork {
                 sourceStart,
                 width: descriptor.width,
                 height: descriptor.height,
+                sourceWidth: descriptor.sourceWidth ?? descriptor.width,
+                sourceHeight: descriptor.sourceHeight ?? descriptor.height,
                 source: descriptor.source ?? null
             };
             sourceStart += segment.width;
@@ -61,6 +66,7 @@ export class ImmutableArtwork {
         this.width = sourceStart;
         this.height = Math.max(...this.#segments.map(({ height }) => height));
         this.imageCount = this.#segments.length;
+        this.sourceDescription = sourceDescriptionFor(this.#segments);
         this.#columns = new Array(this.width);
 
         for (const segment of this.#segments) {
@@ -85,7 +91,9 @@ export class ImmutableArtwork {
             url: segment.url,
             sourceStart: segment.sourceStart,
             width: segment.width,
-            height: segment.height
+            height: segment.height,
+            sourceWidth: segment.sourceWidth,
+            sourceHeight: segment.sourceHeight
         })));
     }
 
@@ -97,8 +105,8 @@ export class ImmutableArtwork {
         if (!isDecodedSource(source)) {
             throw new TypeError("Artwork segment source must be decoded.");
         }
-        if (sourceWidthFor(source) !== segment.width
-            || sourceHeightFor(source) !== segment.height) {
+        if (sourceWidthFor(source) !== segment.sourceWidth
+            || sourceHeightFor(source) !== segment.sourceHeight) {
             throw new RangeError(
                 `Artwork segment "${segment.name}" dimensions do not match its metadata.`
             );
@@ -133,20 +141,23 @@ export class ImmutableArtwork {
     }
 
     #createColumnsFor(segment) {
+        const sourceScaleX = segment.sourceWidth / segment.width;
         for (let sourceX = 0; sourceX < segment.width; sourceX += 1) {
             const artworkX = segment.sourceStart + sourceX;
             this.#columns[artworkX] = Object.freeze({
                 source: segment.source,
-                sourceX,
+                sourceX: sourceX * sourceScaleX,
                 sourceY: 0,
                 width: 1,
                 height: segment.height,
+                sourceWidth: sourceScaleX,
+                sourceHeight: segment.sourceHeight,
                 artworkX
             });
         }
     }
 
-    /** Returns an immutable reference to one exact, one-pixel source column. */
+    /** Returns the immutable source mapping for one logical artwork column. */
     columnAt(sourceX) {
         if (!Number.isInteger(sourceX) || sourceX < 0 || sourceX >= this.width) {
             throw new RangeError("Artwork column is outside the source image.");
@@ -199,10 +210,31 @@ function validateMetadata(metadata) {
             || !Number.isSafeInteger(descriptor.width)
             || descriptor.width <= 0
             || !Number.isSafeInteger(descriptor.height)
-            || descriptor.height <= 0) {
+            || descriptor.height <= 0
+            || !Number.isSafeInteger(
+                descriptor.sourceWidth ?? descriptor.width
+            )
+            || (descriptor.sourceWidth ?? descriptor.width) <= 0
+            || !Number.isSafeInteger(
+                descriptor.sourceHeight ?? descriptor.height
+            )
+            || (descriptor.sourceHeight ?? descriptor.height) <= 0) {
             throw new TypeError("Artwork segment metadata is invalid.");
         }
     }
+}
+
+function sourceDescriptionFor(segments) {
+    const descriptions = new Set(segments.map((segment) => {
+        const halfResolution = segment.sourceWidth * 2 === segment.width
+            && segment.sourceHeight * 2 === segment.height;
+        const prefix = halfResolution ? "HALF-RES" : "SOURCE";
+        return `${prefix} ${segment.sourceWidth}×${segment.sourceHeight}`
+            + ` / LOGICAL ${segment.width}×${segment.height}`;
+    }));
+    return descriptions.size === 1
+        ? [...descriptions][0]
+        : "MIXED SOURCE RESOLUTIONS";
 }
 
 function sourceWidthFor(source) {

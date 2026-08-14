@@ -114,6 +114,8 @@ check(
 check(
     metadata[0].width === 3
         && metadata[0].height === 2
+        && metadata[0].sourceWidth === 3
+        && metadata[0].sourceHeight === 2
         && metadata[0].byteSize === 100,
     "structured metadata dimensions or byte size changed"
 );
@@ -171,6 +173,38 @@ check(
         && metadataArtwork.sourceXForLogicalX(120, 100)
             === legacyArtwork.sourceXForLogicalX(120, 100),
     "metadata artwork coordinate conversion differs from the legacy model"
+);
+
+const halfResolutionMetadata = artworkSegmentsFromManifest(JSON.stringify({
+    version: 1,
+    segments: [{
+        src: "Half.jpg",
+        width: 4,
+        height: 2,
+        sourceWidth: 2,
+        sourceHeight: 1
+    }]
+}), "https://example.test/simone/");
+const halfResolutionArtwork = ImmutableArtwork.fromMetadata(
+    halfResolutionMetadata
+);
+halfResolutionArtwork.setSegmentSource(0, canvasSource(2, 1));
+check(
+    halfResolutionArtwork.width === 4
+        && halfResolutionArtwork.height === 2,
+    "half-resolution source changed authoritative artwork dimensions"
+);
+check(
+    halfResolutionArtwork.columnAt(2).sourceX === 1
+        && halfResolutionArtwork.columnAt(2).sourceWidth === 0.5
+        && halfResolutionArtwork.columnAt(2).sourceHeight === 1
+        && halfResolutionArtwork.columnAt(2).height === 2,
+    "logical columns did not map to half-resolution bitmap coordinates"
+);
+check(
+    halfResolutionArtwork.sourceDescription
+        === "HALF-RES 2×1 / LOGICAL 4×2",
+    "half-resolution source diagnostic is unclear"
 );
 
 const schedulerMetadata = [
