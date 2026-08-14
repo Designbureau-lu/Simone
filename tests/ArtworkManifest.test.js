@@ -5,7 +5,10 @@ import {
 } from "../src/application/startSimone.js";
 import { loadArtwork } from "../src/artwork/loadArtwork.js";
 import { ImmutableArtwork } from "../src/artwork/ImmutableArtwork.js";
-import { artworkSegmentsFromManifest } from "../src/artwork/ArtworkManifest.js";
+import {
+    artworkRepresentationIdsFromManifest,
+    artworkSegmentsFromManifest
+} from "../src/artwork/ArtworkManifest.js";
 import {
     ArtworkSegmentScheduler,
     SegmentLoadState,
@@ -101,35 +104,32 @@ try {
 }
 
 const manifestSource = JSON.stringify({
-    version: 3,
+    version: 2,
     segments: [
         {
             id: "First image",
             logicalWidth: 4,
             logicalHeight: 2,
-            source: {
-                src: "artwork/First.jpg",
-                width: 4,
-                height: 2,
-                byteSize: 100
-            }
+            representations: [
+                { id: "a", src: "artwork/First.jpg", width: 4, height: 2, byteSize: 100 },
+                { id: "b", src: "source-b/First.jpg", width: 2, height: 1, byteSize: 50 }
+            ]
         },
         {
             id: "Second image",
             logicalWidth: 4,
             logicalHeight: 2,
-            source: {
-                src: "artwork/Second.jpg",
-                width: 4,
-                height: 2,
-                byteSize: 100
-            }
+            representations: [
+                { id: "a", src: "artwork/Second.jpg", width: 4, height: 2, byteSize: 100 },
+                { id: "b", src: "source-b/Second.jpg", width: 2, height: 1, byteSize: 50 }
+            ]
         }
     ]
 });
 const metadata = artworkSegmentsFromManifest(
     manifestSource,
-    "https://example.test/simone/"
+    "https://example.test/simone/",
+    "a"
 );
 check(metadata.length === 2, "structured metadata segment count changed");
 check(
@@ -142,25 +142,31 @@ check(
         && metadata[0].height === 2
         && metadata[0].sourceWidth === 4
         && metadata[0].sourceHeight === 2
-        && metadata[0].byteSize === 100,
+        && metadata[0].byteSize === 100
+        && metadata[0].representationId === "a",
     "structured metadata dimensions or byte size changed"
+);
+check(
+    artworkRepresentationIdsFromManifest(manifestSource).join(",") === "a,b",
+    "common artwork representations were not discovered"
 );
 let invalidMetadataRejected = false;
 try {
     artworkSegmentsFromManifest(JSON.stringify({
-        version: 3,
+        version: 2,
         segments: [{
             id: "Broken",
             logicalWidth: 4,
             logicalHeight: 2,
-            source: {
+            representations: [{
+                id: "b",
                 src: "Broken.jpg",
                 width: 3,
                 height: 1,
                 byteSize: 10
-            }
+            }]
         }]
-    }), "https://example.test/simone/");
+    }), "https://example.test/simone/", "b");
 } catch {
     invalidMetadataRejected = true;
 }
@@ -210,20 +216,19 @@ check(
 );
 
 const parityManifest = JSON.stringify({
-    version: 3,
+    version: 2,
     segments: [{
         id: "Production segment",
         logicalWidth: 5000,
         logicalHeight: 2500,
-        source: {
-            src: "Production.jpg",
-            width: 5000,
-            height: 2500,
-            byteSize: 1
-        }
+        representations: [
+            { id: "a", src: "Production.jpg", width: 5000, height: 2500, byteSize: 1 },
+            { id: "b", src: "Production Half.jpg", width: 2500, height: 1250, byteSize: 1 }
+        ]
     }]
 });
-const productionArtwork = decodedManifestArtwork(parityManifest);
+const productionArtwork = decodedManifestArtwork(parityManifest, "a");
+const halfResolutionArtwork = decodedManifestArtwork(parityManifest, "b");
 const productionDescriptor = productionArtwork.segmentDescriptors()[0];
 check(
     productionArtwork.width === 5000
@@ -234,6 +239,15 @@ check(
         && productionDescriptor.sourceStart === 0
         && productionDescriptor.width === 5000,
     "production source changed intrinsic column identity or artwork extent"
+);
+check(
+    halfResolutionArtwork.width === productionArtwork.width
+        && halfResolutionArtwork.height === productionArtwork.height
+        && halfResolutionArtwork.columnAt(2000).artworkX === 2000
+        && halfResolutionArtwork.columnAt(2000).sourceX === 1000
+        && halfResolutionArtwork.columnAt(2000).sourceWidth === 0.5
+        && halfResolutionArtwork.columnAt(2000).sourceHeight === 1250,
+    "half-resolution raster changed intrinsic artwork coordinates"
 );
 const flatParameters = new SurfaceParameters();
 const flatField = new CurtainField({ resetCurtainState: 1 });
@@ -276,10 +290,16 @@ check(
     "intrinsic 60000-unit installation does not create 500 Periods"
 );
 const productionPlacement = representativePlacement(productionArtwork, 2000);
+const halfResolutionPlacement = representativePlacement(
+    halfResolutionArtwork,
+    2000
+);
 check(
     productionPlacement.sourceX === 2000
-        && productionPlacement.periodIndex === 16,
-    "intrinsic source coordinate changed Period placement"
+        && productionPlacement.periodIndex === 16
+        && placementValues(productionPlacement)
+            === placementValues(halfResolutionPlacement),
+    "raster tier changed intrinsic Period placement"
 );
 const productionNavigation = createProjectNavigation({
     source: "First,3\nSecond,2",
@@ -287,11 +307,17 @@ const productionNavigation = createProjectNavigation({
 });
 check(
     productionNavigation.projects.length === 2
-        && productionArtwork.sourceXForSemanticX(2200, 4400) === 2500,
-    "semantic project or viewport navigation target changed"
+        && productionArtwork.sourceXForSemanticX(2200, 4400) === 2500
+        && halfResolutionArtwork.sourceXForSemanticX(2200, 4400) === 2500
+        && productionArtwork.imageCount === halfResolutionArtwork.imageCount,
+    "raster tier changed semantic project or viewport navigation targets"
 );
 const scheduledProductionArtwork = ImmutableArtwork.fromMetadata(
-    artworkSegmentsFromManifest(parityManifest, "https://example.test/simone/")
+    artworkSegmentsFromManifest(
+        parityManifest,
+        "https://example.test/simone/",
+        "b"
+    )
 );
 let scheduledSource = null;
 const productionScheduler = new ArtworkSegmentScheduler({
@@ -308,9 +334,9 @@ const productionScheduler = new ArtworkSegmentScheduler({
 });
 await productionScheduler.request([0], SegmentPriority.INITIAL_VIEWPORT);
 check(
-    scheduledSource.url.endsWith("Production.jpg")
-        && scheduledSource.width === 5000
-        && scheduledSource.height === 2500
+    scheduledSource.url.endsWith("Production%20Half.jpg")
+        && scheduledSource.width === 2500
+        && scheduledSource.height === 1250
         && scheduledProductionArtwork.allSegmentsDecoded,
     "scheduler did not fetch and decode the production source"
 );
@@ -482,10 +508,11 @@ function segmentMetadata(name, index) {
     });
 }
 
-function decodedManifestArtwork(manifest) {
+function decodedManifestArtwork(manifest, representationId) {
     const metadata = artworkSegmentsFromManifest(
         manifest,
-        "https://example.test/simone/"
+        "https://example.test/simone/",
+        representationId
     );
     const artwork = ImmutableArtwork.fromMetadata(metadata);
     artwork.setSegmentSource(0, canvasSource(
@@ -493,6 +520,17 @@ function decodedManifestArtwork(manifest) {
         metadata[0].sourceHeight
     ));
     return artwork;
+}
+
+function placementValues(placement) {
+    return [
+        placement.sourceX,
+        placement.periodIndex,
+        placement.targetX,
+        placement.targetY,
+        placement.branch,
+        placement.alpha
+    ].join("|");
 }
 
 function representativePlacement(artwork, sourceX) {

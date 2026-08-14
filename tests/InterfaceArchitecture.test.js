@@ -1,7 +1,9 @@
 import {
+    artworkRepresentationUrlWithoutOverride,
     bindDebugPanel,
     bindConversationInterface,
-    createTitleTransition
+    createTitleTransition,
+    selectedArtworkRepresentationId
 } from "../src/application/startSimone.js";
 import {
     CurtainEntranceMotion
@@ -620,10 +622,57 @@ test("debug controls expose the canonical renderer defaults", async () => {
     equal(page.getElementById("modelTransitionNumber").value, "50");
     equal(page.getElementById("drawCallProbeMode").value, "normal");
     equal(
+        Array.from(page.getElementById("artworkSourceRepresentation").options)
+            .map((option) => option.textContent.trim())
+            .join("|"),
+        "SOURCE A|SOURCE B"
+    );
+    equal(
         Array.from(page.getElementById("drawCallProbeMode").options)
             .map((option) => option.textContent.trim())
             .join("|"),
         "NORMAL|2:1 DRAW-CALL PROBE"
+    );
+});
+
+test("artwork source policy defaults by layout and permits DEV overrides", () => {
+    equal(
+        selectedArtworkRepresentationId(
+            ["a", "b"],
+            "https://example.test/",
+            false
+        ),
+        "a"
+    );
+    equal(
+        selectedArtworkRepresentationId(
+            ["a", "b"],
+            "https://example.test/",
+            true
+        ),
+        "b"
+    );
+    equal(
+        selectedArtworkRepresentationId(
+            ["a", "b"],
+            "https://example.test/?debug-artwork-source=a",
+            true
+        ),
+        "a"
+    );
+    equal(
+        selectedArtworkRepresentationId(
+            ["a", "b"],
+            "https://example.test/?debug-artwork-source=b",
+            false
+        ),
+        "b"
+    );
+    equal(
+        artworkRepresentationUrlWithoutOverride(
+            "https://example.test/?dev=1&debug-artwork-source=b#curtain"
+        ),
+        "https://example.test/?dev=1#curtain"
     );
 });
 

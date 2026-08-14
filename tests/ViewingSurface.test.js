@@ -162,6 +162,36 @@ test("exact flat columns render as one smoothed source span", () => {
     assert(metrics.drawImageCalls === 1);
 });
 
+test("half-resolution source preserves the exact flat-span path", () => {
+    const canvas = document.createElement("canvas");
+    const source = document.createElement("canvas");
+    source.width = 30;
+    source.height = 5;
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    renderer.beginFrame({ width: 60, height: 10 }, cueTestAppearance());
+
+    for (let artworkX = 0; artworkX < 60; artworkX += 1) {
+        renderer.drawColumn({
+            source,
+            sourceX: artworkX * 0.5,
+            sourceY: 0,
+            sourceWidth: 0.5,
+            sourceHeight: 5,
+            width: 1,
+            height: 10,
+            artworkX
+        }, {
+            x: artworkX,
+            y: 0,
+            width: 1,
+            height: 10
+        }, exactFlatAppearance("front", 0));
+    }
+
+    const metrics = renderer.endFrame();
+    assert(metrics.drawImageCalls === 1);
+});
+
 test("exact flat spans stop at Period and source-image boundaries", () => {
     const canvas = document.createElement("canvas");
     const firstSource = document.createElement("canvas");

@@ -94,9 +94,10 @@ Canvas
 
 **Responsibilities**
 
-- Parse ordered intrinsic segment dimensions and production source metadata
-  from `public/artwork.json` before decoding.
+- Parse ordered intrinsic segment dimensions and multiple raster-source
+  representations from `public/artwork.json` before decoding.
 - Establish the complete virtual-artwork coordinate system from metadata.
+- Select a raster representation without changing intrinsic segment spans.
 - Load and decode viewport-critical segments through a bounded priority queue,
   then continue remaining segments in the background.
 - Reprioritize queued segments from the current guarded viewport, signed Pan
@@ -110,9 +111,9 @@ Canvas
 
 - `ImmutableArtwork.fromMetadata()` establishes global coordinates before
   source pixels are available.
-- Each segment owns its authoritative intrinsic width and height. Its source
-  metadata separately supplies the URL, decoded pixel dimensions, and byte
-  size used for loading and validation.
+- Each segment owns its authoritative intrinsic width and height. Each raster
+  representation separately supplies its URL, decoded pixel dimensions, byte
+  size, and exact intrinsic-to-raster scale used for loading and validation.
 - `ArtworkSegmentScheduler` owns bounded request/decode state and priority.
 - `loadArtwork(files)` remains the all-at-once local-import rollback path.
 - `ImmutableArtwork.columnAt(sourceX)` returns an immutable source-column
@@ -401,7 +402,12 @@ Decoded source-column descriptors are immutable and cached for the lifetime of
 an imported artwork. Intrinsic coordinates and decoded-source coordinates stay
 separate in those descriptors so decoded dimensions can be validated without
 defining curtain geometry. The production source is the full-resolution
-`5,000 × 2,500` artwork for each segment.
+`5,000 × 2,500` artwork for each segment on desktop and non-mobile layouts.
+Mobile uses the corresponding `2,500 × 1,250` source at a `0.5` raster scale.
+Both sources represent the same 5,000 intrinsic columns; source rectangles use
+the exact rational scale without independently rounding fractional coordinates.
+The shared `<768px` layout boundary selects the mobile tier rather than DPR or
+user-agent detection. DEV can override either tier for direct A/B measurement.
 
 Before the exact-span path, a flat segment was still painted as isolated
 one-source-pixel columns. During downscaling, many projected columns rounded to

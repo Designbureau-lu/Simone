@@ -37,12 +37,15 @@ Updated: 2026-08-14
   across each compatible pair of destination columns while preserving Canvas
   dimensions, DPR, geometry, interaction, and shading-region bookkeeping. Its
   only purpose is to compare draw-call overhead with destination-fill cost on
-  real devices; `NORMAL` remains the page-load default. The isolated font
+  real devices; `NORMAL` remains the page-load default. Its Artwork Source
+  selector can reload either raster tier for direct A/B testing, and CAPTURE 5s
+  reports the active source, logical dimensions, raster dimensions, and scale.
+  The isolated font
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.
 
 - Artwork metadata separates one authoritative intrinsic segment from its
-  decoded production source and from READ's semantic navigation grid. Every
+  raster representations and from READ's semantic navigation grid. Every
   segment is `5000 × 2500` intrinsic units, and the curtain geometry maps
   its 5,000 immutable columns directly across those 5,000 units. The complete
   surface is therefore 60,000 units wide and contains 500 Periods at the
@@ -50,10 +53,13 @@ Updated: 2026-08-14
   at its source 2:1 aspect ratio. READ metadata remains unchanged at 4,400
   semantic units per segment (`10 × (400 + 40)`) and is converted explicitly
   to intrinsic source/geometry coordinates only at navigation boundaries. The
-  semantic grid totals 52,800 units but does not define curtain width. The
-  production manifest loads only the genuine full-resolution `5000 × 2500`
-  files in `public/images/artwork/`; decoded source dimensions remain explicit
-  for validation and source-coordinate mapping.
+  semantic grid totals 52,800 units but does not define curtain width. Desktop
+  and non-mobile layouts select the genuine `5000 × 2500` files in
+  `public/images/artwork/`. The existing `<768px` mobile layout boundary selects
+  the corresponding `2500 × 1250` files in `public/images/source-b/` for
+  performance. The `0.5` raster scale affects source sampling only: geometry,
+  Period count, navigation, project positions, and interaction remain intrinsic.
+  DEV can override either tier independently of the draw-call probe.
 - Viewing-space X and Y now share the virtual curtain-frame height, preserving
   the existing top/bottom fold-depth allowance while a flat `5000 × 2500`
   segment retains its exact 2:1 presentation ratio. The renderer combines only

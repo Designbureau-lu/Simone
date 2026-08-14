@@ -1268,6 +1268,8 @@ export class SimoneApplication {
             totalColumns: this.artwork.width,
             visibleColumns: artworkRange.end - artworkRange.start,
             periodCount: this.curtainField.periods.length,
+            sourceDescription: this.artwork.sourceDescription,
+            sourceRepresentation: this.artwork.sourceRepresentation,
             projectedExtent: this.viewport.projectedExtent,
             imageCount: this.imageCount,
             visibleFactor: this.sceneVisibleFactor,

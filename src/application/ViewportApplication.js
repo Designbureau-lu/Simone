@@ -312,6 +312,8 @@ export class ViewportApplication extends SimoneApplication {
             projectedColumns:
                 sampledSourceRange.end - sampledSourceRange.start,
             periodCount: this.curtainField.periods.length,
+            sourceDescription: this.artwork.sourceDescription,
+            sourceRepresentation: this.artwork.sourceRepresentation,
             projectedExtent: this.viewport.projectedExtent,
             imageCount: this.imageCount,
             visibleFactor: this.sceneVisibleFactor,

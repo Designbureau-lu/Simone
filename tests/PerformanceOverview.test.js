@@ -66,6 +66,13 @@ test("five-second capture freezes the existing report sample summary", () => {
         assert(captured.includes("Canvas backing"));
         assert(captured.includes("MODE"));
         assert(captured.includes("NORMAL"));
+        assert(captured.includes("SOURCE B"));
+        assert(captured.includes("Logical source"));
+        assert(captured.includes("5,000 × 2,500"));
+        assert(captured.includes("Raster source"));
+        assert(captured.includes("2,500 × 1,250"));
+        assert(captured.includes("Raster scale"));
+        assert(captured.includes("0.50×"));
         assert(captured.includes("Samples"));
         assert(captured.includes("2"));
 
@@ -125,7 +132,16 @@ function report() {
         projectedColumns: 200,
         totalColumns: 1000,
         periodCount: 10,
-        drawCallProbeMode: "normal"
+        drawCallProbeMode: "normal",
+        sourceRepresentation: {
+            id: "b",
+            label: "SOURCE B",
+            logicalWidth: 5000,
+            logicalHeight: 2500,
+            rasterWidth: 2500,
+            rasterHeight: 1250,
+            rasterScale: 0.5
+        }
     };
 }
 

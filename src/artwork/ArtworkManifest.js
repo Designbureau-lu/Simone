@@ -1,18 +1,58 @@
-/** Parses ordered intrinsic artwork segments and their production sources. */
-export function artworkSegmentsFromManifest(source, applicationBaseUrl) {
-    const manifest = parseArtworkManifest(source);
-    const imageDirectory = new URL("public/images/", applicationBaseUrl);
+export const ARTWORK_REPRESENTATION_IDS = Object.freeze(["a", "b"]);
 
-    return Object.freeze(manifest.segments.map((segment) => Object.freeze({
-        name: segment.id,
-        url: new URL(encodedRelativePath(segment.source.src), imageDirectory)
-            .href,
-        width: segment.width,
-        height: segment.height,
-        sourceWidth: segment.source.width,
-        sourceHeight: segment.source.height,
-        byteSize: segment.source.byteSize
-    })));
+/** Parses ordered intrinsic segments for one selected raster representation. */
+export function artworkSegmentsFromManifest(
+    source,
+    applicationBaseUrl,
+    representationId
+) {
+    const manifest = parseArtworkManifest(source);
+    if (typeof representationId !== "string" || representationId === "") {
+        throw new TypeError("Artwork representation selection is invalid.");
+    }
+
+    const imageDirectory = new URL("public/images/", applicationBaseUrl);
+    return Object.freeze(manifest.segments.map((segment) => {
+        const representation = segment.representations.find(
+            ({ id }) => id === representationId
+        );
+        if (!representation) {
+            throw new RangeError(
+                `Artwork representation "${representationId}" is missing `
+                + `for segment "${segment.id}".`
+            );
+        }
+
+        return Object.freeze({
+            name: segment.id,
+            url: new URL(encodedRelativePath(representation.src), imageDirectory)
+                .href,
+            width: segment.width,
+            height: segment.height,
+            sourceWidth: representation.width,
+            sourceHeight: representation.height,
+            byteSize: representation.byteSize,
+            representationId,
+            representationLabel: representationLabel(representationId)
+        });
+    }));
+}
+
+/** Returns representations available for every intrinsic segment. */
+export function artworkRepresentationIdsFromManifest(source) {
+    const manifest = parseArtworkManifest(source);
+    const common = manifest.segments[0].representations
+        .map(({ id }) => id)
+        .filter((id) => manifest.segments.every((segment) => (
+            segment.representations.some((representation) => (
+                representation.id === id
+            ))
+        )));
+    return Object.freeze(common);
+}
+
+export function representationLabel(id) {
+    return `SOURCE ${id.toUpperCase()}`;
 }
 
 function parseArtworkManifest(source) {
@@ -20,9 +60,12 @@ function parseArtworkManifest(source) {
     try {
         manifest = JSON.parse(source);
     } catch (error) {
-        throw new SyntaxError("Artwork manifest is not valid JSON.", { cause: error });
+        throw new SyntaxError("Artwork manifest is not valid JSON.", {
+            cause: error
+        });
     }
-    if (manifest?.version !== 3
+
+    if (manifest?.version !== 2
         || !Array.isArray(manifest.segments)
         || manifest.segments.length === 0) {
         throw new TypeError("Artwork manifest structure is invalid.");
@@ -35,35 +78,66 @@ function parseArtworkManifest(source) {
             || segment.id.trim() === ""
             || segmentIds.has(segment.id)
             || !positiveInteger(segment.logicalWidth)
-            || !positiveInteger(segment.logicalHeight)) {
+            || !positiveInteger(segment.logicalHeight)
+            || !Array.isArray(segment.representations)
+            || segment.representations.length === 0) {
             throw new TypeError("Artwork intrinsic segment metadata is invalid.");
         }
         segmentIds.add(segment.id);
-        validateSource(segment.source, segment);
+
+        const representationIds = new Set();
+        const representations = segment.representations.map((representation) => {
+            validateRepresentation(representation, segment, representationIds);
+            representationIds.add(representation.id);
+            return Object.freeze({ ...representation });
+        });
+        const scales = new Set(representations.map((representation) => (
+            representation.width / segment.logicalWidth
+        )));
+        if (scales.size !== representations.length) {
+            throw new RangeError(
+                `Artwork segment "${segment.id}" repeats a raster scale.`
+            );
+        }
+
         return Object.freeze({
             id: segment.id,
             width: segment.logicalWidth,
             height: segment.logicalHeight,
-            source: Object.freeze({ ...segment.source })
+            representations: Object.freeze(representations)
         });
     });
-    return Object.freeze({ version: manifest.version, segments: Object.freeze(segments) });
+
+    return Object.freeze({
+        version: manifest.version,
+        segments: Object.freeze(segments)
+    });
 }
 
-function validateSource(source, segment) {
-    if (!source
-        || typeof source.src !== "string"
-        || source.src.trim() === ""
-        || !positiveInteger(source.width)
-        || !positiveInteger(source.height)
-        || !positiveInteger(source.byteSize)) {
-        throw new TypeError("Artwork source metadata is invalid.");
+function validateRepresentation(representation, segment, ids) {
+    if (!representation
+        || typeof representation.id !== "string"
+        || representation.id.trim() === ""
+        || !ARTWORK_REPRESENTATION_IDS.includes(representation.id)
+        || ids.has(representation.id)
+        || typeof representation.src !== "string"
+        || representation.src.trim() === ""
+        || !positiveInteger(representation.width)
+        || !positiveInteger(representation.height)
+        || !positiveInteger(representation.byteSize)) {
+        throw new TypeError("Artwork raster representation metadata is invalid.");
     }
-    if (source.width !== segment.logicalWidth
-        || source.height !== segment.logicalHeight) {
+
+    const horizontalDivisor = segment.logicalWidth / representation.width;
+    const verticalDivisor = segment.logicalHeight / representation.height;
+    if (!Number.isInteger(horizontalDivisor)
+        || horizontalDivisor < 1
+        || horizontalDivisor > 2
+        || horizontalDivisor !== verticalDivisor) {
         throw new RangeError(
-            `Artwork source does not match the intrinsic dimensions for `
-            + `segment "${segment.id}".`
+            `Artwork representation "${representation.id}" does not have `
+            + `a deterministic scale and matching aspect ratio for segment `
+            + `"${segment.id}".`
         );
     }
 }
@@ -78,7 +152,7 @@ function encodedRelativePath(path) {
         || components.some((component) => (
             component === "" || component === "." || component === ".."
         ))) {
-        throw new TypeError("Artwork source path is invalid.");
+        throw new TypeError("Artwork representation path is invalid.");
     }
     return components.map(encodeURIComponent).join("/");
 }
