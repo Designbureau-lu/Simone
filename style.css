@@ -548,7 +548,7 @@ select{
 
         width:max-content;
 
-        transform:translate(-50%,calc(-50% + 100px));
+        transform:translate(-50%,calc(-50% + 50px));
 
         color:var(--color-text);
 
@@ -1108,12 +1108,6 @@ select{
     :root{
 
         --type-body:1.2rem;
-
-    }
-
-    .exhibition-information > .editorial-section:first-child{
-
-        margin-top:-140px;
 
     }
 
