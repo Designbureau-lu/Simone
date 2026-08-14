@@ -313,6 +313,17 @@ inspect artwork pixels.
 
 The renderer draws exact source pixels at supplied destinations. It may group
 placements for batched visual cues, but it does not solve or modify geometry.
+An exact flat-span path may combine consecutive columns only when source
+identity and coordinates, affine X mapping, Y/height, alpha, shading state,
+branch, and Period identity are all compatible. Those spans use Canvas's
+high-quality filtered scaling; every non-matching placement retains the
+individual-column path.
+
+### Viewing surface
+
+Viewport presentation uses the virtual curtain-frame height as the common
+reference for both axes. The top/bottom fold-depth allowance therefore remains
+visible without applying a different horizontal scale to the artwork.
 
 ### Application
 

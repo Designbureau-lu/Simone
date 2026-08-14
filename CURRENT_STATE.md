@@ -61,6 +61,14 @@ Updated: 2026-08-14
   draw-call probe, and reports selected representation, logical dimensions,
   raster dimensions, and scale. The override is removed from browser history
   after selection, so a later reload returns to SOURCE A.
+- Viewing-space X and Y now share the virtual curtain-frame height, preserving
+  the existing top/bottom fold-depth allowance while a flat `5000 × 2500`
+  segment retains its exact 2:1 presentation ratio. The renderer combines only
+  mathematically exact flat runs bounded by source, branch, and Period identity;
+  these runs use one high-quality smoothed `drawImage()` over their complete
+  source interval. Folded or otherwise incompatible columns retain the
+  established individual-column path, and the independent DEV 2:1 probe remains
+  available.
 - Real Android 10 Chrome measurement of the preceding full-coordinate scene
   recorded 43.2 ms frame median / 79.2 ms p95 and 34.8 ms rendering median /
   55.2 ms p95 at 1,080 draw calls, despite fewer destination pixels than fast

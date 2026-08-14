@@ -23,40 +23,51 @@ const tests = [];
 test("portrait uses a narrower camera extent at the same visual scale", () => {
     const fixture = createViewingSurface(400, 800);
     const viewing = fixture.surface.resolve(
-        { width: 60_000, height: 2_600 },
-        2_500
+        { width: 60_000, height: 2_600 }
     );
 
-    closeTo(viewing.projectedExtent, 1_250);
+    closeTo(viewing.projectedExtent, 1_300);
     fixture.remove();
 });
 
 test("landscape uses a wider camera extent at the same visual scale", () => {
     const fixture = createViewingSurface(800, 400);
     const viewing = fixture.surface.resolve(
-        { width: 60_000, height: 2_600 },
-        2_500
+        { width: 60_000, height: 2_600 }
     );
 
-    closeTo(viewing.projectedExtent, 5_000);
+    closeTo(viewing.projectedExtent, 5_200);
     fixture.remove();
 });
 
 test("camera extent follows a changed rendered container aspect", () => {
     const fixture = createViewingSurface(400, 800);
     const portrait = fixture.surface.resolve(
-        { width: 60_000, height: 2_600 },
-        2_500
+        { width: 60_000, height: 2_600 }
     );
     fixture.container.style.width = "800px";
     fixture.container.style.height = "400px";
     const landscape = fixture.surface.resolve(
-        { width: 60_000, height: 2_600 },
-        2_500
+        { width: 60_000, height: 2_600 }
     );
 
-    closeTo(portrait.projectedExtent, 1_250);
-    closeTo(landscape.projectedExtent, 5_000);
+    closeTo(portrait.projectedExtent, 1_300);
+    closeTo(landscape.projectedExtent, 5_200);
+    fixture.remove();
+});
+
+test("viewport applies one uniform scale to flat artwork", () => {
+    const fixture = createViewingSurface(2000, 676);
+    const viewing = fixture.surface.resolve(
+        { width: 60_000, height: 2_576.39437268411 }
+    );
+    const horizontalScale = viewing.frame.width / viewing.projectedExtent;
+
+    closeTo(horizontalScale, viewing.scaleY);
+    closeTo(
+        5_000 * horizontalScale / (2_500 * viewing.scaleY),
+        2
+    );
     fixture.remove();
 });
 
@@ -119,6 +130,98 @@ test("2:1 probe halves compatible artwork draws without resizing Canvas", () => 
     assert(probe.drawCallProbeMode === DrawCallProbeMode.PAIR);
     assert(probe.canvasWidth === normal.canvasWidth);
     assert(probe.canvasHeight === normal.canvasHeight);
+});
+
+test("exact flat columns render as one smoothed source span", () => {
+    const canvas = document.createElement("canvas");
+    const source = document.createElement("canvas");
+    source.width = 60;
+    source.height = 10;
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    renderer.beginFrame({ width: 60, height: 10 }, cueTestAppearance());
+
+    for (let sourceX = 0; sourceX < 60; sourceX += 1) {
+        renderer.drawColumn({
+            source,
+            sourceX,
+            sourceY: 0,
+            sourceWidth: 1,
+            sourceHeight: 10,
+            width: 1,
+            height: 10,
+            artworkX: sourceX
+        }, {
+            x: sourceX,
+            y: 0,
+            width: 1,
+            height: 10
+        }, exactFlatAppearance("front", 0));
+    }
+
+    const metrics = renderer.endFrame();
+    assert(metrics.drawImageCalls === 1);
+});
+
+test("exact flat spans stop at Period and source-image boundaries", () => {
+    const canvas = document.createElement("canvas");
+    const firstSource = document.createElement("canvas");
+    const secondSource = document.createElement("canvas");
+    firstSource.width = secondSource.width = 4;
+    firstSource.height = secondSource.height = 10;
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    renderer.beginFrame({ width: 8, height: 10 }, cueTestAppearance());
+
+    for (let sourceX = 0; sourceX < 8; sourceX += 1) {
+        const localSourceX = sourceX % 4;
+        renderer.drawColumn({
+            source: sourceX < 4 ? firstSource : secondSource,
+            sourceX: localSourceX,
+            sourceY: 0,
+            sourceWidth: 1,
+            sourceHeight: 10,
+            width: 1,
+            height: 10,
+            artworkX: sourceX
+        }, {
+            x: sourceX,
+            y: 0,
+            width: 1,
+            height: 10
+        }, exactFlatAppearance("front", sourceX < 2 ? 0 : 1));
+    }
+
+    const metrics = renderer.endFrame();
+    assert(metrics.drawImageCalls === 3);
+});
+
+test("folded columns retain individual draw calls", () => {
+    const canvas = document.createElement("canvas");
+    const source = document.createElement("canvas");
+    source.width = 4;
+    source.height = 10;
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    renderer.beginFrame({ width: 4, height: 10 }, cueTestAppearance());
+
+    for (let sourceX = 0; sourceX < 4; sourceX += 1) {
+        renderer.drawColumn({
+            source,
+            sourceX,
+            sourceY: 0,
+            sourceWidth: 1,
+            sourceHeight: 10,
+            width: 1,
+            height: 10,
+            artworkX: sourceX
+        }, {
+            x: sourceX,
+            y: sourceX / 10,
+            width: 1,
+            height: 10 - sourceX / 10
+        }, cueColumnAppearance("front"));
+    }
+
+    const metrics = renderer.endFrame();
+    assert(metrics.drawImageCalls === 4);
 });
 
 test("viewport sampling keeps the complete global Period model", () => {
@@ -852,6 +955,18 @@ function cueColumnAppearance(branch) {
         localSlope: 0.5,
         foldProgress: 0.5,
         crestLifecycleMultiplier: 1
+    };
+}
+
+function exactFlatAppearance(branch, periodIndex) {
+    return {
+        brightness: 1,
+        alpha: 1,
+        branch,
+        periodIndex,
+        localSlope: 0,
+        foldProgress: 0,
+        crestLifecycleMultiplier: 0
     };
 }
 

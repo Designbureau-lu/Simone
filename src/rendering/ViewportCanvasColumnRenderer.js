@@ -26,6 +26,7 @@ export class ViewportCanvasColumnRenderer {
     #backingStoreResized = false;
     #drawCallProbeMode = DrawCallProbeMode.NORMAL;
     #pendingProbeColumn = null;
+    #pendingExactFlatSpan = null;
 
     constructor(canvas) {
         if (!(canvas instanceof HTMLCanvasElement)) {
@@ -49,6 +50,7 @@ export class ViewportCanvasColumnRenderer {
         }
         this.#drawCallProbeMode = mode;
         this.#pendingProbeColumn = null;
+        this.#pendingExactFlatSpan = null;
     }
 
     beginFrame({ width, height }, appearance) {
@@ -61,6 +63,7 @@ export class ViewportCanvasColumnRenderer {
         this.#appearance = appearance;
         this.#drawImageCalls = 0;
         this.#pendingProbeColumn = null;
+        this.#pendingExactFlatSpan = null;
         this.#context.globalAlpha = 1;
         this.#context.imageSmoothingEnabled = false;
         this.#context.clearRect(0, 0, width, height);
@@ -75,6 +78,7 @@ export class ViewportCanvasColumnRenderer {
             && (appearance.branch !== this.#activeFoldRegion.branch
                 || appearance.periodIndex
                     !== this.#activeFoldRegion.periodIndex)) {
+            this.#flushExactFlatSpan();
             this.#flushProbeColumn();
             this.#finishFoldRegion();
         }
@@ -82,6 +86,7 @@ export class ViewportCanvasColumnRenderer {
             this.#finishRearRegion();
         }
         if (appearance.alpha <= 0) {
+            this.#flushExactFlatSpan();
             this.#flushProbeColumn();
             this.#finishRearRegion();
             return;
@@ -90,25 +95,31 @@ export class ViewportCanvasColumnRenderer {
         const startX = Math.round(placement.x);
         const endX = Math.round(placement.x + placement.width);
         const destinationWidth = endX - startX;
-        if (destinationWidth === 0) {
-            return;
-        }
-
         if (this.#drawCallProbeMode === DrawCallProbeMode.NORMAL) {
-            this.#context.globalAlpha = appearance.alpha;
-            this.#context.drawImage(
-                column.source,
-                column.sourceX,
-                column.sourceY,
-                column.sourceWidth ?? column.width,
-                column.sourceHeight ?? column.height,
-                startX,
-                placement.y,
-                destinationWidth,
-                placement.height
-            );
-            this.#drawImageCalls += 1;
+            if (isExactFlatSpanCandidate(column, placement, appearance)) {
+                this.#queueExactFlatColumn({
+                    column,
+                    placement,
+                    appearance,
+                    startX,
+                    endX
+                });
+            } else {
+                this.#flushExactFlatSpan();
+                if (destinationWidth !== 0) {
+                    this.#paintIndividualArtworkColumn(
+                        column,
+                        placement,
+                        appearance,
+                        startX,
+                        destinationWidth
+                    );
+                }
+            }
         } else {
+            if (destinationWidth === 0) {
+                return;
+            }
             this.#drawProbeArtworkColumn({
                 column,
                 startX,
@@ -117,6 +128,10 @@ export class ViewportCanvasColumnRenderer {
                 height: placement.height,
                 alpha: appearance.alpha
             });
+        }
+
+        if (destinationWidth === 0) {
+            return;
         }
 
         this.#extendFoldRegion(
@@ -142,6 +157,7 @@ export class ViewportCanvasColumnRenderer {
     }
 
     endFrame() {
+        this.#flushExactFlatSpan();
         this.#flushProbeColumn();
         this.#finishRearRegion();
         this.#finishFoldRegion();
@@ -174,6 +190,99 @@ export class ViewportCanvasColumnRenderer {
             drawCallProbeMode: this.#drawCallProbeMode,
             backingStoreResized: this.#backingStoreResized
         });
+    }
+
+    #queueExactFlatColumn(draw) {
+        if (!this.#pendingExactFlatSpan) {
+            this.#pendingExactFlatSpan = {
+                first: draw,
+                last: draw,
+                count: 1
+            };
+            return;
+        }
+
+        if (exactFlatColumnsAreContiguous(
+            this.#pendingExactFlatSpan.last,
+            draw
+        )) {
+            this.#pendingExactFlatSpan.last = draw;
+            this.#pendingExactFlatSpan.count += 1;
+            return;
+        }
+
+        this.#flushExactFlatSpan();
+        this.#pendingExactFlatSpan = {
+            first: draw,
+            last: draw,
+            count: 1
+        };
+    }
+
+    #flushExactFlatSpan() {
+        if (!this.#pendingExactFlatSpan) {
+            return;
+        }
+        const span = this.#pendingExactFlatSpan;
+        this.#pendingExactFlatSpan = null;
+        const { first, last } = span;
+        const destinationWidth = last.endX - first.startX;
+        if (destinationWidth === 0) {
+            return;
+        }
+
+        if (span.count === 1) {
+            this.#paintIndividualArtworkColumn(
+                first.column,
+                first.placement,
+                first.appearance,
+                first.startX,
+                destinationWidth
+            );
+            return;
+        }
+
+        const sourceWidth = last.column.sourceX
+            + sourceColumnWidth(last.column)
+            - first.column.sourceX;
+        this.#context.globalAlpha = first.appearance.alpha;
+        this.#context.imageSmoothingEnabled = true;
+        this.#context.imageSmoothingQuality = "high";
+        this.#context.drawImage(
+            first.column.source,
+            first.column.sourceX,
+            first.column.sourceY,
+            sourceWidth,
+            first.column.sourceHeight ?? first.column.height,
+            first.startX,
+            first.placement.y,
+            destinationWidth,
+            first.placement.height
+        );
+        this.#context.imageSmoothingEnabled = false;
+        this.#drawImageCalls += 1;
+    }
+
+    #paintIndividualArtworkColumn(
+        column,
+        placement,
+        appearance,
+        startX,
+        destinationWidth
+    ) {
+        this.#context.globalAlpha = appearance.alpha;
+        this.#context.drawImage(
+            column.source,
+            column.sourceX,
+            column.sourceY,
+            sourceColumnWidth(column),
+            column.sourceHeight ?? column.height,
+            startX,
+            placement.y,
+            destinationWidth,
+            placement.height
+        );
+        this.#drawImageCalls += 1;
     }
 
     #drawProbeArtworkColumn(draw) {
@@ -457,6 +566,67 @@ export class ViewportCanvasColumnRenderer {
             }
         };
     }
+}
+
+const EXACT_FLAT_NUMERIC_TOLERANCE = 1e-9;
+
+function isExactFlatSpanCandidate(column, placement, appearance) {
+    return Number.isInteger(column.artworkX)
+        && Number.isFinite(column.sourceX)
+        && Number.isFinite(sourceColumnWidth(column))
+        && sourceColumnWidth(column) > 0
+        && Number.isFinite(placement.x)
+        && Number.isFinite(placement.y)
+        && Number.isFinite(placement.width)
+        && placement.width > 0
+        && Number.isFinite(placement.height)
+        && placement.height > 0
+        && appearance.alpha > 0
+        && appearance.brightness === 1
+        && appearance.localSlope === 0
+        && appearance.foldProgress === 0
+        && appearance.crestLifecycleMultiplier === 0;
+}
+
+function exactFlatColumnsAreContiguous(previous, current) {
+    return previous.column.source === current.column.source
+        && current.column.artworkX === previous.column.artworkX + 1
+        && numericallyEqual(
+            previous.column.sourceX + sourceColumnWidth(previous.column),
+            current.column.sourceX
+        )
+        && previous.column.sourceY === current.column.sourceY
+        && (previous.column.sourceHeight ?? previous.column.height)
+            === (current.column.sourceHeight ?? current.column.height)
+        && previous.appearance.branch === current.appearance.branch
+        && previous.appearance.periodIndex === current.appearance.periodIndex
+        && previous.appearance.alpha === current.appearance.alpha
+        && previous.appearance.brightness === current.appearance.brightness
+        && previous.appearance.localSlope === current.appearance.localSlope
+        && previous.appearance.foldProgress === current.appearance.foldProgress
+        && previous.appearance.crestLifecycleMultiplier
+            === current.appearance.crestLifecycleMultiplier
+        && numericallyEqual(previous.placement.y, current.placement.y)
+        && numericallyEqual(
+            previous.placement.height,
+            current.placement.height
+        )
+        && numericallyEqual(
+            previous.placement.x + previous.placement.width,
+            current.placement.x
+        )
+        && numericallyEqual(
+            previous.placement.width,
+            current.placement.width
+        );
+}
+
+function sourceColumnWidth(column) {
+    return column.sourceWidth ?? column.width;
+}
+
+function numericallyEqual(left, right) {
+    return Math.abs(left - right) <= EXACT_FLAT_NUMERIC_TOLERANCE;
 }
 
 function addGradientStops(gradient, settings, strengthFactor = 1) {

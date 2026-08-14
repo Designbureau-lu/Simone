@@ -178,10 +178,7 @@ export class ViewportApplication extends SimoneApplication {
         const viewportDiscoveryStartedAt = performance.now();
         const contentBounds = this.#projectedContentBounds(surface);
         this.projectedContentBounds = contentBounds;
-        const viewing = this.viewingSurface.resolve(
-            virtualFrame,
-            this.artwork.height
-        );
+        const viewing = this.viewingSurface.resolve(virtualFrame);
 
         const previousExtent = this.viewport.projectedExtent;
         const projectedExtent = viewing.projectedExtent ?? previousExtent;

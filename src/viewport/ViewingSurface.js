@@ -18,7 +18,7 @@ export class ViewingSurface {
         this.#mode = value;
     }
 
-    resolve(virtualFrame, artworkHeight = virtualFrame.height) {
+    resolve(virtualFrame) {
         if (this.#mode === "dynamic") {
             return Object.freeze({
                 frame: virtualFrame,
@@ -39,7 +39,7 @@ export class ViewingSurface {
             scaleX: width / virtualFrame.width,
             scaleY: height / virtualFrame.height,
             pixelRatio,
-            projectedExtent: artworkHeight * width / height,
+            projectedExtent: virtualFrame.height * width / height,
             mode: this.#mode
         });
     }
