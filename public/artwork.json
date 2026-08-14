@@ -1,17 +1,17 @@
 {
   "version": 1,
   "segments": [
-    { "src": "Rideau recherche.jpg", "width": 5000, "height": 2500, "byteSize": 704320 },
-    { "src": "Rideau recherche2.jpg", "width": 5000, "height": 2500, "byteSize": 738211 },
-    { "src": "Rideau recherche3.jpg", "width": 5000, "height": 2500, "byteSize": 1461482 },
-    { "src": "Rideau recherche4.jpg", "width": 5000, "height": 2500, "byteSize": 732541 },
-    { "src": "Rideau recherche5.jpg", "width": 5000, "height": 2500, "byteSize": 903250 },
-    { "src": "Rideau recherche6.jpg", "width": 5000, "height": 2500, "byteSize": 877100 },
-    { "src": "Rideau recherche7.jpg", "width": 5000, "height": 2500, "byteSize": 1167625 },
-    { "src": "Rideau recherche8.jpg", "width": 5000, "height": 2500, "byteSize": 830741 },
-    { "src": "Rideau recherche9.jpg", "width": 5000, "height": 2500, "byteSize": 873220 },
-    { "src": "Rideau recherche10.jpg", "width": 5000, "height": 2500, "byteSize": 807594 },
-    { "src": "Rideau recherche11.jpg", "width": 5000, "height": 2500, "byteSize": 926750 },
-    { "src": "Rideau recherche12.jpg", "width": 5000, "height": 2500, "byteSize": 855577 }
+    { "src": "Rideau recherche.jpg", "width": 2500, "height": 1250, "byteSize": 393958 },
+    { "src": "Rideau recherche2.jpg", "width": 2500, "height": 1250, "byteSize": 398980 },
+    { "src": "Rideau recherche3.jpg", "width": 2500, "height": 1250, "byteSize": 811043 },
+    { "src": "Rideau recherche4.jpg", "width": 2500, "height": 1250, "byteSize": 406208 },
+    { "src": "Rideau recherche5.jpg", "width": 2500, "height": 1250, "byteSize": 501724 },
+    { "src": "Rideau recherche6.jpg", "width": 2500, "height": 1250, "byteSize": 462352 },
+    { "src": "Rideau recherche7.jpg", "width": 2500, "height": 1250, "byteSize": 623171 },
+    { "src": "Rideau recherche8.jpg", "width": 2500, "height": 1250, "byteSize": 450591 },
+    { "src": "Rideau recherche9.jpg", "width": 2500, "height": 1250, "byteSize": 450268 },
+    { "src": "Rideau recherche10.jpg", "width": 2500, "height": 1250, "byteSize": 456870 },
+    { "src": "Rideau recherche11.jpg", "width": 2500, "height": 1250, "byteSize": 505073 },
+    { "src": "Rideau recherche12.jpg", "width": 2500, "height": 1250, "byteSize": 472580 }
   ]
 }
