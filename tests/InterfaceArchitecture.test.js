@@ -2,7 +2,8 @@ import {
     bindDebugPanel,
     bindIdentityFontDiagnostic,
     bindConversationInterface,
-    createTitleTransition
+    createTitleTransition,
+    selectedArtworkRepresentationId
 } from "../src/application/startSimone.js";
 import {
     CurtainEntranceMotion
@@ -620,12 +621,39 @@ test("debug controls expose the canonical renderer defaults", async () => {
     equal(page.getElementById("carrierDistanceNumber").value, "120");
     equal(page.getElementById("modelTransitionNumber").value, "50");
     equal(page.getElementById("drawCallProbeMode").value, "normal");
+    equal(page.getElementById("artworkSourceRepresentation").value, "b");
+    assert(page.querySelector(
+        "#artworkSourceRepresentation option[value='a']"
+    ).disabled);
+    assert(!page.querySelector(
+        "#artworkSourceRepresentation option[value='b']"
+    ).disabled);
     equal(
         Array.from(page.getElementById("drawCallProbeMode").options)
             .map((option) => option.textContent.trim())
             .join("|"),
         "NORMAL|2:1 DRAW-CALL PROBE"
     );
+});
+
+test("DEV artwork source selection is explicit and rejects missing tiers", () => {
+    equal(
+        selectedArtworkRepresentationId(
+            ["a", "b"],
+            "https://example.test/?debug-artwork-source=a"
+        ),
+        "a"
+    );
+    let rejected = false;
+    try {
+        selectedArtworkRepresentationId(
+            ["b"],
+            "https://example.test/?debug-artwork-source=a"
+        );
+    } catch {
+        rejected = true;
+    }
+    assert(rejected);
 });
 
 test("debug panel is ordered, titleless, and excludes temporary navigation", async () => {

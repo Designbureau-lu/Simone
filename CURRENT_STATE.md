@@ -1,6 +1,6 @@
 # SIMONE Current State
 
-Updated: 2026-08-13
+Updated: 2026-08-14
 
 ## Desktop milestone
 
@@ -43,14 +43,17 @@ Updated: 2026-08-13
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.
 
-- The current artwork is a temporary source-resolution diagnostic. Each of the
-  twelve segments retains its authoritative `5000 × 2500` logical dimensions,
-  so artwork width remains 60,000 columns and the approved geometry, Viewport,
-  Carrier Distance, interaction, destination Canvas, and normal draw-call count
-  remain unchanged. The decoded JPEG for each segment is `2500 × 1250`; logical
-  source coordinates map to bitmap coordinates at `0.5` in both axes. The DEV
-  capture identifies this explicitly as `HALF-RES 2500×1250 / LOGICAL
-  5000×2500`. This is a diagnostic state, not an approved optimization.
+- Artwork metadata now separates one authoritative logical segment from its
+  raster representations. Every segment remains `5000 × 2500` logical units,
+  so artwork width stays 60,000 columns and geometry, Viewport, Carrier
+  Distance, navigation, interaction, destination Canvas, and normal draw-call
+  count are representation-invariant. The repository currently contains only
+  `SOURCE B`, the authentic `2500 × 1250` replacement raster, sampled at `0.5`
+  in both axes without independently rounding source coordinates. DEV exposes
+  `SOURCE A` as unavailable until genuine `5000 × 2500` assets are supplied;
+  it never duplicates or upscales SOURCE B. The source selector reloads the
+  page, remains independent of the 2:1 draw-call probe, and reports selected
+  representation, logical dimensions, raster dimensions, and scale.
 - Real Android 10 Chrome measurement of the preceding full-coordinate scene
   recorded 43.2 ms frame median / 79.2 ms p95 and 34.8 ms rendering median /
   55.2 ms p95 at 1,080 draw calls, despite fewer destination pixels than fast

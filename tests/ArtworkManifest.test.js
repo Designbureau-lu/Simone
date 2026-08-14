@@ -6,6 +6,7 @@ import {
 import { loadArtwork } from "../src/artwork/loadArtwork.js";
 import { ImmutableArtwork } from "../src/artwork/ImmutableArtwork.js";
 import {
+    artworkRepresentationIdsFromManifest,
     artworkSegmentsFromManifest
 } from "../src/artwork/ArtworkManifest.js";
 import {
@@ -13,6 +14,11 @@ import {
     SegmentLoadState,
     SegmentPriority
 } from "../src/artwork/ArtworkSegmentScheduler.js";
+import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
+import { createProjectNavigation } from "../src/navigation/ProjectNavigation.js";
+import { ViewportCanvasColumnRenderer } from "../src/rendering/ViewportCanvasColumnRenderer.js";
+import { CurtainField } from "../src/surface/CurtainField.js";
+import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
 
 const failures = [];
 let assertionCount = 0;
@@ -98,34 +104,69 @@ try {
     console.error = originalConsoleError;
 }
 
-const metadata = artworkSegmentsFromManifest(JSON.stringify({
-    version: 1,
+const manifestSource = JSON.stringify({
+    version: 2,
     segments: [
-        { src: "First image.jpg", width: 3, height: 2, byteSize: 100 },
-        { src: "Second image.jpg", width: 5, height: 4 }
+        {
+            id: "First image",
+            logicalWidth: 4,
+            logicalHeight: 2,
+            representations: [
+                { id: "a", src: "First A.jpg", width: 4, height: 2, byteSize: 100 },
+                { id: "b", src: "First B.jpg", width: 2, height: 1, byteSize: 50 }
+            ]
+        },
+        {
+            id: "Second image",
+            logicalWidth: 4,
+            logicalHeight: 2,
+            representations: [
+                { id: "a", src: "Second A.jpg", width: 4, height: 2, byteSize: 100 },
+                { id: "b", src: "Second B.jpg", width: 2, height: 1, byteSize: 50 }
+            ]
+        }
     ]
-}), "https://example.test/simone/");
+});
+const metadata = artworkSegmentsFromManifest(
+    manifestSource,
+    "https://example.test/simone/",
+    "a"
+);
 check(metadata.length === 2, "structured metadata segment count changed");
 check(
     metadata[1].url
-        === "https://example.test/simone/public/images/Second%20image.jpg",
+        === "https://example.test/simone/public/images/Second%20A.jpg",
     "structured metadata URL resolution changed"
 );
 check(
-    metadata[0].width === 3
+    metadata[0].width === 4
         && metadata[0].height === 2
-        && metadata[0].sourceWidth === 3
+        && metadata[0].sourceWidth === 4
         && metadata[0].sourceHeight === 2
-        && metadata[0].byteSize === 100,
+        && metadata[0].byteSize === 100
+        && metadata[0].representationId === "a",
     "structured metadata dimensions or byte size changed"
+);
+check(
+    artworkRepresentationIdsFromManifest(manifestSource).join(",") === "a,b",
+    "common artwork representations were not discovered"
 );
 let invalidMetadataRejected = false;
 try {
     artworkSegmentsFromManifest(JSON.stringify({
-        version: 1,
-        segments: [
-            { src: "Broken.jpg", width: 0, height: 2 }
-        ]
+        version: 2,
+        segments: [{
+            id: "Broken",
+            logicalWidth: 4,
+            logicalHeight: 2,
+            representations: [{
+                id: "b",
+                src: "Broken.jpg",
+                width: 3,
+                height: 1,
+                byteSize: 10
+            }]
+        }]
     }), "https://example.test/simone/");
 } catch {
     invalidMetadataRejected = true;
@@ -135,7 +176,7 @@ check(invalidMetadataRejected, "invalid artwork metadata was accepted");
 const metadataArtwork = ImmutableArtwork.fromMetadata(metadata);
 check(
     metadataArtwork.width === 8
-        && metadataArtwork.height === 4
+        && metadataArtwork.height === 2
         && metadataArtwork.imageCount === 2,
     "metadata-only artwork did not establish global dimensions"
 );
@@ -145,8 +186,8 @@ check(
             === "0,1",
     "metadata-only source range mapping changed"
 );
-const firstSource = canvasSource(3, 2);
-const secondSource = canvasSource(5, 4);
+const firstSource = canvasSource(4, 2);
+const secondSource = canvasSource(4, 2);
 metadataArtwork.setSegmentSource(0, firstSource);
 metadataArtwork.setSegmentSource(1, secondSource);
 const legacyArtwork = new ImmutableArtwork([firstSource, secondSource]);
@@ -175,22 +216,17 @@ check(
     "metadata artwork coordinate conversion differs from the legacy model"
 );
 
-const halfResolutionMetadata = artworkSegmentsFromManifest(JSON.stringify({
-    version: 1,
-    segments: [{
-        src: "Half.jpg",
-        width: 4,
-        height: 2,
-        sourceWidth: 2,
-        sourceHeight: 1
-    }]
-}), "https://example.test/simone/");
+const halfResolutionMetadata = artworkSegmentsFromManifest(
+    manifestSource,
+    "https://example.test/simone/",
+    "b"
+);
 const halfResolutionArtwork = ImmutableArtwork.fromMetadata(
     halfResolutionMetadata
 );
 halfResolutionArtwork.setSegmentSource(0, canvasSource(2, 1));
 check(
-    halfResolutionArtwork.width === 4
+    halfResolutionArtwork.width === 8
         && halfResolutionArtwork.height === 2,
     "half-resolution source changed authoritative artwork dimensions"
 );
@@ -203,8 +239,141 @@ check(
 );
 check(
     halfResolutionArtwork.sourceDescription
-        === "HALF-RES 2×1 / LOGICAL 4×2",
+        === "SOURCE B 2×1 / LOGICAL 4×2",
     "half-resolution source diagnostic is unclear"
+);
+let missingRepresentationRejected = false;
+try {
+    artworkSegmentsFromManifest(
+        manifestSource,
+        "https://example.test/simone/",
+        "missing"
+    );
+} catch (error) {
+    missingRepresentationRejected = String(error.message).includes("missing");
+}
+check(
+    missingRepresentationRejected,
+    "a missing selected representation was not reported clearly"
+);
+
+const parityManifest = JSON.stringify({
+    version: 2,
+    segments: [{
+        id: "Parity segment",
+        logicalWidth: 5000,
+        logicalHeight: 2500,
+        representations: [
+            {
+                id: "a",
+                src: "Parity A.jpg",
+                width: 5000,
+                height: 2500,
+                byteSize: 1
+            },
+            {
+                id: "b",
+                src: "Parity B.jpg",
+                width: 2500,
+                height: 1250,
+                byteSize: 1
+            }
+        ]
+    }]
+});
+const sourceAArtwork = decodedRepresentation(parityManifest, "a");
+const sourceBArtwork = decodedRepresentation(parityManifest, "b");
+const sourceADescriptor = sourceAArtwork.segmentDescriptors()[0];
+const sourceBDescriptor = sourceBArtwork.segmentDescriptors()[0];
+check(
+    sourceAArtwork.width === 5000
+        && sourceBArtwork.width === 5000
+        && sourceAArtwork.height === 2500
+        && sourceBArtwork.height === 2500
+        && sourceAArtwork.columnAt(4999).artworkX === 4999
+        && sourceBArtwork.columnAt(4999).artworkX === 4999,
+    "raster representation changed logical column identity or artwork extent"
+);
+check(
+    sourceADescriptor.sourceStart === sourceBDescriptor.sourceStart
+        && sourceADescriptor.width === sourceBDescriptor.width
+        && sourceAArtwork.segmentIndicesForSourceRange(0, 5000).join(",")
+            === sourceBArtwork.segmentIndicesForSourceRange(0, 5000).join(","),
+    "raster representation changed the global logical segment range"
+);
+check(
+    sourceAArtwork.columnAt(2000).sourceX === 2000
+        && sourceAArtwork.columnAt(2000).sourceWidth === 1
+        && sourceBArtwork.columnAt(2000).sourceX === 1000
+        && sourceBArtwork.columnAt(2000).sourceWidth === 0.5,
+    "representation parity changed something other than raster sampling"
+);
+let decodedDimensionMismatchRejected = false;
+try {
+    sourceBArtwork.setSegmentSource(0, canvasSource(5000, 2500));
+} catch {
+    decodedDimensionMismatchRejected = true;
+}
+check(
+    decodedDimensionMismatchRejected,
+    "selected representation accepted incorrect decoded raster dimensions"
+);
+
+const sourceAPlacement = representativePlacement(sourceAArtwork, 2000);
+const sourceBPlacement = representativePlacement(sourceBArtwork, 2000);
+check(
+    placementValues(sourceAPlacement) === placementValues(sourceBPlacement),
+    "raster representation changed Period placement"
+);
+const sourceANavigation = createProjectNavigation({
+    source: "First,3\nSecond,2",
+    loadedImageCount: sourceAArtwork.imageCount
+});
+const sourceBNavigation = createProjectNavigation({
+    source: "First,3\nSecond,2",
+    loadedImageCount: sourceBArtwork.imageCount
+});
+check(
+    JSON.stringify(sourceANavigation.projects)
+        === JSON.stringify(sourceBNavigation.projects)
+        && sourceAArtwork.sourceXForLogicalX(2200, 4400)
+            === sourceBArtwork.sourceXForLogicalX(2200, 4400),
+    "raster representation changed project or viewport navigation targets"
+);
+check(
+    normalDrawCountFor(sourceAArtwork)
+        === normalDrawCountFor(sourceBArtwork),
+    "raster representation changed the normal logical-column draw count"
+);
+const scheduledSourceBArtwork = ImmutableArtwork.fromMetadata(
+    artworkSegmentsFromManifest(
+        parityManifest,
+        "https://example.test/simone/",
+        "b"
+    )
+);
+let scheduledRepresentation = null;
+const representationScheduler = new ArtworkSegmentScheduler({
+    artwork: scheduledSourceBArtwork,
+    async fetchSegment(segment) {
+        scheduledRepresentation = {
+            id: segment.representationId,
+            url: segment.url,
+            width: segment.sourceWidth,
+            height: segment.sourceHeight
+        };
+        return canvasSource(segment.sourceWidth, segment.sourceHeight);
+    },
+    decodeSegment: async (source) => source
+});
+await representationScheduler.request([0], SegmentPriority.INITIAL_VIEWPORT);
+check(
+    scheduledRepresentation.id === "b"
+        && scheduledRepresentation.url.endsWith("Parity%20B.jpg")
+        && scheduledRepresentation.width === 2500
+        && scheduledRepresentation.height === 1250
+        && scheduledSourceBArtwork.allSegmentsDecoded,
+    "scheduler did not fetch and decode the selected raster representation"
 );
 
 const schedulerMetadata = [
@@ -372,4 +541,78 @@ function segmentMetadata(name, index) {
         width: 2,
         height: 2
     });
+}
+
+function decodedRepresentation(manifest, id) {
+    const representationMetadata = artworkSegmentsFromManifest(
+        manifest,
+        "https://example.test/simone/",
+        id
+    );
+    const artwork = ImmutableArtwork.fromMetadata(representationMetadata);
+    artwork.setSegmentSource(0, canvasSource(
+        representationMetadata[0].sourceWidth,
+        representationMetadata[0].sourceHeight
+    ));
+    return artwork;
+}
+
+function representativePlacement(artwork, sourceX) {
+    const parameters = new SurfaceParameters();
+    const field = new CurtainField();
+    field.configureFor(4400, parameters.carrierDistance);
+    field.resolve(parameters);
+    const surface = new CircularFoldSurface();
+    surface.frameFor({ width: 4400, height: artwork.height }, field);
+    return surface.mapColumn({
+        sourceX: artwork.logicalXForSourceX(sourceX, 4400)
+    }, field);
+}
+
+function placementValues(placement) {
+    return [
+        placement.sourceX,
+        placement.periodIndex,
+        placement.targetX,
+        placement.targetY,
+        placement.branch,
+        placement.alpha
+    ].join("|");
+}
+
+function normalDrawCountFor(artwork) {
+    const columnCount = 100;
+    const renderer = new ViewportCanvasColumnRenderer(
+        document.createElement("canvas")
+    );
+    renderer.beginFrame({ width: columnCount, height: 10 }, {
+        rearDarkening: { color: [0, 0, 0] },
+        crestHighlight: {
+            color: [255, 255, 255],
+            strength: 0,
+            stops: []
+        },
+        valleyShadow: {
+            color: [0, 0, 0],
+            strength: 0,
+            stops: []
+        }
+    });
+    for (let sourceX = 0; sourceX < columnCount; sourceX += 1) {
+        renderer.drawColumn(artwork.columnAt(sourceX), {
+            x: sourceX,
+            y: 0,
+            width: 1,
+            height: 10
+        }, {
+            brightness: 1,
+            alpha: 1,
+            branch: "front",
+            periodIndex: 0,
+            localSlope: 0,
+            foldProgress: 0,
+            crestLifecycleMultiplier: 0
+        });
+    }
+    return renderer.endFrame().drawImageCalls;
 }

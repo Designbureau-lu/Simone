@@ -32,6 +32,8 @@ export class ImmutableArtwork {
             height: sourceHeightFor(source),
             sourceWidth: sourceWidthFor(source),
             sourceHeight: sourceHeightFor(source),
+            representationId: "local",
+            representationLabel: "LOCAL SOURCE",
             source
         }));
         this.#initialize(descriptors);
@@ -55,6 +57,9 @@ export class ImmutableArtwork {
                 height: descriptor.height,
                 sourceWidth: descriptor.sourceWidth ?? descriptor.width,
                 sourceHeight: descriptor.sourceHeight ?? descriptor.height,
+                representationId: descriptor.representationId ?? "source",
+                representationLabel:
+                    descriptor.representationLabel ?? "SOURCE",
                 source: descriptor.source ?? null
             };
             sourceStart += segment.width;
@@ -66,7 +71,8 @@ export class ImmutableArtwork {
         this.width = sourceStart;
         this.height = Math.max(...this.#segments.map(({ height }) => height));
         this.imageCount = this.#segments.length;
-        this.sourceDescription = sourceDescriptionFor(this.#segments);
+        this.sourceRepresentation = sourceRepresentationFor(this.#segments);
+        this.sourceDescription = this.sourceRepresentation.description;
         this.#columns = new Array(this.width);
 
         for (const segment of this.#segments) {
@@ -93,7 +99,9 @@ export class ImmutableArtwork {
             width: segment.width,
             height: segment.height,
             sourceWidth: segment.sourceWidth,
-            sourceHeight: segment.sourceHeight
+            sourceHeight: segment.sourceHeight,
+            representationId: segment.representationId,
+            representationLabel: segment.representationLabel
         })));
     }
 
@@ -224,17 +232,35 @@ function validateMetadata(metadata) {
     }
 }
 
-function sourceDescriptionFor(segments) {
-    const descriptions = new Set(segments.map((segment) => {
-        const halfResolution = segment.sourceWidth * 2 === segment.width
-            && segment.sourceHeight * 2 === segment.height;
-        const prefix = halfResolution ? "HALF-RES" : "SOURCE";
-        return `${prefix} ${segment.sourceWidth}×${segment.sourceHeight}`
+function sourceRepresentationFor(segments) {
+    const descriptions = new Map(segments.map((segment) => {
+        const scale = segment.sourceWidth / segment.width;
+        const description = `${segment.representationLabel} `
+            + `${segment.sourceWidth}×${segment.sourceHeight}`
             + ` / LOGICAL ${segment.width}×${segment.height}`;
+        return [description, Object.freeze({
+            id: segment.representationId,
+            label: segment.representationLabel,
+            logicalWidth: segment.width,
+            logicalHeight: segment.height,
+            rasterWidth: segment.sourceWidth,
+            rasterHeight: segment.sourceHeight,
+            rasterScale: scale,
+            description
+        })];
     }));
     return descriptions.size === 1
-        ? [...descriptions][0]
-        : "MIXED SOURCE RESOLUTIONS";
+        ? [...descriptions.values()][0]
+        : Object.freeze({
+            id: "mixed",
+            label: "MIXED SOURCES",
+            logicalWidth: null,
+            logicalHeight: null,
+            rasterWidth: null,
+            rasterHeight: null,
+            rasterScale: null,
+            description: "MIXED SOURCE REPRESENTATIONS"
+        });
 }
 
 function sourceWidthFor(source) {

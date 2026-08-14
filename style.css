@@ -1699,7 +1699,8 @@ select{
 
 }
 
-.draw-call-probe-control{
+.draw-call-probe-control,
+.source-representation-control{
 
     display:flex;
 
@@ -1711,7 +1712,8 @@ select{
 
 }
 
-.draw-call-probe-control select{
+.draw-call-probe-control select,
+.source-representation-control select{
 
     width:100%;
 

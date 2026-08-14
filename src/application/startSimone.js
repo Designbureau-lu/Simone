@@ -1,7 +1,9 @@
 import { loadArtwork } from "../artwork/loadArtwork.js";
 import { ImmutableArtwork } from "../artwork/ImmutableArtwork.js";
 import {
-    artworkSegmentsFromManifest
+    artworkRepresentationIdsFromManifest,
+    artworkSegmentsFromManifest,
+    representationLabel
 } from "../artwork/ArtworkManifest.js";
 import {
     ArtworkSegmentScheduler,
@@ -54,6 +56,9 @@ export function startSimone() {
     const debugPanelElement = document.getElementById("debugPanel");
     const debugReopenElement = document.getElementById("debugReopen");
     const drawCallProbeMode = document.getElementById("drawCallProbeMode");
+    const artworkSourceRepresentation = document.getElementById(
+        "artworkSourceRepresentation"
+    );
     const controls = getSurfaceControls();
 
     if (!(fileInput instanceof HTMLInputElement)
@@ -66,7 +71,8 @@ export function startSimone() {
         || !(conversationBarElement instanceof HTMLElement)
         || !(debugPanelElement instanceof HTMLElement)
         || !(debugReopenElement instanceof HTMLButtonElement)
-        || !(drawCallProbeMode instanceof HTMLSelectElement)) {
+        || !(drawCallProbeMode instanceof HTMLSelectElement)
+        || !(artworkSourceRepresentation instanceof HTMLSelectElement)) {
         throw new Error("SIMONE could not find its required interface elements.");
     }
 
@@ -151,7 +157,11 @@ export function startSimone() {
         }
     });
 
-    loadManifestArtwork(application, synchronizeInterface);
+    loadManifestArtwork(
+        application,
+        synchronizeInterface,
+        artworkSourceRepresentation
+    );
 
     return application;
 }
@@ -190,7 +200,11 @@ function bindViewingSurfaceResize(
     }
 }
 
-export async function loadManifestArtwork(application, onNavigation = null) {
+export async function loadManifestArtwork(
+    application,
+    onNavigation = null,
+    representationControl = null
+) {
     const manifestUrl = manifestUrlFor(
         "public/artwork.json",
         document.baseURI
@@ -204,14 +218,29 @@ export async function loadManifestArtwork(application, onNavigation = null) {
             );
         }
 
+        const manifestSource = await response.text();
+        const availableRepresentationIds =
+            artworkRepresentationIdsFromManifest(manifestSource);
+        const representationId = selectedArtworkRepresentationId(
+            availableRepresentationIds
+        );
+        if (representationControl) {
+            bindArtworkRepresentationControl(
+                representationControl,
+                availableRepresentationIds,
+                representationId
+            );
+        }
         const segments = artworkSegmentsFromManifest(
-            await response.text(),
-            document.baseURI
+            manifestSource,
+            document.baseURI,
+            representationId
         );
         console.info([
             "Loaded artwork.json",
             `Loaded at: ${manifestLoadTime()}`,
-            `Images: ${segments.length}`
+            `Images: ${segments.length}`,
+            `Representation: ${representationLabel(representationId)}`
         ].join("\n"));
         const artwork = ImmutableArtwork.fromMetadata(segments);
         application.initializeArtwork(artwork);
@@ -242,6 +271,38 @@ export async function loadManifestArtwork(application, onNavigation = null) {
     } catch (error) {
         console.error("SIMONE could not load its image manifest.", error);
     }
+}
+
+export function selectedArtworkRepresentationId(
+    availableIds,
+    locationUrl = window.location.href
+) {
+    const requested = new URL(locationUrl).searchParams.get(
+        "debug-artwork-source"
+    ) ?? "b";
+    if (!availableIds.includes(requested)) {
+        throw new RangeError(
+            `Artwork representation "${requested}" is not available for `
+            + "every segment."
+        );
+    }
+    return requested;
+}
+
+function bindArtworkRepresentationControl(control, availableIds, selectedId) {
+    for (const option of control.options) {
+        const available = availableIds.includes(option.value);
+        option.disabled = !available;
+        option.textContent = available
+            ? representationLabel(option.value)
+            : `${representationLabel(option.value)} — UNAVAILABLE`;
+    }
+    control.value = selectedId;
+    control.addEventListener("change", () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("debug-artwork-source", control.value);
+        window.location.assign(url.href);
+    }, { once: true });
 }
 
 export async function loadProjectNavigation(application, onUpdate = null) {

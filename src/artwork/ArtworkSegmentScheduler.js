@@ -17,7 +17,7 @@ export const SegmentPriority = Object.freeze({
     INITIAL_VIEWPORT: 500
 });
 
-/** Bounded loader for independently available artwork segments. */
+/** Bounded loader for each logical segment's selected raster representation. */
 export class ArtworkSegmentScheduler {
     #artwork;
     #segments;
@@ -231,7 +231,8 @@ export class ArtworkSegmentScheduler {
             : new Error(String(error));
         segment.state = SegmentLoadState.FAILED;
         console.error(
-            `SIMONE could not load artwork segment "${segment.name}".`,
+            `SIMONE could not load artwork segment "${segment.name}" `
+            + `(${segment.representationLabel}).`,
             segment.error
         );
         this.#notify(segment);
@@ -240,6 +241,7 @@ export class ArtworkSegmentScheduler {
     #notify(segment) {
         const event = Object.freeze({
             index: segment.index,
+            representationId: segment.representationId,
             state: segment.state,
             error: segment.error
         });

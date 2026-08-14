@@ -1,5 +1,63 @@
-/** Parses ordered segment metadata without loading artwork pixels. */
-export function artworkSegmentsFromManifest(source, applicationBaseUrl) {
+export const ARTWORK_REPRESENTATION_IDS = Object.freeze(["a", "b"]);
+
+/** Parses ordered logical segments for one selected raster representation. */
+export function artworkSegmentsFromManifest(
+    source,
+    applicationBaseUrl,
+    representationId = "b"
+) {
+    const manifest = parseArtworkManifest(source);
+    if (typeof representationId !== "string" || representationId === "") {
+        throw new TypeError("Artwork representation selection is invalid.");
+    }
+
+    const imageDirectory = new URL("public/images/", applicationBaseUrl);
+    return Object.freeze(manifest.segments.map((segment) => {
+        const representation = segment.representations.find(
+            ({ id }) => id === representationId
+        );
+        if (!representation) {
+            throw new RangeError(
+                `Artwork representation "${representationId}" is missing `
+                + `for segment "${segment.id}".`
+            );
+        }
+
+        return Object.freeze({
+            name: segment.id,
+            url: new URL(
+                encodeURIComponent(representation.src),
+                imageDirectory
+            ).href,
+            width: segment.width,
+            height: segment.height,
+            sourceWidth: representation.width,
+            sourceHeight: representation.height,
+            byteSize: representation.byteSize,
+            representationId,
+            representationLabel: representationLabel(representationId)
+        });
+    }));
+}
+
+/** Returns representations that are available for every logical segment. */
+export function artworkRepresentationIdsFromManifest(source) {
+    const manifest = parseArtworkManifest(source);
+    const common = manifest.segments[0].representations
+        .map(({ id }) => id)
+        .filter((id) => manifest.segments.every((segment) => (
+            segment.representations.some((representation) => (
+                representation.id === id
+            ))
+        )));
+    return Object.freeze(common);
+}
+
+export function representationLabel(id) {
+    return `SOURCE ${id.toUpperCase()}`;
+}
+
+function parseArtworkManifest(source) {
     let manifest;
     try {
         manifest = JSON.parse(source);
@@ -9,46 +67,87 @@ export function artworkSegmentsFromManifest(source, applicationBaseUrl) {
         });
     }
 
-    if (manifest?.version !== 1
+    if (manifest?.version !== 2
         || !Array.isArray(manifest.segments)
         || manifest.segments.length === 0) {
         throw new TypeError("Artwork manifest structure is invalid.");
     }
 
-    const imageDirectory = new URL("public/images/", applicationBaseUrl);
-    const names = new Set();
-    return Object.freeze(manifest.segments.map((segment) => {
+    const segmentIds = new Set();
+    const segments = manifest.segments.map((segment) => {
         if (!segment
-            || typeof segment.src !== "string"
-            || segment.src.trim() === ""
-            || names.has(segment.src)
-            || !Number.isSafeInteger(segment.width)
-            || segment.width <= 0
-            || !Number.isSafeInteger(segment.height)
-            || segment.height <= 0
-            || !validOptionalExtent(segment.sourceWidth)
-            || !validOptionalExtent(segment.sourceHeight)
-            || ((segment.sourceWidth === undefined)
-                !== (segment.sourceHeight === undefined))
-            || (segment.byteSize !== undefined
-                && (!Number.isSafeInteger(segment.byteSize)
-                    || segment.byteSize <= 0))) {
-            throw new TypeError("Artwork segment metadata is invalid.");
+            || typeof segment.id !== "string"
+            || segment.id.trim() === ""
+            || segmentIds.has(segment.id)
+            || !positiveInteger(segment.logicalWidth)
+            || !positiveInteger(segment.logicalHeight)
+            || !Array.isArray(segment.representations)
+            || segment.representations.length === 0) {
+            throw new TypeError("Artwork logical segment metadata is invalid.");
         }
-        names.add(segment.src);
-        return Object.freeze({
-            name: segment.src,
-            url: new URL(encodeURIComponent(segment.src), imageDirectory).href,
-            width: segment.width,
-            height: segment.height,
-            sourceWidth: segment.sourceWidth ?? segment.width,
-            sourceHeight: segment.sourceHeight ?? segment.height,
-            byteSize: segment.byteSize ?? null
+        segmentIds.add(segment.id);
+
+        const representationIds = new Set();
+        const representations = segment.representations.map((representation) => {
+            validateRepresentation(
+                representation,
+                segment,
+                representationIds
+            );
+            representationIds.add(representation.id);
+            return Object.freeze({ ...representation });
         });
-    }));
+        const scales = new Set(representations.map((representation) => (
+            representation.width / segment.logicalWidth
+        )));
+        if (scales.size !== representations.length) {
+            throw new RangeError(
+                `Artwork segment "${segment.id}" repeats a raster scale.`
+            );
+        }
+
+        return Object.freeze({
+            id: segment.id,
+            width: segment.logicalWidth,
+            height: segment.logicalHeight,
+            representations: Object.freeze(representations)
+        });
+    });
+
+    return Object.freeze({
+        version: manifest.version,
+        segments: Object.freeze(segments)
+    });
 }
 
-function validOptionalExtent(value) {
-    return value === undefined
-        || (Number.isSafeInteger(value) && value > 0);
+function validateRepresentation(representation, segment, ids) {
+    if (!representation
+        || typeof representation.id !== "string"
+        || representation.id.trim() === ""
+        || !ARTWORK_REPRESENTATION_IDS.includes(representation.id)
+        || ids.has(representation.id)
+        || typeof representation.src !== "string"
+        || representation.src.trim() === ""
+        || !positiveInteger(representation.width)
+        || !positiveInteger(representation.height)
+        || !positiveInteger(representation.byteSize)) {
+        throw new TypeError("Artwork raster representation metadata is invalid.");
+    }
+
+    const horizontalDivisor = segment.logicalWidth / representation.width;
+    const verticalDivisor = segment.logicalHeight / representation.height;
+    if (!Number.isInteger(horizontalDivisor)
+        || horizontalDivisor < 1
+        || horizontalDivisor > 2
+        || horizontalDivisor !== verticalDivisor) {
+        throw new RangeError(
+            `Artwork representation "${representation.id}" does not have `
+            + `a deterministic scale and matching aspect ratio for segment `
+            + `"${segment.id}".`
+        );
+    }
+}
+
+function positiveInteger(value) {
+    return Number.isSafeInteger(value) && value > 0;
 }

@@ -1291,6 +1291,7 @@ export class SimoneApplication {
             visibleFactor: this.sceneVisibleFactor,
             carrierDistance: this.parameters.carrierDistance,
             sourceDescription: this.artwork.sourceDescription,
+            sourceRepresentation: this.artwork.sourceRepresentation,
             ...rendererMetrics
         });
     }

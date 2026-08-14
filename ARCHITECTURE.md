@@ -94,8 +94,10 @@ Canvas
 
 **Responsibilities**
 
-- Parse ordered source dimensions from `public/artwork.json` before decoding.
+- Parse ordered logical segment dimensions and available raster
+  representations from `public/artwork.json` before decoding.
 - Establish the complete virtual-artwork coordinate system from metadata.
+- Select one raster representation without changing logical segment spans.
 - Load and decode viewport-critical segments through a bounded priority queue,
   then continue remaining segments in the background.
 - Reprioritize queued segments from the current guarded viewport, signed Pan
@@ -109,6 +111,9 @@ Canvas
 
 - `ImmutableArtwork.fromMetadata()` establishes global coordinates before
   source pixels are available.
+- Each logical segment owns its authoritative width and height; a selected
+  representation supplies only its URL, decoded pixel dimensions, byte size,
+  and logical-to-raster sampling scale.
 - `ArtworkSegmentScheduler` owns bounded request/decode state and priority.
 - `loadArtwork(files)` remains the all-at-once local-import rollback path.
 - `ImmutableArtwork.columnAt(sourceX)` returns an immutable source-column
@@ -355,9 +360,13 @@ continuity take precedence over exact visible material length.
 
 Decoded source-column descriptors are immutable and cached for the lifetime of
 an imported artwork. Their logical virtual coordinates are likewise cached for
-the active artwork layout. Production frames reuse both inputs while computing
-the same requested curtain samples; caching changes allocation lifecycle, not
-artwork sampling or geometry.
+the active artwork layout. A raster representation may have fewer pixels than
+its logical segment: source rectangles use the exact rational scale while the
+column identity, global span, structural height, geometry, navigation, and draw
+count remain logical. Fractional raster source coordinates are not independently
+rounded. Production frames reuse both inputs while computing the same requested
+curtain samples; caching and raster selection change neither geometry nor the
+authoritative artwork coordinate system.
 
 The physical curtain and its printed artwork now have explicit resolution
 boundaries. Every frame resolves the complete ordered Period table and its

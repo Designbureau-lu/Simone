@@ -67,9 +67,13 @@ test("five-second capture freezes the existing report sample summary", () => {
         assert(captured.includes("MODE"));
         assert(captured.includes("NORMAL"));
         assert(captured.includes("SOURCE"));
-        assert(captured.includes(
-            "HALF-RES 2500×1250 / LOGICAL 5000×2500"
-        ));
+        assert(captured.includes("SOURCE B"));
+        assert(captured.includes("Logical source"));
+        assert(captured.includes("5,000 × 2,500"));
+        assert(captured.includes("Raster source"));
+        assert(captured.includes("2,500 × 1,250"));
+        assert(captured.includes("Raster scale"));
+        assert(captured.includes("0.50×"));
         assert(captured.includes("Samples"));
         assert(captured.includes("2"));
 
@@ -130,7 +134,16 @@ function report() {
         totalColumns: 1000,
         periodCount: 10,
         drawCallProbeMode: "normal",
-        sourceDescription: "HALF-RES 2500×1250 / LOGICAL 5000×2500"
+        sourceDescription: "SOURCE B 2500×1250 / LOGICAL 5000×2500",
+        sourceRepresentation: {
+            id: "b",
+            label: "SOURCE B",
+            logicalWidth: 5000,
+            logicalHeight: 2500,
+            rasterWidth: 2500,
+            rasterHeight: 1250,
+            rasterScale: 0.5
+        }
     };
 }
 

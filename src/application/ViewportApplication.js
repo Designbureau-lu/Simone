@@ -326,6 +326,7 @@ export class ViewportApplication extends SimoneApplication {
             pixelRatio: viewing.pixelRatio,
             destinationMode: viewing.mode,
             sourceDescription: this.artwork.sourceDescription,
+            sourceRepresentation: this.artwork.sourceRepresentation,
             ...rendererMetrics
         });
         this.performanceOverview?.update(report);
