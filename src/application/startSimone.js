@@ -1,10 +1,6 @@
 import { loadArtwork } from "../artwork/loadArtwork.js";
 import { ImmutableArtwork } from "../artwork/ImmutableArtwork.js";
-import {
-    artworkRepresentationIdsFromManifest,
-    artworkSegmentsFromManifest,
-    representationLabel
-} from "../artwork/ArtworkManifest.js";
+import { artworkSegmentsFromManifest } from "../artwork/ArtworkManifest.js";
 import {
     ArtworkSegmentScheduler,
     SegmentLoadState,
@@ -56,9 +52,6 @@ export function startSimone() {
     const debugPanelElement = document.getElementById("debugPanel");
     const debugReopenElement = document.getElementById("debugReopen");
     const drawCallProbeMode = document.getElementById("drawCallProbeMode");
-    const artworkSourceRepresentation = document.getElementById(
-        "artworkSourceRepresentation"
-    );
     const controls = getSurfaceControls();
 
     if (!(fileInput instanceof HTMLInputElement)
@@ -71,8 +64,7 @@ export function startSimone() {
         || !(conversationBarElement instanceof HTMLElement)
         || !(debugPanelElement instanceof HTMLElement)
         || !(debugReopenElement instanceof HTMLButtonElement)
-        || !(drawCallProbeMode instanceof HTMLSelectElement)
-        || !(artworkSourceRepresentation instanceof HTMLSelectElement)) {
+        || !(drawCallProbeMode instanceof HTMLSelectElement)) {
         throw new Error("SIMONE could not find its required interface elements.");
     }
 
@@ -106,7 +98,6 @@ export function startSimone() {
     });
     bindDebugPanel(debugPanelElement, debugReopenElement);
     bindDrawCallProbe(drawCallProbeMode, renderer, application);
-    bindIdentityFontDiagnostic(debugPanelElement);
     bindSurfaceControls(controls, application);
     const synchronizeViewportControl = bindViewportControl(
         viewportPosition,
@@ -157,11 +148,7 @@ export function startSimone() {
         }
     });
 
-    loadManifestArtwork(
-        application,
-        synchronizeInterface,
-        artworkSourceRepresentation
-    );
+    loadManifestArtwork(application, synchronizeInterface);
 
     return application;
 }
@@ -202,8 +189,7 @@ function bindViewingSurfaceResize(
 
 export async function loadManifestArtwork(
     application,
-    onNavigation = null,
-    representationControl = null
+    onNavigation = null
 ) {
     const manifestUrl = manifestUrlFor(
         "public/artwork.json",
@@ -219,29 +205,14 @@ export async function loadManifestArtwork(
         }
 
         const manifestSource = await response.text();
-        const availableRepresentationIds =
-            artworkRepresentationIdsFromManifest(manifestSource);
-        const representationId = selectedArtworkRepresentationId(
-            availableRepresentationIds
-        );
-        clearArtworkRepresentationOverride();
-        if (representationControl) {
-            bindArtworkRepresentationControl(
-                representationControl,
-                availableRepresentationIds,
-                representationId
-            );
-        }
         const segments = artworkSegmentsFromManifest(
             manifestSource,
-            document.baseURI,
-            representationId
+            document.baseURI
         );
         console.info([
             "Loaded artwork.json",
             `Loaded at: ${manifestLoadTime()}`,
-            `Images: ${segments.length}`,
-            `Representation: ${representationLabel(representationId)}`
+            `Images: ${segments.length}`
         ].join("\n"));
         const artwork = ImmutableArtwork.fromMetadata(segments);
         application.initializeArtwork(artwork);
@@ -272,56 +243,6 @@ export async function loadManifestArtwork(
     } catch (error) {
         console.error("SIMONE could not load its image manifest.", error);
     }
-}
-
-export function selectedArtworkRepresentationId(
-    availableIds,
-    locationUrl = window.location.href
-) {
-    const requested = new URL(locationUrl).searchParams.get(
-        "debug-artwork-source"
-    ) ?? "a";
-    if (!availableIds.includes(requested)) {
-        throw new RangeError(
-            `Artwork representation "${requested}" is not available for `
-            + "every segment."
-        );
-    }
-    return requested;
-}
-
-function clearArtworkRepresentationOverride() {
-    const url = new URL(window.location.href);
-    if (!url.searchParams.has("debug-artwork-source")) {
-        return;
-    }
-    window.history.replaceState(
-        window.history.state,
-        "",
-        artworkRepresentationUrlWithoutOverride(url.href)
-    );
-}
-
-export function artworkRepresentationUrlWithoutOverride(locationUrl) {
-    const url = new URL(locationUrl);
-    url.searchParams.delete("debug-artwork-source");
-    return url.href;
-}
-
-function bindArtworkRepresentationControl(control, availableIds, selectedId) {
-    for (const option of control.options) {
-        const available = availableIds.includes(option.value);
-        option.disabled = !available;
-        option.textContent = available
-            ? representationLabel(option.value)
-            : `${representationLabel(option.value)} — UNAVAILABLE`;
-    }
-    control.value = selectedId;
-    control.addEventListener("change", () => {
-        const url = new URL(window.location.href);
-        url.searchParams.set("debug-artwork-source", control.value);
-        window.location.assign(url.href);
-    }, { once: true });
 }
 
 export async function loadProjectNavigation(application, onUpdate = null) {
@@ -592,44 +513,6 @@ export function bindDebugPanel(panel, reopen) {
         panel.hidden = false;
         close.focus();
     });
-}
-
-export function bindIdentityFontDiagnostic(panel) {
-    const output = panel.querySelector("[data-identity-font-diagnostic]");
-    if (!(output instanceof HTMLPreElement)) {
-        return null;
-    }
-    const productionSamples = Object.freeze([
-        Object.freeze({ label: "LETZE", selector: ".arrival-identity-prize-letters" }),
-        Object.freeze({ label: "20", selector: ".arrival-identity-prize-digits" }),
-        Object.freeze({ label: "BUERGER", selector: ".arrival-identity-prize > :nth-child(2)" }),
-        Object.freeze({ label: "KONSCHT", selector: ".arrival-identity-prize > :nth-child(3)" }),
-        Object.freeze({ label: "PRAIS", selector: ".arrival-identity-prize > :nth-child(4) .arrival-identity-prize-letters" }),
-        Object.freeze({ label: "26", selector: ".arrival-identity-prize > :nth-child(4) .arrival-identity-prize-digits" })
-    ]);
-    const update = () => {
-        const lines = [
-            `LAYOUT ${window.innerWidth < 768 ? "MOBILE (<768px)" : "DESKTOP (>=768px)"}`,
-            `VIEWPORT ${window.innerWidth} × ${window.innerHeight} CSS px`,
-            `DPR ${window.devicePixelRatio}`,
-            "COMPUTED FONTS"
-        ];
-        for (const { label, selector } of productionSamples) {
-            const element = document.querySelector(selector);
-            if (!(element instanceof HTMLElement)) {
-                lines.push(`${label}: unavailable`);
-                continue;
-            }
-            const style = getComputedStyle(element);
-            lines.push(`${label}: ${style.fontFamily} · ${style.fontWeight}`);
-        }
-        output.textContent = lines.join("\n");
-        return output.textContent;
-    };
-    window.addEventListener("resize", update);
-    document.fonts?.ready.then(update);
-    update();
-    return Object.freeze({ update });
 }
 
 export function bindCurtainDragging(

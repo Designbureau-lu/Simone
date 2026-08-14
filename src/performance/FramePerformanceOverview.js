@@ -129,8 +129,7 @@ export class FramePerformanceOverview {
             valueRow("Selected cols", integer(current.visibleColumns)),
             valueRow("Projected cols", integer(current.projectedColumns)),
             valueRow("Artwork cols", integer(current.totalColumns)),
-            valueRow("Periods", integer(current.periodCount)),
-            ...sourceRepresentationRows(current.sourceRepresentation)
+            valueRow("Periods", integer(current.periodCount))
         ];
 
         this.#output.textContent = rows.join("\n");
@@ -162,7 +161,6 @@ export class FramePerformanceOverview {
                 current?.destinationPixelCount
             )),
             valueRow("MODE", probeModeLabel(current?.drawCallProbeMode)),
-            ...sourceRepresentationRows(current?.sourceRepresentation),
             "",
             `${"".padEnd(18)}${"Median".padStart(10)}`
                 + `${"p95".padStart(10)}`,
@@ -183,23 +181,6 @@ export class FramePerformanceOverview {
 
         this.#output.textContent = rows.join("\n");
     }
-}
-
-function sourceRepresentationRows(representation) {
-    return [
-        valueRow("SOURCE", representation?.label ?? "—"),
-        valueRow("Logical source", dimensions(
-            representation?.logicalWidth,
-            representation?.logicalHeight
-        )),
-        valueRow("Raster source", dimensions(
-            representation?.rasterWidth,
-            representation?.rasterHeight
-        )),
-        valueRow("Raster scale", Number.isFinite(
-            representation?.rasterScale
-        ) ? `${format(representation.rasterScale, 2)}×` : "—")
-    ];
 }
 
 export function currentBrowserName() {

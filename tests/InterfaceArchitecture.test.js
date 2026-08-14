@@ -1,10 +1,7 @@
 import {
     bindDebugPanel,
-    bindIdentityFontDiagnostic,
     bindConversationInterface,
-    createTitleTransition,
-    artworkRepresentationUrlWithoutOverride,
-    selectedArtworkRepresentationId
+    createTitleTransition
 } from "../src/application/startSimone.js";
 import {
     CurtainEntranceMotion
@@ -622,51 +619,11 @@ test("debug controls expose the canonical renderer defaults", async () => {
     equal(page.getElementById("carrierDistanceNumber").value, "120");
     equal(page.getElementById("modelTransitionNumber").value, "50");
     equal(page.getElementById("drawCallProbeMode").value, "normal");
-    equal(page.getElementById("artworkSourceRepresentation").value, "a");
-    assert(!page.querySelector(
-        "#artworkSourceRepresentation option[value='a']"
-    ).disabled);
-    assert(!page.querySelector(
-        "#artworkSourceRepresentation option[value='b']"
-    ).disabled);
     equal(
         Array.from(page.getElementById("drawCallProbeMode").options)
             .map((option) => option.textContent.trim())
             .join("|"),
         "NORMAL|2:1 DRAW-CALL PROBE"
-    );
-});
-
-test("DEV artwork source selection is explicit and rejects missing tiers", () => {
-    equal(
-        selectedArtworkRepresentationId(
-            ["a", "b"],
-            "https://example.test/"
-        ),
-        "a"
-    );
-    equal(
-        selectedArtworkRepresentationId(
-            ["a", "b"],
-            "https://example.test/?debug-artwork-source=a"
-        ),
-        "a"
-    );
-    let rejected = false;
-    try {
-        selectedArtworkRepresentationId(
-            ["b"],
-            "https://example.test/?debug-artwork-source=a"
-        );
-    } catch {
-        rejected = true;
-    }
-    assert(rejected);
-    equal(
-        artworkRepresentationUrlWithoutOverride(
-            "https://example.test/?dev=1&debug-artwork-source=b#curtain"
-        ),
-        "https://example.test/?dev=1#curtain"
     );
 });
 
@@ -730,28 +687,6 @@ test("debug panel closes to a small reopen control and restores focus", () => {
     equal(document.activeElement, panel.querySelector("[data-debug-close]"));
     panel.remove();
     reopen.remove();
-});
-
-test("permanent DEV environment diagnostic reports viewport and production fonts", () => {
-    const panel = document.createElement("aside");
-    panel.innerHTML = `
-        <pre data-identity-font-diagnostic></pre>
-    `;
-    document.body.append(panel);
-
-    const diagnostic = bindIdentityFontDiagnostic(panel);
-    const report = diagnostic.update();
-    assert(report.includes(window.innerWidth < 768
-        ? "LAYOUT MOBILE (<768px)"
-        : "LAYOUT DESKTOP (>=768px)"));
-    assert(report.includes(`VIEWPORT ${window.innerWidth} × ${window.innerHeight} CSS px`));
-    assert(report.includes(`DPR ${window.devicePixelRatio}`));
-    for (const label of ["LETZE", "20", "BUERGER", "KONSCHT", "PRAIS", "26"]) {
-        assert(report.includes(`${label}:`));
-    }
-    assert(!report.includes("DEV SPECIMEN FACES"));
-
-    panel.remove();
 });
 
 test("conversation title follows default, Explore, project, and inactive states", () => {

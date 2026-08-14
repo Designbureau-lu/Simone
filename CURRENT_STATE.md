@@ -29,9 +29,7 @@ Updated: 2026-08-14
   desktop. Touch physics, Index panel contents, and lower editorial layout are
   unchanged.
 
-- The permanent development panel reports the active mobile/desktop layout,
-  CSS viewport dimensions, device pixel ratio, computed production identity
-  families and weights, and frame-performance information. Its permanent
+- The permanent development panel retains frame-performance information. Its
   `CAPTURE 5s` control records the existing renderer reports for five seconds,
   then freezes a real-device browser, viewport, Canvas, timing, missed-frame,
   and workload summary for photographing without remote debugging. A default-off,
@@ -43,32 +41,33 @@ Updated: 2026-08-14
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.
 
-- Artwork metadata now separates one authoritative intrinsic segment from its
-  raster representations and from READ's semantic navigation grid. Every
-  segment remains `5000 × 2500` intrinsic units, and the curtain geometry maps
+- Artwork metadata separates one authoritative intrinsic segment from its
+  decoded production source and from READ's semantic navigation grid. Every
+  segment is `5000 × 2500` intrinsic units, and the curtain geometry maps
   its 5,000 immutable columns directly across those 5,000 units. The complete
   surface is therefore 60,000 units wide and contains 500 Periods at the
   approved 120-unit Carrier Distance; a completely flat segment reconstructs
   at its source 2:1 aspect ratio. READ metadata remains unchanged at 4,400
   semantic units per segment (`10 × (400 + 40)`) and is converted explicitly
-  to intrinsic source/geometry coordinates only at navigation boundaries.
-  `SOURCE A` uses the genuine
-  `5000 × 2500` exports in `public/images/source-a/` and is the default for a
-  normal or freshly reloaded page. `SOURCE B` uses the corresponding
-  `2500 × 1250` rasters in `public/images/source-b/`, sampled at `0.5` in both
-  axes without independently rounding source coordinates. The DEV source
-  selector performs a one-load override, remains independent of the 2:1
-  draw-call probe, and reports selected representation, logical dimensions,
-  raster dimensions, and scale. The override is removed from browser history
-  after selection, so a later reload returns to SOURCE A.
+  to intrinsic source/geometry coordinates only at navigation boundaries. The
+  semantic grid totals 52,800 units but does not define curtain width. The
+  production manifest loads only the genuine full-resolution `5000 × 2500`
+  files in `public/images/artwork/`; decoded source dimensions remain explicit
+  for validation and source-coordinate mapping.
 - Viewing-space X and Y now share the virtual curtain-frame height, preserving
   the existing top/bottom fold-depth allowance while a flat `5000 × 2500`
   segment retains its exact 2:1 presentation ratio. The renderer combines only
   mathematically exact flat runs bounded by source, branch, and Period identity;
   these runs use one high-quality smoothed `drawImage()` over their complete
-  source interval. Folded or otherwise incompatible columns retain the
-  established individual-column path, and the independent DEV 2:1 probe remains
-  available.
+  source interval, ensuring that every source pixel participates in filtered
+  downsampling. Folded or otherwise incompatible columns retain the established
+  individual-column path; no nearly-flat approximation is used. Continuous
+  flat bounds are mathematically 2:1, with final raster quantization differing
+  by less than one destination pixel. Visual fidelity is validated against the
+  original artwork. Flat frames dropped from roughly 2,000 artwork calls to
+  roughly 147, a representative mixed READ frame used roughly 1,771, and folded
+  EXPLORE remains near 2,000. The independent DEV 2:1 draw-call probe remains
+  available and NORMAL is always the page-load default.
 - Real Android 10 Chrome measurement of the preceding full-coordinate scene
   recorded 43.2 ms frame median / 79.2 ms p95 and 34.8 ms rendering median /
   55.2 ms p95 at 1,080 draw calls, despite fewer destination pixels than fast
@@ -131,19 +130,22 @@ Updated: 2026-08-14
   zero-slope crossing. Front/Rear and Period boundaries still split regions;
   cue strengths, geometry, structural height, and Front crest behavior are
   unchanged.
-- Closed the desktop Chrome performance investigation without changing
-  production code. Controlled comparisons show that the corrected orientation,
-  structural `destinationHeight = originalHeight - 2 * h` model, and renderer
-  cleanup did not introduce the slowdown. Geometry and guarded projection are
+- The earlier desktop Chrome investigation established that the corrected
+  orientation, structural `destinationHeight = originalHeight - 2 * h` model,
+  and renderer cleanup did not introduce the slowdown. Geometry and guarded projection are
   not the bottleneck, shading adds only a small separate cost, and Chrome
   remained GPU accelerated in the inspected runs. The evidence is most
   consistent with Chrome spending the dominant time handling thousands of
   narrow Canvas 2D `drawImage()` calls from decoded image sources during
   continuous dragging, but the browser-internal cause remains unknown. A
   canvas-backed source experiment produced no production-ready improvement and
-  was fully reverted. Android remains unmeasured, and Firefox and Safari were
-  not fully comparable under the same conditions. `PERFORMANCE.md` records the
-  measurements, interpretation, eliminated hypotheses, and scope limits.
+  was fully reverted. Subsequent real-device testing confirmed that genuinely
+  folded EXPLORE rendering remains expensive on Android Chrome. Exact flat-span
+  rendering fixes flat fidelity and reduces flat draw calls, but cannot merge
+  non-affine folded regions; Android folded performance remains a separate open
+  issue. Firefox and Safari were not fully comparable under the original
+  controlled desktop conditions. `PERFORMANCE.md` records the measurements,
+  interpretation, eliminated hypotheses, and scope limits.
 - Approved the corrected circular Front/Rear orientation and structural strip
   height model. Each placement exposes its Period's maximum `targetY`; the
   application computes `h = periodMaximumTargetY - targetY` and draws

@@ -2,8 +2,8 @@
  * Immutable description of one continuous source artwork.
  *
  * Artwork is sacred: this model exposes immutable vertical source mappings.
- * Temporary diagnostic metadata may map logical columns into a lower-resolution
- * decoded source without changing the authoritative artwork coordinate system.
+ * Source pixels and intrinsic artwork coordinates remain explicit so decoded
+ * source validation never defines the geometry coordinate system.
  */
 export class ImmutableArtwork {
     #segments;
@@ -32,8 +32,6 @@ export class ImmutableArtwork {
             height: sourceHeightFor(source),
             sourceWidth: sourceWidthFor(source),
             sourceHeight: sourceHeightFor(source),
-            representationId: "local",
-            representationLabel: "LOCAL SOURCE",
             source
         }));
         this.#initialize(descriptors);
@@ -57,9 +55,6 @@ export class ImmutableArtwork {
                 height: descriptor.height,
                 sourceWidth: descriptor.sourceWidth ?? descriptor.width,
                 sourceHeight: descriptor.sourceHeight ?? descriptor.height,
-                representationId: descriptor.representationId ?? "source",
-                representationLabel:
-                    descriptor.representationLabel ?? "SOURCE",
                 source: descriptor.source ?? null
             };
             sourceStart += segment.width;
@@ -71,8 +66,6 @@ export class ImmutableArtwork {
         this.width = sourceStart;
         this.height = Math.max(...this.#segments.map(({ height }) => height));
         this.imageCount = this.#segments.length;
-        this.sourceRepresentation = sourceRepresentationFor(this.#segments);
-        this.sourceDescription = this.sourceRepresentation.description;
         this.#columns = new Array(this.width);
 
         for (const segment of this.#segments) {
@@ -99,9 +92,7 @@ export class ImmutableArtwork {
             width: segment.width,
             height: segment.height,
             sourceWidth: segment.sourceWidth,
-            sourceHeight: segment.sourceHeight,
-            representationId: segment.representationId,
-            representationLabel: segment.representationLabel
+            sourceHeight: segment.sourceHeight
         })));
     }
 
@@ -239,37 +230,6 @@ function validateMetadata(metadata) {
             throw new TypeError("Artwork segment metadata is invalid.");
         }
     }
-}
-
-function sourceRepresentationFor(segments) {
-    const descriptions = new Map(segments.map((segment) => {
-        const scale = segment.sourceWidth / segment.width;
-        const description = `${segment.representationLabel} `
-            + `${segment.sourceWidth}×${segment.sourceHeight}`
-            + ` / LOGICAL ${segment.width}×${segment.height}`;
-        return [description, Object.freeze({
-            id: segment.representationId,
-            label: segment.representationLabel,
-            logicalWidth: segment.width,
-            logicalHeight: segment.height,
-            rasterWidth: segment.sourceWidth,
-            rasterHeight: segment.sourceHeight,
-            rasterScale: scale,
-            description
-        })];
-    }));
-    return descriptions.size === 1
-        ? [...descriptions.values()][0]
-        : Object.freeze({
-            id: "mixed",
-            label: "MIXED SOURCES",
-            logicalWidth: null,
-            logicalHeight: null,
-            rasterWidth: null,
-            rasterHeight: null,
-            rasterScale: null,
-            description: "MIXED SOURCE REPRESENTATIONS"
-        });
 }
 
 function sourceWidthFor(source) {

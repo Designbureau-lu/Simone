@@ -94,10 +94,9 @@ Canvas
 
 **Responsibilities**
 
-- Parse ordered logical segment dimensions and available raster
-  representations from `public/artwork.json` before decoding.
+- Parse ordered intrinsic segment dimensions and production source metadata
+  from `public/artwork.json` before decoding.
 - Establish the complete virtual-artwork coordinate system from metadata.
-- Select one raster representation without changing logical segment spans.
 - Load and decode viewport-critical segments through a bounded priority queue,
   then continue remaining segments in the background.
 - Reprioritize queued segments from the current guarded viewport, signed Pan
@@ -111,9 +110,9 @@ Canvas
 
 - `ImmutableArtwork.fromMetadata()` establishes global coordinates before
   source pixels are available.
-- Each logical segment owns its authoritative width and height; a selected
-  representation supplies only its URL, decoded pixel dimensions, byte size,
-  and logical-to-raster sampling scale.
+- Each segment owns its authoritative intrinsic width and height. Its source
+  metadata separately supplies the URL, decoded pixel dimensions, and byte
+  size used for loading and validation.
 - `ArtworkSegmentScheduler` owns bounded request/decode state and priority.
 - `loadArtwork(files)` remains the all-at-once local-import rollback path.
 - `ImmutableArtwork.columnAt(sourceX)` returns an immutable source-column
@@ -145,7 +144,25 @@ Canvas
 
 These values describe semantic project placement only. They do not set the
 physical width of the artwork-bearing curtain. Each segment occupies its full
-5,000-column intrinsic geometry span, irrespective of raster representation.
+5,000-column intrinsic geometry span.
+
+## Coordinate Systems
+
+SIMONE keeps three horizontal coordinate systems explicit:
+
+- **Intrinsic artwork:** each of the 12 source segments is `5,000 × 2,500`,
+  for 60,000 immutable intrinsic columns in total.
+- **Semantic READ/navigation:** project metadata uses
+  `10 × (400 + 40) = 4,400` units per segment, or 52,800 units in total.
+  Navigation converts these semantic coordinates explicitly into intrinsic
+  artwork coordinates. Semantic width never determines physical geometry.
+- **Curtain geometry:** the installation spans the 60,000 intrinsic units.
+  With Carrier Distance `120`, `CurtainField` owns 500 Periods. Geometry maps
+  source columns directly into this intrinsic range.
+
+The 40-unit semantic gutter belongs to project placement in READ mode; it is
+not blank material inserted into the printed artwork and does not reduce the
+physical width of a source segment.
 
 **Interaction-mode boundary**
 
@@ -193,7 +210,8 @@ curtain interactions.
 **Public contract**
 
 - `beginFrame(frame, appearance)` initializes the canvas and frame appearance.
-- `drawColumn(column, placement, appearance)` draws one mapped source column.
+- `drawColumn(column, placement, appearance)` accepts one mapped source column
+  and accumulates an exact compatible span when possible.
 - `endFrame()` applies frame-level fold cues and completes the frame.
 
 **Must not know**
@@ -316,14 +334,18 @@ placements for batched visual cues, but it does not solve or modify geometry.
 An exact flat-span path may combine consecutive columns only when source
 identity and coordinates, affine X mapping, Y/height, alpha, shading state,
 branch, and Period identity are all compatible. Those spans use Canvas's
-high-quality filtered scaling; every non-matching placement retains the
-individual-column path.
+`imageSmoothingEnabled = true` and `imageSmoothingQuality = "high"` over the
+complete contiguous source interval, so all contributing source pixels take
+part in downsampling. Every non-matching placement retains the established
+individual-column path. There is no approximate or “nearly flat” merge.
 
 ### Viewing surface
 
 Viewport presentation uses the virtual curtain-frame height as the common
-reference for both axes. The top/bottom fold-depth allowance therefore remains
-visible without applying a different horizontal scale to the artwork.
+reference for both X and Y. The top/bottom fold-depth allowance therefore
+remains visible without applying a different horizontal scale to the artwork.
+A completely flat `5,000 × 2,500` segment consequently measures exactly `2:1`
+in continuous projected coordinates.
 
 ### Application
 
@@ -376,14 +398,26 @@ not currently remove columns through physical carrier occlusion. Readability and
 continuity take precedence over exact visible material length.
 
 Decoded source-column descriptors are immutable and cached for the lifetime of
-an imported artwork. Their logical virtual coordinates are likewise cached for
-the active artwork layout. A raster representation may have fewer pixels than
-its logical segment: source rectangles use the exact rational scale while the
-column identity, global span, structural height, geometry, navigation, and draw
-count remain logical. Fractional raster source coordinates are not independently
-rounded. Production frames reuse both inputs while computing the same requested
-curtain samples; caching and raster selection change neither geometry nor the
-authoritative artwork coordinate system.
+an imported artwork. Intrinsic coordinates and decoded-source coordinates stay
+separate in those descriptors so decoded dimensions can be validated without
+defining curtain geometry. The production source is the full-resolution
+`5,000 × 2,500` artwork for each segment.
+
+Before the exact-span path, a flat segment was still painted as isolated
+one-source-pixel columns. During downscaling, many projected columns rounded to
+zero destination width and never contributed, producing visible aliasing and
+stair-stepping in typography, diagonals, and fine detail. Exact flat spans now
+delegate the complete interval to Canvas filtering. Validated flat frames fell
+from roughly 2,000 artwork draw calls to roughly 147; a representative mixed
+READ frame used roughly 1,771, while a folded EXPLORE frame remained near 2,000.
+Flat artwork fidelity has been visually validated against the original source.
+Final Canvas raster quantization may differ from the continuous 2:1 bounds by
+less than one destination pixel.
+
+Folded EXPLORE rendering remains expensive on the tested Android Chrome device.
+The exact-flat optimization does not apply to genuinely folded/non-affine
+regions, so that performance issue remains open and is separate from the fixed
+flat-artwork fidelity problem.
 
 The physical curtain and its printed artwork now have explicit resolution
 boundaries. Every frame resolves the complete ordered Period table and its

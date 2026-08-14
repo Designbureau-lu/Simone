@@ -1,17 +1,17 @@
 {
-  "version": 2,
+  "version": 3,
   "segments": [
-    { "id": "Simone Curtain", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain.jpg", "width": 5000, "height": 2500, "byteSize": 4398224 }, { "id": "b", "src": "source-b/Simone Curtain.jpg", "width": 2500, "height": 1250, "byteSize": 1434013 }] },
-    { "id": "Simone Curtain2", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain2.jpg", "width": 5000, "height": 2500, "byteSize": 4161574 }, { "id": "b", "src": "source-b/Simone Curtain2.jpg", "width": 2500, "height": 1250, "byteSize": 1341462 }] },
-    { "id": "Simone Curtain3", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain3.jpg", "width": 5000, "height": 2500, "byteSize": 8445847 }, { "id": "b", "src": "source-b/Simone Curtain3.jpg", "width": 2500, "height": 1250, "byteSize": 2597281 }] },
-    { "id": "Simone Curtain4", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain4.jpg", "width": 5000, "height": 2500, "byteSize": 4333772 }, { "id": "b", "src": "source-b/Simone Curtain4.jpg", "width": 2500, "height": 1250, "byteSize": 1379990 }] },
-    { "id": "Simone Curtain5", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain5.jpg", "width": 5000, "height": 2500, "byteSize": 6398839 }, { "id": "b", "src": "source-b/Simone Curtain5.jpg", "width": 2500, "height": 1250, "byteSize": 2045715 }] },
-    { "id": "Simone Curtain6", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain6.jpg", "width": 5000, "height": 2500, "byteSize": 5427496 }, { "id": "b", "src": "source-b/Simone Curtain6.jpg", "width": 2500, "height": 1250, "byteSize": 1694563 }] },
-    { "id": "Simone Curtain7", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain7.jpg", "width": 5000, "height": 2500, "byteSize": 6694468 }, { "id": "b", "src": "source-b/Simone Curtain7.jpg", "width": 2500, "height": 1250, "byteSize": 2158995 }] },
-    { "id": "Simone Curtain8", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain8.jpg", "width": 5000, "height": 2500, "byteSize": 4813141 }, { "id": "b", "src": "source-b/Simone Curtain8.jpg", "width": 2500, "height": 1250, "byteSize": 1544115 }] },
-    { "id": "Simone Curtain9", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain9.jpg", "width": 5000, "height": 2500, "byteSize": 5446035 }, { "id": "b", "src": "source-b/Simone Curtain9.jpg", "width": 2500, "height": 1250, "byteSize": 1632560 }] },
-    { "id": "Simone Curtain10", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain10.jpg", "width": 5000, "height": 2500, "byteSize": 5840103 }, { "id": "b", "src": "source-b/Simone Curtain10.jpg", "width": 2500, "height": 1250, "byteSize": 1780457 }] },
-    { "id": "Simone Curtain11", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain11.jpg", "width": 5000, "height": 2500, "byteSize": 5777783 }, { "id": "b", "src": "source-b/Simone Curtain11.jpg", "width": 2500, "height": 1250, "byteSize": 1809712 }] },
-    { "id": "Simone Curtain12", "logicalWidth": 5000, "logicalHeight": 2500, "representations": [{ "id": "a", "src": "source-a/Simone Curtain12.jpg", "width": 5000, "height": 2500, "byteSize": 4874276 }, { "id": "b", "src": "source-b/Simone Curtain12.jpg", "width": 2500, "height": 1250, "byteSize": 1564851 }] }
+    { "id": "Simone Curtain", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain.jpg", "width": 5000, "height": 2500, "byteSize": 4398224 } },
+    { "id": "Simone Curtain2", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain2.jpg", "width": 5000, "height": 2500, "byteSize": 4161574 } },
+    { "id": "Simone Curtain3", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain3.jpg", "width": 5000, "height": 2500, "byteSize": 8445847 } },
+    { "id": "Simone Curtain4", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain4.jpg", "width": 5000, "height": 2500, "byteSize": 4333772 } },
+    { "id": "Simone Curtain5", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain5.jpg", "width": 5000, "height": 2500, "byteSize": 6398839 } },
+    { "id": "Simone Curtain6", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain6.jpg", "width": 5000, "height": 2500, "byteSize": 5427496 } },
+    { "id": "Simone Curtain7", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain7.jpg", "width": 5000, "height": 2500, "byteSize": 6694468 } },
+    { "id": "Simone Curtain8", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain8.jpg", "width": 5000, "height": 2500, "byteSize": 4813141 } },
+    { "id": "Simone Curtain9", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain9.jpg", "width": 5000, "height": 2500, "byteSize": 5446035 } },
+    { "id": "Simone Curtain10", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain10.jpg", "width": 5000, "height": 2500, "byteSize": 5840103 } },
+    { "id": "Simone Curtain11", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain11.jpg", "width": 5000, "height": 2500, "byteSize": 5777783 } },
+    { "id": "Simone Curtain12", "logicalWidth": 5000, "logicalHeight": 2500, "source": { "src": "artwork/Simone Curtain12.jpg", "width": 5000, "height": 2500, "byteSize": 4874276 } }
   ]
 }
