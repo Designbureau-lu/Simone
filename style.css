@@ -548,7 +548,7 @@ select{
 
         width:max-content;
 
-        transform:translate(-50%,calc(-50% + 50px));
+        transform:translate(-50%,calc(-50% + 100px));
 
         color:var(--color-text);
 

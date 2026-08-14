@@ -184,7 +184,7 @@ test("mobile title fits one intrinsic composition between symmetric margins", as
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-language\s*\{[^}]*left:24px;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*position:absolute;[^}]*top:50%;[^}]*left:50%;[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;[^}]*width:max-content;[^}]*transform:translate\(-50%,calc\(-50% \+ 50px\)\);[^}]*font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*position:absolute;[^}]*top:50%;[^}]*left:50%;[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;[^}]*width:max-content;[^}]*transform:translate\(-50%,calc\(-50% \+ 100px\)\);[^}]*font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/s.test(
         style
     ));
     assert(!/@media \(max-width:767px\)[\s\S]*?\.arrival-identity-title\s*\{[^}]*justify-content:space-between;/s.test(
