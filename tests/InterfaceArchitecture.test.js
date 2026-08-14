@@ -619,6 +619,13 @@ test("debug controls expose the canonical renderer defaults", async () => {
     equal(page.getElementById("resetCurtainStateNumber").value, "50");
     equal(page.getElementById("carrierDistanceNumber").value, "120");
     equal(page.getElementById("modelTransitionNumber").value, "50");
+    equal(page.getElementById("drawCallProbeMode").value, "normal");
+    equal(
+        Array.from(page.getElementById("drawCallProbeMode").options)
+            .map((option) => option.textContent.trim())
+            .join("|"),
+        "NORMAL|2:1 DRAW-CALL PROBE"
+    );
 });
 
 test("debug panel is ordered, titleless, and excludes temporary navigation", async () => {

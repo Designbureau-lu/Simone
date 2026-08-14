@@ -1,5 +1,6 @@
 import { ViewingSurface } from "../src/viewport/ViewingSurface.js";
 import {
+    DrawCallProbeMode,
     ViewportCanvasColumnRenderer
 } from "../src/rendering/ViewportCanvasColumnRenderer.js";
 import {
@@ -77,6 +78,47 @@ test("renderer preserves an unchanged canvas backing store", () => {
     assert(first.backingStoreResized);
     assert(!second.backingStoreResized);
     assert(canvas.width === 400 && canvas.height === 200);
+});
+
+test("2:1 probe halves compatible artwork draws without resizing Canvas", () => {
+    const canvas = document.createElement("canvas");
+    const source = document.createElement("canvas");
+    source.width = 4;
+    source.height = 10;
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    const frame = { width: 40, height: 20 };
+    const drawFrame = () => {
+        renderer.beginFrame(frame, cueTestAppearance());
+        for (let index = 0; index < 4; index += 1) {
+            renderer.drawColumn({
+                source,
+                sourceX: index,
+                sourceY: 0,
+                width: 1,
+                height: 10
+            }, {
+                x: index * 10,
+                y: 0,
+                width: 10,
+                height: 20
+            }, {
+                ...cueColumnAppearance("front"),
+                periodIndex: 0
+            });
+        }
+        return renderer.endFrame();
+    };
+
+    const normal = drawFrame();
+    renderer.setDrawCallProbeMode(DrawCallProbeMode.PAIR);
+    const probe = drawFrame();
+
+    assert(normal.drawImageCalls === 4);
+    assert(normal.drawCallProbeMode === DrawCallProbeMode.NORMAL);
+    assert(probe.drawImageCalls === 2);
+    assert(probe.drawCallProbeMode === DrawCallProbeMode.PAIR);
+    assert(probe.canvasWidth === normal.canvasWidth);
+    assert(probe.canvasHeight === normal.canvasHeight);
 });
 
 test("viewport sampling keeps the complete global Period model", () => {

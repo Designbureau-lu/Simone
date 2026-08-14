@@ -34,7 +34,12 @@ Updated: 2026-08-13
   families and weights, and frame-performance information. Its permanent
   `CAPTURE 5s` control records the existing renderer reports for five seconds,
   then freezes a real-device browser, viewport, Canvas, timing, missed-frame,
-  and workload summary for photographing without remote debugging. The isolated font
+  and workload summary for photographing without remote debugging. A default-off,
+  non-persistent `2:1 DRAW-CALL PROBE` deliberately repeats one source slice
+  across each compatible pair of destination columns while preserving Canvas
+  dimensions, DPR, geometry, interaction, and shading-region bookkeeping. Its
+  only purpose is to compare draw-call overhead with destination-fill cost on
+  real devices; `NORMAL` remains the page-load default. The isolated font
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.
 

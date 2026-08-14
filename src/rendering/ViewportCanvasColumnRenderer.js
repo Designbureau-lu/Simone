@@ -8,6 +8,10 @@ const DEBUG_REGION_COLORS = Object.freeze([
     "rgba(170, 80, 255, 0.12)"
 ]);
 const DEBUG_RIDGE_COLOR = "rgba(255, 0, 0, 0.9)";
+export const DrawCallProbeMode = Object.freeze({
+    NORMAL: "normal",
+    PAIR: "pair"
+});
 
 /** Canvas 2D renderer for globally placed columns in the guarded region. */
 export class ViewportCanvasColumnRenderer {
@@ -20,6 +24,8 @@ export class ViewportCanvasColumnRenderer {
     #appearance;
     #drawImageCalls = 0;
     #backingStoreResized = false;
+    #drawCallProbeMode = DrawCallProbeMode.NORMAL;
+    #pendingProbeColumn = null;
 
     constructor(canvas) {
         if (!(canvas instanceof HTMLCanvasElement)) {
@@ -37,6 +43,14 @@ export class ViewportCanvasColumnRenderer {
         this.#context = context;
     }
 
+    setDrawCallProbeMode(mode) {
+        if (!Object.values(DrawCallProbeMode).includes(mode)) {
+            throw new RangeError(`Unknown draw-call probe mode: ${mode}`);
+        }
+        this.#drawCallProbeMode = mode;
+        this.#pendingProbeColumn = null;
+    }
+
     beginFrame({ width, height }, appearance) {
         this.#backingStoreResized = this.#canvas.width !== width
             || this.#canvas.height !== height;
@@ -46,6 +60,7 @@ export class ViewportCanvasColumnRenderer {
         }
         this.#appearance = appearance;
         this.#drawImageCalls = 0;
+        this.#pendingProbeColumn = null;
         this.#context.globalAlpha = 1;
         this.#context.imageSmoothingEnabled = false;
         this.#context.clearRect(0, 0, width, height);
@@ -60,12 +75,14 @@ export class ViewportCanvasColumnRenderer {
             && (appearance.branch !== this.#activeFoldRegion.branch
                 || appearance.periodIndex
                     !== this.#activeFoldRegion.periodIndex)) {
+            this.#flushProbeColumn();
             this.#finishFoldRegion();
         }
         if (appearance.branch !== "rear") {
             this.#finishRearRegion();
         }
         if (appearance.alpha <= 0) {
+            this.#flushProbeColumn();
             this.#finishRearRegion();
             return;
         }
@@ -77,19 +94,30 @@ export class ViewportCanvasColumnRenderer {
             return;
         }
 
-        this.#context.globalAlpha = appearance.alpha;
-        this.#context.drawImage(
-            column.source,
-            column.sourceX,
-            column.sourceY,
-            column.width,
-            column.height,
-            startX,
-            placement.y,
-            destinationWidth,
-            placement.height
-        );
-        this.#drawImageCalls += 1;
+        if (this.#drawCallProbeMode === DrawCallProbeMode.NORMAL) {
+            this.#context.globalAlpha = appearance.alpha;
+            this.#context.drawImage(
+                column.source,
+                column.sourceX,
+                column.sourceY,
+                column.width,
+                column.height,
+                startX,
+                placement.y,
+                destinationWidth,
+                placement.height
+            );
+            this.#drawImageCalls += 1;
+        } else {
+            this.#drawProbeArtworkColumn({
+                column,
+                startX,
+                endX,
+                y: placement.y,
+                height: placement.height,
+                alpha: appearance.alpha
+            });
+        }
 
         this.#extendFoldRegion(
             startX,
@@ -114,6 +142,7 @@ export class ViewportCanvasColumnRenderer {
     }
 
     endFrame() {
+        this.#flushProbeColumn();
         this.#finishRearRegion();
         this.#finishFoldRegion();
         this.#context.globalAlpha = 1;
@@ -142,8 +171,49 @@ export class ViewportCanvasColumnRenderer {
             canvasWidth: this.#canvas.width,
             canvasHeight: this.#canvas.height,
             drawImageCalls: this.#drawImageCalls,
+            drawCallProbeMode: this.#drawCallProbeMode,
             backingStoreResized: this.#backingStoreResized
         });
+    }
+
+    #drawProbeArtworkColumn(draw) {
+        if (!this.#pendingProbeColumn) {
+            this.#pendingProbeColumn = draw;
+            return;
+        }
+
+        const pending = this.#pendingProbeColumn;
+        this.#pendingProbeColumn = null;
+        this.#paintArtworkColumn(
+            pending,
+            Math.min(pending.startX, draw.startX),
+            Math.max(pending.endX, draw.endX)
+        );
+    }
+
+    #flushProbeColumn() {
+        if (!this.#pendingProbeColumn) {
+            return;
+        }
+        const pending = this.#pendingProbeColumn;
+        this.#pendingProbeColumn = null;
+        this.#paintArtworkColumn(pending, pending.startX, pending.endX);
+    }
+
+    #paintArtworkColumn(draw, startX, endX) {
+        this.#context.globalAlpha = draw.alpha;
+        this.#context.drawImage(
+            draw.column.source,
+            draw.column.sourceX,
+            draw.column.sourceY,
+            draw.column.width,
+            draw.column.height,
+            startX,
+            draw.y,
+            endX - startX,
+            draw.height
+        );
+        this.#drawImageCalls += 1;
     }
 
     #drawFoldCues() {

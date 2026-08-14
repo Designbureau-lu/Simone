@@ -64,6 +64,8 @@ test("five-second capture freezes the existing report sample summary", () => {
         assert(captured.includes("Viewport CSS"));
         assert(captured.includes("Canvas CSS"));
         assert(captured.includes("Canvas backing"));
+        assert(captured.includes("MODE"));
+        assert(captured.includes("NORMAL"));
         assert(captured.includes("Samples"));
         assert(captured.includes("2"));
 
@@ -122,7 +124,8 @@ function report() {
         visibleColumns: 100,
         projectedColumns: 200,
         totalColumns: 1000,
-        periodCount: 10
+        periodCount: 10,
+        drawCallProbeMode: "normal"
     };
 }
 

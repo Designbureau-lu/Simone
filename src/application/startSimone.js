@@ -14,6 +14,7 @@ import {
     OperatingPhaseResolver
 } from "../geometry/OperatingPhaseResolver.js";
 import {
+    DrawCallProbeMode,
     ViewportCanvasColumnRenderer
 } from "../rendering/ViewportCanvasColumnRenderer.js";
 import {
@@ -52,6 +53,7 @@ export function startSimone() {
     );
     const debugPanelElement = document.getElementById("debugPanel");
     const debugReopenElement = document.getElementById("debugReopen");
+    const drawCallProbeMode = document.getElementById("drawCallProbeMode");
     const controls = getSurfaceControls();
 
     if (!(fileInput instanceof HTMLInputElement)
@@ -63,11 +65,13 @@ export function startSimone() {
         || !(semanticNavigationElement instanceof HTMLElement)
         || !(conversationBarElement instanceof HTMLElement)
         || !(debugPanelElement instanceof HTMLElement)
-        || !(debugReopenElement instanceof HTMLButtonElement)) {
+        || !(debugReopenElement instanceof HTMLButtonElement)
+        || !(drawCallProbeMode instanceof HTMLSelectElement)) {
         throw new Error("SIMONE could not find its required interface elements.");
     }
 
     const circularFoldSurface = new CircularFoldSurface();
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
     const application = new ViewportApplication({
         artworkLoader: loadArtwork,
         parameters: new SurfaceParameters(),
@@ -83,7 +87,7 @@ export function startSimone() {
             [OperatingPhase.POST_TRANSITION]: circularFoldSurface
         }),
         shading: new SurfaceShading(),
-        renderer: new ViewportCanvasColumnRenderer(canvas),
+        renderer,
         viewingSurface: new ViewingSurface(canvas),
         performanceOverview: new FramePerformanceOverview(
             performanceOverviewElement,
@@ -95,6 +99,7 @@ export function startSimone() {
         ).matches === true
     });
     bindDebugPanel(debugPanelElement, debugReopenElement);
+    bindDrawCallProbe(drawCallProbeMode, renderer, application);
     bindIdentityFontDiagnostic(debugPanelElement);
     bindSurfaceControls(controls, application);
     const synchronizeViewportControl = bindViewportControl(
@@ -149,6 +154,15 @@ export function startSimone() {
     loadManifestArtwork(application, synchronizeInterface);
 
     return application;
+}
+
+function bindDrawCallProbe(control, renderer, application) {
+    control.value = DrawCallProbeMode.NORMAL;
+    renderer.setDrawCallProbeMode(DrawCallProbeMode.NORMAL);
+    control.addEventListener("change", () => {
+        renderer.setDrawCallProbeMode(control.value);
+        application.render();
+    });
 }
 
 function bindViewingSurfaceResize(

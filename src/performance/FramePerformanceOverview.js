@@ -160,6 +160,7 @@ export class FramePerformanceOverview {
             valueRow("Destination px", integer(
                 current?.destinationPixelCount
             )),
+            valueRow("MODE", probeModeLabel(current?.drawCallProbeMode)),
             "",
             `${"".padEnd(18)}${"Median".padStart(10)}`
                 + `${"p95".padStart(10)}`,
@@ -257,4 +258,8 @@ function userAgentSummary(browser, userAgent) {
         /(?:CriOS|Chrome|Version)\/[\d.]+/
     )?.[0];
     return [browser, platform, version].filter(Boolean).join(" · ");
+}
+
+function probeModeLabel(mode) {
+    return mode === "pair" ? "2:1 DRAW-CALL PROBE" : "NORMAL";
 }

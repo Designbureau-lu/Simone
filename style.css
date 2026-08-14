@@ -1699,6 +1699,26 @@ select{
 
 }
 
+.draw-call-probe-control{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:5px;
+
+    margin-top:8px;
+
+}
+
+.draw-call-probe-control select{
+
+    width:100%;
+
+    font:inherit;
+
+}
+
 .performance-overview-actions{
 
     display:flex;
