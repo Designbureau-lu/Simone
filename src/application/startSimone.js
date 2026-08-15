@@ -59,6 +59,8 @@ export function startSimone() {
     const artworkSourceRepresentation = document.getElementById(
         "artworkSourceRepresentation"
     );
+    const mobileSnapBoxToggle = document.getElementById("mobileSnapBoxToggle");
+    const mobileSnapBoxOutput = document.getElementById("mobileSnapBoxOutput");
     const controls = getSurfaceControls();
 
     if (!(fileInput instanceof HTMLInputElement)
@@ -72,7 +74,9 @@ export function startSimone() {
         || !(debugPanelElement instanceof HTMLElement)
         || !(debugReopenElement instanceof HTMLButtonElement)
         || !(drawCallProbeMode instanceof HTMLSelectElement)
-        || !(artworkSourceRepresentation instanceof HTMLSelectElement)) {
+        || !(artworkSourceRepresentation instanceof HTMLSelectElement)
+        || !(mobileSnapBoxToggle instanceof HTMLInputElement)
+        || !(mobileSnapBoxOutput instanceof HTMLPreElement)) {
         throw new Error("SIMONE could not find its required interface elements.");
     }
 
@@ -106,6 +110,7 @@ export function startSimone() {
     });
     bindDebugPanel(debugPanelElement, debugReopenElement);
     bindDrawCallProbe(drawCallProbeMode, renderer, application);
+    bindMobileSnapBoxDiagnostic(mobileSnapBoxToggle, mobileSnapBoxOutput);
     bindSurfaceControls(controls, application);
     const synchronizeViewportControl = bindViewportControl(
         viewportPosition,
@@ -172,6 +177,96 @@ function bindDrawCallProbe(control, renderer, application) {
         renderer.setDrawCallProbeMode(control.value);
         application.render();
     });
+}
+
+export function bindMobileSnapBoxDiagnostic(toggle, output) {
+    const screenOne = document.querySelector(".arrival-screen-identity");
+    const screenTwo = document.querySelector(".curtain-sticky-stage");
+    const editorial = document.querySelector(".exhibition-information");
+    if (!(toggle instanceof HTMLInputElement)
+        || !(output instanceof HTMLPreElement)
+        || !(screenOne instanceof HTMLElement)
+        || !(screenTwo instanceof HTMLElement)
+        || !(editorial instanceof HTMLElement)) {
+        throw new Error("Mobile snap-box diagnostic elements are incomplete.");
+    }
+
+    let frame = null;
+    const documentBounds = (element) => {
+        const bounds = element.getBoundingClientRect();
+        const top = bounds.top + window.scrollY;
+        return Object.freeze({
+            height: Number.parseFloat(getComputedStyle(element).height),
+            top,
+            bottom: top + bounds.height
+        });
+    };
+    const update = () => {
+        frame = null;
+        if (!toggle.checked) {
+            return;
+        }
+        const first = documentBounds(screenOne);
+        const second = documentBounds(screenTwo);
+        const content = documentBounds(editorial);
+        const visualHeight = window.visualViewport?.height;
+        output.textContent = [
+            "MOBILE SNAP BOXES",
+            `window.innerHeight: ${formatDiagnosticNumber(window.innerHeight)} px`,
+            `document.clientHeight: ${formatDiagnosticNumber(document.documentElement.clientHeight)} px`,
+            `visualViewport.height: ${Number.isFinite(visualHeight) ? `${formatDiagnosticNumber(visualHeight)} px` : "unavailable"}`,
+            `window.scrollY: ${formatDiagnosticNumber(window.scrollY)} px`,
+            "",
+            ...snapBoxRows("SCREEN 1", first, "100lvh"),
+            "",
+            ...snapBoxRows("SCREEN 2", second, "100lvh"),
+            "",
+            `EDITORIAL top: ${formatDiagnosticNumber(content.top)} px`
+        ].join("\n");
+    };
+    const scheduleUpdate = () => {
+        if (frame !== null || !toggle.checked) {
+            return;
+        }
+        frame = requestAnimationFrame(update);
+    };
+    const setEnabled = () => {
+        const enabled = toggle.checked
+            && window.matchMedia("(max-width: 767px)").matches;
+        document.body.toggleAttribute("data-show-mobile-snap-boxes", enabled);
+        output.hidden = !enabled;
+        if (enabled) {
+            update();
+        }
+    };
+
+    toggle.checked = false;
+    document.body.removeAttribute("data-show-mobile-snap-boxes");
+    output.hidden = true;
+    toggle.addEventListener("change", setEnabled);
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", () => {
+        setEnabled();
+        scheduleUpdate();
+    });
+    window.visualViewport?.addEventListener("resize", scheduleUpdate);
+    window.visualViewport?.addEventListener("scroll", scheduleUpdate);
+
+    return Object.freeze({ update, setEnabled });
+}
+
+function snapBoxRows(label, bounds, heightRule) {
+    return [
+        `${label} height: ${formatDiagnosticNumber(bounds.height)} px (${heightRule})`,
+        `${label} top: ${formatDiagnosticNumber(bounds.top)} px`,
+        `${label} bottom: ${formatDiagnosticNumber(bounds.bottom)} px`,
+        `${label} snap-start: ${formatDiagnosticNumber(bounds.top)} px`,
+        `${label} snap distance: ${formatDiagnosticNumber(bounds.top - window.scrollY)} px`
+    ];
+}
+
+function formatDiagnosticNumber(value) {
+    return Number.isFinite(value) ? value.toFixed(2) : "—";
 }
 
 function bindViewingSurfaceResize(

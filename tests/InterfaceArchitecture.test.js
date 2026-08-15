@@ -1,6 +1,7 @@
 import {
     artworkRepresentationUrlWithoutOverride,
     bindDebugPanel,
+    bindMobileSnapBoxDiagnostic,
     bindConversationInterface,
     createTitleTransition,
     selectedArtworkRepresentationId
@@ -81,15 +82,13 @@ test("mobile Screen 1 and curtain are native snap targets with shared entrance m
         "../src/prototypes/arrival/startCurtainEntrance.js"
     ).then((response) => response.text());
 
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:block;[^}]*height:100dvh;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:block;[^}]*height:100lvh;/s.test(
         style
     ));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.curtain-sticky-stage,\s*\.curtain-sticky-stage > \.hero\s*\{[^}]*height:100vh;[^}]*height:100lvh;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.curtain-sticky-stage\s*\{[^}]*margin-bottom:120px;/s.test(
-        style
-    ));
+    assert(!/\.curtain-sticky-stage\s*\{[^}]*margin-bottom:120px;/s.test(style));
     assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
     assert(/\.arrival-screen-identity,\s*\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;[^}]*scroll-snap-stop:always;/s.test(style));
     assert(/animation:identity-blob-breathe 10s/.test(style));
@@ -105,6 +104,44 @@ test("mobile Screen 1 and curtain are native snap targets with shared entrance m
     assert(!/const DESKTOP_QUERY/.test(entranceSource));
     assert(/window\.addEventListener\("scroll", updateScrollTarget/.test(entranceSource));
     assert(/presentation\.dataset\.entranceActive/.test(entranceSource));
+});
+
+test("mobile snap-box diagnostic is off by default and reports real boxes", async () => {
+    const source = await fetch("../index.html").then((response) => (
+        response.text()
+    ));
+    const page = new DOMParser().parseFromString(source, "text/html");
+    const sourceToggle = page.getElementById("mobileSnapBoxToggle");
+    assert(!sourceToggle.checked);
+
+    const screenOne = document.createElement("section");
+    screenOne.className = "arrival-screen-identity";
+    const screenTwo = document.createElement("section");
+    screenTwo.className = "curtain-sticky-stage";
+    const editorial = document.createElement("article");
+    editorial.className = "exhibition-information";
+    const toggle = document.createElement("input");
+    toggle.type = "checkbox";
+    const output = document.createElement("pre");
+    document.body.append(screenOne, screenTwo, editorial, toggle, output);
+
+    const diagnostic = bindMobileSnapBoxDiagnostic(toggle, output);
+    assert(!toggle.checked);
+    assert(output.hidden);
+    assert(!document.body.hasAttribute("data-show-mobile-snap-boxes"));
+    toggle.checked = true;
+    diagnostic.update();
+    assert(output.textContent.includes("window.innerHeight"));
+    assert(output.textContent.includes("visualViewport.height"));
+    assert(output.textContent.includes("SCREEN 1 height"));
+    assert(output.textContent.includes("SCREEN 2 snap-start"));
+    assert(output.textContent.includes("EDITORIAL top"));
+
+    screenOne.remove();
+    screenTwo.remove();
+    editorial.remove();
+    toggle.remove();
+    output.remove();
 });
 
 test("mobile curtain header presents INDEX without the conversation title", async () => {
