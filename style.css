@@ -444,7 +444,13 @@ select{
 
         height:100vh;
 
-        height:100svh;
+        height:100lvh;
+
+    }
+
+    .curtain-sticky-stage{
+
+        margin-bottom:120px;
 
     }
 
