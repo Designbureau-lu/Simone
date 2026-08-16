@@ -430,7 +430,12 @@ select{
 
     }
 
-    .arrival-screen-identity,
+    .arrival-screen-identity{
+
+        scroll-snap-align:none;
+
+    }
+
     .curtain-sticky-stage{
 
         scroll-snap-align:start;
@@ -725,7 +730,7 @@ select{
 
     body[data-show-mobile-snap-boxes] .arrival-screen-identity::before{
 
-        content:"SCREEN 1 · 100dvh · SNAP START";
+        content:"SCREEN 1 · 100dvh · NO SNAP";
 
     }
 

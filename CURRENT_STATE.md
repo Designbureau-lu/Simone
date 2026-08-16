@@ -5,9 +5,10 @@ Updated: 2026-08-16
 ## Desktop milestone
 
 - Below 768 px, Screen 1, the Curtain stage, and its Hero presentation are equal
-  `100dvh` boxes in the single root `y proximity` scroller. Screen 1 and Screen 2
-  are both native `start` snap targets with the original `always` stop behavior.
-  Editorial content follows Screen 2 directly in normal document flow, without
+  `100dvh` boxes in the single root `y proximity` scroller. Screen 1 is ordinary
+  document flow with no snap target or snap-stop rule. Screen 2 is the sole
+  mobile intro `start` target and retains its `always` stop behavior. Editorial
+  content follows Screen 2 directly in normal document flow, without
   an added transition margin. Both screens track Safari's currently available
   dynamic viewport as browser chrome appears or disappears.
   The curtain is not sticky. It reuses the desktop
@@ -43,10 +44,10 @@ Updated: 2026-08-16
   selector can reload either raster tier for direct A/B testing, and CAPTURE 5s
   reports the active source, logical dimensions, raster dimensions, and scale.
   A separate non-persistent `SHOW MOBILE SNAP BOXES` control overlays the real
-  Screen 1, Curtain, and editorial boxes. It identifies both first screens as
-  `100dvh` start targets and reports live viewport, scroll, computed height,
-  document-boundary, and both snap-start coordinates. It is off after every
-  reload and does not alter snap behavior.
+  Screen 1, Curtain, and editorial boxes. It identifies Screen 1 as a `100dvh`
+  non-target and Screen 2 as the `100dvh` start target, and reports live
+  viewport, scroll, computed height, document-boundary, and Screen 2's snap-start
+  coordinate. It is off after every reload and does not alter snap behavior.
   The isolated font
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.
