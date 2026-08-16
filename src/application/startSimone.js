@@ -217,9 +217,9 @@ export function bindMobileSnapBoxDiagnostic(toggle, output) {
             `visualViewport.height: ${Number.isFinite(visualHeight) ? `${formatDiagnosticNumber(visualHeight)} px` : "unavailable"}`,
             `window.scrollY: ${formatDiagnosticNumber(window.scrollY)} px`,
             "",
-            ...snapBoxRows("SCREEN 1", first, "100lvh"),
+            ...layoutBoxRows("SCREEN 1 · NO SNAP", first, "100lvh"),
             "",
-            ...snapBoxRows("SCREEN 2", second, "100lvh"),
+            ...snapBoxRows("SCREEN 2 · SNAP START", second, "90lvh"),
             "",
             `EDITORIAL top: ${formatDiagnosticNumber(content.top)} px`
         ].join("\n");
@@ -257,11 +257,17 @@ export function bindMobileSnapBoxDiagnostic(toggle, output) {
 
 function snapBoxRows(label, bounds, heightRule) {
     return [
-        `${label} height: ${formatDiagnosticNumber(bounds.height)} px (${heightRule})`,
-        `${label} top: ${formatDiagnosticNumber(bounds.top)} px`,
-        `${label} bottom: ${formatDiagnosticNumber(bounds.bottom)} px`,
+        ...layoutBoxRows(label, bounds, heightRule),
         `${label} snap-start: ${formatDiagnosticNumber(bounds.top)} px`,
         `${label} snap distance: ${formatDiagnosticNumber(bounds.top - window.scrollY)} px`
+    ];
+}
+
+function layoutBoxRows(label, bounds, heightRule) {
+    return [
+        `${label} height: ${formatDiagnosticNumber(bounds.height)} px (${heightRule})`,
+        `${label} top: ${formatDiagnosticNumber(bounds.top)} px`,
+        `${label} bottom: ${formatDiagnosticNumber(bounds.bottom)} px`
     ];
 }
 
