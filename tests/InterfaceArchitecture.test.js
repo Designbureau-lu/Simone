@@ -20,7 +20,8 @@ import {
 } from "../src/prototypes/arrival/startCurtainEntrance.js";
 import {
     createIdentityBlobPresentation,
-    IDENTITY_BLOB_CONFIG
+    IDENTITY_BLOB_CONFIG,
+    mobileUpwardScrollSeparation
 } from "../src/prototypes/identity/startIdentityBlobPresentation.js";
 
 const tests = [];
@@ -598,6 +599,13 @@ test("identity blob uses stable side-biased desktop and mobile presentations", (
     equal(IDENTITY_BLOB_CONFIG.scrollRate, 0.90);
 });
 
+test("mobile upward blob re-entry eases from the exact current pose", () => {
+    const start = Object.freeze({ scrollY: 800, separation: 80 });
+    equal(mobileUpwardScrollSeparation(start, 800), 80);
+    equal(mobileUpwardScrollSeparation(start, 0), 0);
+    assert(mobileUpwardScrollSeparation(start, 720) < 72);
+});
+
 test("desktop identity blob separates pose, breathing, and scroll transforms", async () => {
     const source = await fetch("../style.css").then((response) => (
         response.text()
@@ -863,10 +871,7 @@ test("menu has no visible heading, highlights active project, and closes", () =>
     );
 
     fixture.trigger.click();
-    equal(
-        fixture.trigger.textContent,
-        window.matchMedia("(min-width: 768px)").matches ? "X" : "×"
-    );
+    equal(fixture.trigger.textContent, "X");
     equal(fixture.trigger.getAttribute("aria-expanded"), "true");
     assert(!fixture.panel.hidden);
     assert(!fixture.panel.querySelector("h1,h2,h3,h4,h5,h6"));
@@ -948,11 +953,14 @@ test("manual curtain movement can clear only the visual Index selection", () => 
     );
 });
 
-test("desktop drag threshold owns Index selection clearing", async () => {
+test("mouse and touch drag thresholds own Index selection clearing", async () => {
     const source = await fetch("../src/application/startSimone.js").then(
         (response) => response.text()
     );
     assert(/drag\.dragLearned\s*=\s*true;\s*conversation\.clearProjectSelection\(\);/s.test(
+        source
+    ));
+    assert(/touchExploration\.dragLearned\s*=\s*true;\s*conversation\.clearProjectSelection\(\);/s.test(
         source
     ));
 });
@@ -1010,6 +1018,12 @@ test("mobile editorial and Index inherit the approved desktop visual language", 
         source
     ));
     assert(/@media \(max-width:767px\)[\s\S]*?button\[aria-current="true"\]::before\s*\{[^}]*content:none;/s.test(
+        source
+    ));
+    assert(/@media \(max-width:767px\)[\s\S]*?#conversationBar\.is-menu-open > \.conversation-menu-trigger\s*\{[^}]*right:18px;[^}]*left:auto;[^}]*width:auto;[^}]*opacity:1;/s.test(
+        source
+    ));
+    assert(!/#conversationBar\.is-menu-open > \.curtain-index-label\s*\{[^}]*visibility:hidden;/s.test(
         source
     ));
 });

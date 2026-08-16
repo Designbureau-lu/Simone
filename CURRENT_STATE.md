@@ -30,10 +30,15 @@ Updated: 2026-08-16
   normal-scroll content layer; only its sibling blob presentation receives
   parallax. The authored blob receives one stable side-biased
   random pose per load and the same restrained `0.90` scroll-rate separation as
-  desktop. Touch physics, Index panel contents, and lower editorial layout are
-  unchanged. Screen 2 uses a 75 px mobile header row: INDEX occupies the same
+  desktop. Down-scroll mapping remains direct; mobile up-scroll re-entry eases
+  from its captured reversal pose to the exact zero-scroll pose so native scroll
+  steps do not abruptly drive the blob into Screen 1's clipping edge. Touch
+  physics and lower editorial layout are unchanged. Screen 2 uses a 75 px mobile header row: INDEX occupies the same
   approximate 24 px top inset as EN/FR on Screen 1, with a matching interval
-  below the text before the curtain presentation begins.
+  below the text before the curtain presentation begins. Its open Index retains
+  INDEX at the left and presents the existing close control as `X` at the right;
+  either mouse/pen or touch curtain dragging clears only the visual row selection
+  once the gesture passes the established drag threshold.
 
 - The permanent development panel retains frame-performance information. Its
   `CAPTURE 5s` control records the existing renderer reports for five seconds,

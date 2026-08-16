@@ -28,17 +28,38 @@ export function startIdentityBlobPresentation() {
         return null;
     }
 
+    const layout = window.matchMedia(MOBILE_QUERY).matches
+        ? "mobile"
+        : "desktop";
     const presentation = createIdentityBlobPresentation(
         Math.random,
-        window.matchMedia(MOBILE_QUERY).matches ? "mobile" : "desktop"
+        layout
     );
     applyPresentation(blob, presentation);
     let frameId = null;
+    let previousScrollY = window.scrollY;
+    let upwardStart = null;
     const updateScrollSeparation = () => {
         frameId = null;
-        const separation = window.scrollY
-            * (1 - IDENTITY_BLOB_CONFIG.scrollRate);
+        const scrollY = window.scrollY;
+        if (layout === "mobile" && scrollY < previousScrollY) {
+            upwardStart ??= Object.freeze({
+                scrollY: previousScrollY,
+                separation: previousScrollY
+                    * (1 - IDENTITY_BLOB_CONFIG.scrollRate)
+            });
+        } else if (scrollY >= previousScrollY) {
+            upwardStart = null;
+        }
+        const separation = upwardStart
+            ? mobileUpwardScrollSeparation(
+                upwardStart,
+                scrollY,
+                IDENTITY_BLOB_CONFIG.scrollRate
+            )
+            : scrollY * (1 - IDENTITY_BLOB_CONFIG.scrollRate);
         blob.style.setProperty("--blob-scroll-separation", `${separation}px`);
+        previousScrollY = scrollY;
     };
     const scheduleScrollSeparation = () => {
         if (frameId === null) {
@@ -50,6 +71,24 @@ export function startIdentityBlobPresentation() {
     });
     updateScrollSeparation();
     return Object.freeze({ presentation });
+}
+
+export function mobileUpwardScrollSeparation(
+    start,
+    scrollY,
+    scrollRate = IDENTITY_BLOB_CONFIG.scrollRate
+) {
+    if (start.scrollY <= 0) {
+        return 0;
+    }
+    const progress = Math.min(
+        1,
+        Math.max(0, (start.scrollY - scrollY) / start.scrollY)
+    );
+    const easedProgress = progress * progress * (3 - 2 * progress);
+    return start.separation
+        + start.scrollY * scrollRate * easedProgress
+        - start.scrollY * progress;
 }
 
 export function createIdentityBlobPresentation(

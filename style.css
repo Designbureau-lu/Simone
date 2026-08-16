@@ -826,13 +826,13 @@ select{
 
     }
 
-    #conversationBar.is-menu-open > .curtain-index-label{
-
-        visibility:hidden;
-
-    }
-
     #conversationBar.is-menu-open > .conversation-menu-trigger{
+
+        right:18px;
+
+        left:auto;
+
+        width:auto;
 
         opacity:1;
 

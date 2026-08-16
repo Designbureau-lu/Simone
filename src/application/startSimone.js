@@ -957,6 +957,7 @@ export function bindCurtainDragging(
                 event.clientY - touchExploration.startY
             )) {
                 touchExploration.dragLearned = true;
+                conversation.clearProjectSelection();
                 conversation.markDragLearned();
             }
 
@@ -1192,8 +1193,6 @@ export function bindConversationInterface(
     }
 
     const title = createTitleTransition(conversation);
-    const desktopIndex = window.matchMedia?.("(min-width: 768px)").matches
-        === true;
     let menuOpen = false;
     let exploredProjectIndex = null;
     let projectSelectionCleared = false;
@@ -1213,7 +1212,7 @@ export function bindConversationInterface(
         synchronizeProjects();
         panel.hidden = false;
         element.classList.add("is-menu-open");
-        trigger.textContent = desktopIndex ? "X" : "×";
+        trigger.textContent = "X";
         trigger.setAttribute("aria-expanded", "true");
         trigger.setAttribute("aria-label", "Close project list");
         const active = list.querySelector('[aria-current="true"]');

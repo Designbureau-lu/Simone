@@ -206,6 +206,7 @@ test("touch input transitions directly between pan and pinch", () => {
         revealLocalInteraction: () => false
     };
     const conversation = {
+        clearProjectSelection() {},
         markDragLearned() {},
         showDragHint() {},
         markExplorationInactive() {
@@ -291,6 +292,7 @@ test("vertical touch intent remains native and never starts curtain exploration"
         }
     };
     const conversation = {
+        clearProjectSelection() {},
         markDragLearned() {},
         showDragHint() {},
         markExplorationInactive() {}
