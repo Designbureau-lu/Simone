@@ -424,6 +424,12 @@ select{
 
 @media (max-width:767px){
 
+    body{
+
+        --conversation-bar-height:75px;
+
+    }
+
     html{
 
         scroll-snap-type:y proximity;
@@ -553,7 +559,7 @@ select{
 
         width:max-content;
 
-        transform:translate(-50%,calc(-50% + 50px));
+        transform:translate(-50%,-50%);
 
         color:var(--color-text);
 
@@ -786,8 +792,6 @@ select{
 
         pointer-events:none;
 
-        transform:translateY(24px);
-
     }
 
     #conversationBar > .conversation-bar-text{
@@ -812,7 +816,7 @@ select{
 
         height:1.2em;
 
-        transform:translateY(calc(-50% + 24px));
+        transform:translateY(-50%);
 
         opacity:0;
 

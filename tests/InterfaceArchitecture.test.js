@@ -89,7 +89,7 @@ test("mobile Screen 1 is 100dvh ordinary flow and the 100dvh curtain is the sole
         style
     ));
     assert(!/\.curtain-sticky-stage\s*\{[^}]*margin-bottom:120px;/s.test(style));
-    assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?html\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
     assert(/\.arrival-screen-identity\s*\{\s*scroll-snap-align:none;\s*\}/s.test(style));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;[^}]*scroll-snap-stop:always;/s.test(style));
     assert(/animation:identity-blob-breathe 10s/.test(style));
@@ -227,7 +227,7 @@ test("mobile title fits one intrinsic composition between symmetric margins", as
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-language\s*\{[^}]*left:24px;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*position:absolute;[^}]*top:50%;[^}]*left:50%;[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;[^}]*width:max-content;[^}]*transform:translate\(-50%,calc\(-50% \+ 50px\)\);[^}]*font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*position:absolute;[^}]*top:50%;[^}]*left:50%;[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;[^}]*width:max-content;[^}]*transform:translate\(-50%,-50%\);[^}]*font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/s.test(
         style
     ));
     assert(!/@media \(max-width:767px\)[\s\S]*?\.arrival-identity-title\s*\{[^}]*justify-content:space-between;/s.test(
@@ -280,9 +280,14 @@ test("INDEX fixed cells become visible and readable after reveal", async () => {
         style.transform,
         window.matchMedia("(min-width: 768px)").matches
             ? "matrix(1, 0, 0, 1, 0, 12)"
-            : "matrix(1, 0, 0, 1, 0, 24)"
+            : "none"
     );
     equal(style.display, "block");
+
+    const barStyle = getComputedStyle(bar);
+    if (window.matchMedia("(max-width: 767px)").matches) {
+        equal(barStyle.height, "75px");
+    }
 
     bar.remove();
 });

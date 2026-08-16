@@ -25,12 +25,15 @@ Updated: 2026-08-16
   `0.8ch` internal gap. The complete typographic object—not its individual
   blocks—is centered and its font size is derived from its combined monospace
   width to span symmetric 24 px edges. It uses neither equal columns nor
-  independently anchored viewport edges. All identity text lives in a
+  independently anchored viewport edges. The title is vertically centered on
+  the `100dvh` identity screen without an additional Y offset. All identity text lives in a
   normal-scroll content layer; only its sibling blob presentation receives
   parallax. The authored blob receives one stable side-biased
   random pose per load and the same restrained `0.90` scroll-rate separation as
   desktop. Touch physics, Index panel contents, and lower editorial layout are
-  unchanged.
+  unchanged. Screen 2 uses a 75 px mobile header row: INDEX occupies the same
+  approximate 24 px top inset as EN/FR on Screen 1, with a matching interval
+  below the text before the curtain presentation begins.
 
 - The permanent development panel retains frame-performance information. Its
   `CAPTURE 5s` control records the existing renderer reports for five seconds,
