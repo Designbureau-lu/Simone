@@ -377,11 +377,11 @@ export async function loadManifestArtwork(
 export function selectedArtworkRepresentationId(
     availableIds,
     locationUrl = window.location.href,
-    mobileLayout = window.matchMedia?.("(max-width: 767px)").matches === true
+    userAgent = window.navigator.userAgent
 ) {
     const requested = new URL(locationUrl).searchParams.get(
         "debug-artwork-source"
-    ) ?? (mobileLayout ? "b" : "a");
+    ) ?? (isChromeUserAgent(userAgent) ? "b" : "a");
     if (!availableIds.includes(requested)) {
         throw new RangeError(
             `Artwork representation "${requested}" is not available for `
@@ -389,6 +389,13 @@ export function selectedArtworkRepresentationId(
         );
     }
     return requested;
+}
+
+export function isChromeUserAgent(userAgent) {
+    const chromeBrand = /(?:Chrome|CriOS)\/\d/i.test(userAgent);
+    const otherChromiumBrand = /(?:Edg|EdgiOS|OPR|Opera|SamsungBrowser|YaBrowser)\//i
+        .test(userAgent);
+    return chromeBrand && !otherChromiumBrand;
 }
 
 function clearArtworkRepresentationOverride() {

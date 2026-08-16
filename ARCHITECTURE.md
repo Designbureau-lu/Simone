@@ -401,13 +401,17 @@ continuity take precedence over exact visible material length.
 Decoded source-column descriptors are immutable and cached for the lifetime of
 an imported artwork. Intrinsic coordinates and decoded-source coordinates stay
 separate in those descriptors so decoded dimensions can be validated without
-defining curtain geometry. The production source is the full-resolution
-`5,000 × 2,500` artwork for each segment on desktop and non-mobile layouts.
-Mobile uses the corresponding `2,500 × 1,250` source at a `0.5` raster scale.
+defining curtain geometry. SOURCE A is the reference production raster: the
+full-resolution `5,000 × 2,500` artwork for each segment. SOURCE B is the
+corresponding `2,500 × 1,250` raster at a `0.5` scale.
 Both sources represent the same 5,000 intrinsic columns; source rectangles use
 the exact rational scale without independently rounding fractional coordinates.
-The shared `<768px` layout boundary selects the mobile tier rather than DPR or
-user-agent detection. DEV can override either tier for direct A/B measurement.
+Chrome selects SOURCE B in production because controlled real-device testing
+showed substantially better rendering performance. Safari, Firefox, and other
+non-Chrome browsers select the reference SOURCE A unless explicitly tested and
+approved otherwise. Selection is browser/user-agent based and does not depend
+on viewport width or DPR. DEV can override either tier in every browser for
+direct A/B measurement.
 
 Before the exact-span path, a flat segment was still painted as isolated
 one-source-pixel columns. During downscaling, many projected columns rounded to

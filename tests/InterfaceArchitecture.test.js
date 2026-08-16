@@ -691,12 +691,33 @@ test("debug controls expose the canonical renderer defaults", async () => {
     );
 });
 
-test("artwork source policy defaults by layout and permits DEV overrides", () => {
+test("artwork source policy defaults by browser and permits DEV overrides", () => {
+    const chromeDesktop = "Mozilla/5.0 Chrome/140.0.0.0 Safari/537.36";
+    const chromeAndroid = "Mozilla/5.0 (Linux; Android 10) Chrome/140.0.0.0 Mobile Safari/537.36";
+    const safari = "Mozilla/5.0 Version/18.6 Mobile/15E148 Safari/604.1";
+    const firefox = "Mozilla/5.0 Firefox/141.0";
+    const edge = "Mozilla/5.0 Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0";
     equal(
         selectedArtworkRepresentationId(
             ["a", "b"],
             "https://example.test/",
-            false
+            chromeDesktop
+        ),
+        "b"
+    );
+    equal(
+        selectedArtworkRepresentationId(
+            ["a", "b"],
+            "https://example.test/",
+            chromeAndroid
+        ),
+        "b"
+    );
+    equal(
+        selectedArtworkRepresentationId(
+            ["a", "b"],
+            "https://example.test/",
+            safari
         ),
         "a"
     );
@@ -704,15 +725,23 @@ test("artwork source policy defaults by layout and permits DEV overrides", () =>
         selectedArtworkRepresentationId(
             ["a", "b"],
             "https://example.test/",
-            true
+            firefox
         ),
-        "b"
+        "a"
+    );
+    equal(
+        selectedArtworkRepresentationId(
+            ["a", "b"],
+            "https://example.test/",
+            edge
+        ),
+        "a"
     );
     equal(
         selectedArtworkRepresentationId(
             ["a", "b"],
             "https://example.test/?debug-artwork-source=a",
-            true
+            chromeDesktop
         ),
         "a"
     );
@@ -720,7 +749,7 @@ test("artwork source policy defaults by layout and permits DEV overrides", () =>
         selectedArtworkRepresentationId(
             ["a", "b"],
             "https://example.test/?debug-artwork-source=b",
-            false
+            safari
         ),
         "b"
     );

@@ -69,13 +69,15 @@ Updated: 2026-08-16
   at its source 2:1 aspect ratio. READ metadata remains unchanged at 4,400
   semantic units per segment (`10 × (400 + 40)`) and is converted explicitly
   to intrinsic source/geometry coordinates only at navigation boundaries. The
-  semantic grid totals 52,800 units but does not define curtain width. Desktop
-  and non-mobile layouts select the genuine `5000 × 2500` files in
-  `public/images/artwork/`. The existing `<768px` mobile layout boundary selects
-  the corresponding `2500 × 1250` files in `public/images/source-b/` for
-  performance. The `0.5` raster scale affects source sampling only: geometry,
+  semantic grid totals 52,800 units but does not define curtain width. SOURCE A
+  contains the reference `5000 × 2500` files in `public/images/artwork/`.
+  SOURCE B contains the corresponding `2500 × 1250` files in
+  `public/images/source-b/`. Chrome selects SOURCE B on desktop and mobile
+  because its measured rendering performance is substantially better. Safari,
+  Firefox, and other non-Chrome browsers default to SOURCE A. This policy uses
+  browser identity, never viewport dimensions or DPR. The `0.5` raster scale affects source sampling only: geometry,
   Period count, navigation, project positions, and interaction remain intrinsic.
-  DEV can override either tier independently of the draw-call probe.
+  DEV can override either tier in every browser independently of the draw-call probe.
 - Viewing-space X and Y now share the virtual curtain-frame height, preserving
   the existing top/bottom fold-depth allowance while a flat `5000 × 2500`
   segment retains its exact 2:1 presentation ratio. The renderer combines only
