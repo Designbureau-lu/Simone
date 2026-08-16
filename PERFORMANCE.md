@@ -3,6 +3,21 @@
 This document records controlled performance observations. It does not define
 optimization decisions.
 
+## Current production resolution
+
+Later real-device A/B testing established a production-safe operational answer
+without changing the renderer or intrinsic geometry. Chrome on desktop and
+Android uses SOURCE B (`2,500 × 1,250` raster per logical `5,000 × 2,500`
+segment), where interaction performance was substantially better. Safari,
+Firefox, and other non-Chrome browsers use reference SOURCE A (`5,000 × 2,500`).
+DEV can override either representation for comparison. Source selection changes
+decoded raster density only: the curtain remains 60,000 intrinsic units wide,
+with the same 500 Periods, geometry, navigation, and draw architecture.
+
+The browser-internal reason Chrome benefits so strongly from the lower raster
+remains unknown, but it is no longer an unresolved production-policy question.
+The sections below retain the controlled investigation as historical evidence.
+
 ## Closed desktop Chrome investigation
 
 ### Objective and trigger
@@ -14,9 +29,10 @@ was opened after the corrected Front/Rear orientation, the structural
 `destinationHeight = originalHeight - 2 * h` model, and renderer cleanup had
 landed close to the report of slower Chrome interaction.
 
-The investigation is closed without a production-code change. Measurement did
-not associate the slowdown with that structural work, and no tested change was
-both effective and suitable for production.
+This phase closed without a production-code change. Measurement did not
+associate the slowdown with that structural work, and no change tested during
+that phase was both effective and suitable for production. The SOURCE B policy
+documented above was established by subsequent real-device testing.
 
 ### Experiments and demonstrated facts
 
@@ -72,8 +88,8 @@ browser-internal root cause. The investigation did not establish which Chrome
 Canvas, raster, upload, batching, or compositor mechanism accounts for that
 cost.
 
-No production-ready improvement was found. Further renderer changes would
-therefore be speculative, and this investigation does not justify changing the
+No production-ready improvement was found during this phase. Further renderer
+changes would therefore have been speculative, and this investigation did not justify changing the
 physical model, reducing projection accuracy, removing shading, or replacing
 the production source architecture. Production code was restored to its clean
 pre-investigation state, including complete removal of the canvas-source
@@ -85,9 +101,9 @@ experiment.
   unknown.
 - Whether a different production-safe batching or source representation could
   help remains a hypothesis; the tested canvas-backed representation did not.
-- Android performance is unknown. Desktop Chrome results must not be used to
-  infer Chrome on Android, device GPU behavior, thermal behavior, or mobile
-  frame pacing.
+- Android performance was unknown during this phase and was not inferred from
+  desktop Chrome. It was measured later through the retained real-device capture
+  tooling, leading to the accepted SOURCE B policy above.
 - Firefox and Safari could not be evaluated under all of the same conditions,
   so this investigation does not establish a controlled cross-browser ranking
   or prove that their internal behavior matches Chrome.

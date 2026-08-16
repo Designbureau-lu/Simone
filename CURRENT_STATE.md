@@ -10,7 +10,8 @@ Updated: 2026-08-16
   mobile intro `start` target and retains its `always` stop behavior. Editorial
   content follows Screen 2 directly in normal document flow, without
   an added transition margin. Both screens track Safari's currently available
-  dynamic viewport as browser chrome appears or disappears.
+  dynamic viewport as browser chrome appears or disappears. There is no nested
+  mobile scroller and no remaining `lvh`, `svh`, or `90lvh` experiment.
   The curtain is not sticky. It reuses the desktop
   presentation-level entrance choreography; after landing, the existing mobile
   touch lifecycle is authoritative. Its canvas uses `touch-action: pan-y` and
@@ -26,7 +27,8 @@ Updated: 2026-08-16
   blocks—is centered and its font size is derived from its combined monospace
   width to span symmetric 24 px edges. It uses neither equal columns nor
   independently anchored viewport edges. The title is vertically centered on
-  the `100dvh` identity screen without an additional Y offset. All identity text lives in a
+  the `100dvh` identity screen without an additional Y offset. All identity text
+  lives in a
   normal-scroll content layer; only its sibling blob presentation receives
   parallax. The authored blob receives one stable side-biased
   random pose per load and the same restrained `0.90` scroll-rate separation as
@@ -43,14 +45,10 @@ Updated: 2026-08-16
 - The permanent development panel retains frame-performance information. Its
   `CAPTURE 5s` control records the existing renderer reports for five seconds,
   then freezes a real-device browser, viewport, Canvas, timing, missed-frame,
-  and workload summary for photographing without remote debugging. A default-off,
-  non-persistent `2:1 DRAW-CALL PROBE` deliberately repeats one source slice
-  across each compatible pair of destination columns while preserving Canvas
-  dimensions, DPR, geometry, interaction, and shading-region bookkeeping. Its
-  only purpose is to compare draw-call overhead with destination-fill cost on
-  real devices; `NORMAL` remains the page-load default. Its Artwork Source
-  selector can reload either raster tier for direct A/B testing, and CAPTURE 5s
-  reports the active source, logical dimensions, raster dimensions, and scale.
+  and workload summary for photographing without remote debugging. Its Artwork
+  Source selector can reload either production raster representation for direct
+  A/B testing, and CAPTURE 5s reports the active source, logical dimensions,
+  raster dimensions, scale, and draw-call/workload counts.
   A separate non-persistent `SHOW MOBILE SNAP BOXES` control overlays the real
   Screen 1, Curtain, and editorial boxes. It identifies Screen 1 as a `100dvh`
   non-target and Screen 2 as the `100dvh` start target, and reports live
@@ -77,7 +75,7 @@ Updated: 2026-08-16
   Firefox, and other non-Chrome browsers default to SOURCE A. This policy uses
   browser identity, never viewport dimensions or DPR. The `0.5` raster scale affects source sampling only: geometry,
   Period count, navigation, project positions, and interaction remain intrinsic.
-  DEV can override either tier in every browser independently of the draw-call probe.
+  DEV can override either tier in every browser.
 - Viewing-space X and Y now share the virtual curtain-frame height, preserving
   the existing top/bottom fold-depth allowance while a flat `5000 × 2500`
   segment retains its exact 2:1 presentation ratio. The renderer combines only
@@ -90,8 +88,7 @@ Updated: 2026-08-16
   by less than one destination pixel. Visual fidelity is validated against the
   original artwork. Flat frames dropped from roughly 2,000 artwork calls to
   roughly 147, a representative mixed READ frame used roughly 1,771, and folded
-  EXPLORE remains near 2,000. The independent DEV 2:1 draw-call probe remains
-  available and NORMAL is always the page-load default.
+  EXPLORE remains near 2,000.
 - Real Android 10 Chrome measurement of the preceding full-coordinate scene
   recorded 43.2 ms frame median / 79.2 ms p95 and 34.8 ms rendering median /
   55.2 ms p95 at 1,080 draw calls, despite fewer destination pixels than fast
@@ -163,13 +160,12 @@ Updated: 2026-08-16
   narrow Canvas 2D `drawImage()` calls from decoded image sources during
   continuous dragging, but the browser-internal cause remains unknown. A
   canvas-backed source experiment produced no production-ready improvement and
-  was fully reverted. Subsequent real-device testing confirmed that genuinely
-  folded EXPLORE rendering remains expensive on Android Chrome. Exact flat-span
-  rendering fixes flat fidelity and reduces flat draw calls, but cannot merge
-  non-affine folded regions; Android folded performance remains a separate open
-  issue. Firefox and Safari were not fully comparable under the original
-  controlled desktop conditions. `PERFORMANCE.md` records the measurements,
-  interpretation, eliminated hypotheses, and scope limits.
+  was fully reverted. Subsequent real-device A/B testing established SOURCE B's
+  lower decoded-raster resolution as the accepted operational solution for
+  Chrome on desktop and Android, without changing intrinsic geometry or draw
+  architecture. Safari, Firefox, and other non-Chrome browsers retain reference
+  SOURCE A. `PERFORMANCE.md` records the historical measurements and the adopted
+  source policy.
 - Approved the corrected circular Front/Rear orientation and structural strip
   height model. Each placement exposes its Period's maximum `targetY`; the
   application computes `h = periodMaximumTargetY - targetY` and draws
@@ -634,11 +630,16 @@ demonstrated browser-internal root cause. A canvas-backed source variant did
 not provide a production-ready improvement and was fully reverted. No
 optimization from this investigation ships in production.
 
-Android performance remains unknown and cannot be inferred from desktop
-Chrome. Firefox and Safari were not fully evaluated under identical conditions,
-so no controlled cross-browser conclusion should be drawn. Earlier destination
-backing-store and source-type experiments remain useful historical evidence for
-the viewport-canvas architecture.
+The investigation's original Android uncertainty was resolved by later
+real-device testing: Chrome uses SOURCE B in production on desktop and Android;
+Safari, Firefox, and other non-Chrome browsers use SOURCE A. The internal Chrome
+cost remains unexplained, but the production source policy is accepted.
+
+## Future UX
+
+Mobile pinch interaction remains insufficiently discoverable. A possible later
+iteration is a one-time contextual `PINCH` hint after the visitor's initial
+curtain interaction; no such hint is currently implemented.
 
 See `PERFORMANCE.md` for the recorded experimental evidence.
 

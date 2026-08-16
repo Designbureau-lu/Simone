@@ -16,7 +16,6 @@ import {
     OperatingPhaseResolver
 } from "../geometry/OperatingPhaseResolver.js";
 import {
-    DrawCallProbeMode,
     ViewportCanvasColumnRenderer
 } from "../rendering/ViewportCanvasColumnRenderer.js";
 import {
@@ -55,7 +54,6 @@ export function startSimone() {
     );
     const debugPanelElement = document.getElementById("debugPanel");
     const debugReopenElement = document.getElementById("debugReopen");
-    const drawCallProbeMode = document.getElementById("drawCallProbeMode");
     const artworkSourceRepresentation = document.getElementById(
         "artworkSourceRepresentation"
     );
@@ -73,7 +71,6 @@ export function startSimone() {
         || !(conversationBarElement instanceof HTMLElement)
         || !(debugPanelElement instanceof HTMLElement)
         || !(debugReopenElement instanceof HTMLButtonElement)
-        || !(drawCallProbeMode instanceof HTMLSelectElement)
         || !(artworkSourceRepresentation instanceof HTMLSelectElement)
         || !(mobileSnapBoxToggle instanceof HTMLInputElement)
         || !(mobileSnapBoxOutput instanceof HTMLPreElement)) {
@@ -109,7 +106,6 @@ export function startSimone() {
         ).matches === true
     });
     bindDebugPanel(debugPanelElement, debugReopenElement);
-    bindDrawCallProbe(drawCallProbeMode, renderer, application);
     bindMobileSnapBoxDiagnostic(mobileSnapBoxToggle, mobileSnapBoxOutput);
     bindSurfaceControls(controls, application);
     const synchronizeViewportControl = bindViewportControl(
@@ -168,15 +164,6 @@ export function startSimone() {
     );
 
     return application;
-}
-
-function bindDrawCallProbe(control, renderer, application) {
-    control.value = DrawCallProbeMode.NORMAL;
-    renderer.setDrawCallProbeMode(DrawCallProbeMode.NORMAL);
-    control.addEventListener("change", () => {
-        renderer.setDrawCallProbeMode(control.value);
-        application.render();
-    });
 }
 
 export function bindMobileSnapBoxDiagnostic(toggle, output) {

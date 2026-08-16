@@ -360,6 +360,15 @@ Geometry computes placements.
 Renderer draws placements.
 ```
 
+### Mobile page viewport
+
+Mobile uses the root document as its only vertical scroller with native
+`scroll-snap-type: y proximity`. Screen 1 is a `100dvh` ordinary-flow section
+and is not a snap target. Screen 2 contains the Curtain in another `100dvh`
+section and is the sole mobile intro `scroll-snap-align: start` target. There is
+no nested mobile scroller, JavaScript scroll controller, or remaining
+`lvh`/`svh`/`90lvh` viewport experiment.
+
 ---
 
 ## Current Design Principles
@@ -424,10 +433,10 @@ Flat artwork fidelity has been visually validated against the original source.
 Final Canvas raster quantization may differ from the continuous 2:1 bounds by
 less than one destination pixel.
 
-Folded EXPLORE rendering remains expensive on the tested Android Chrome device.
 The exact-flat optimization does not apply to genuinely folded/non-affine
-regions, so that performance issue remains open and is separate from the fixed
-flat-artwork fidelity problem.
+regions. Chrome's cost for that column-rendering workload is addressed
+operationally by selecting SOURCE B's lower decoded-raster resolution; the
+geometry and renderer remain identical across sources.
 
 The physical curtain and its printed artwork now have explicit resolution
 boundaries. Every frame resolves the complete ordered Period table and its

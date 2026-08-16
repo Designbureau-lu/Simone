@@ -676,19 +676,13 @@ test("debug controls expose the canonical renderer defaults", async () => {
     equal(page.getElementById("resetCurtainStateNumber").value, "50");
     equal(page.getElementById("carrierDistanceNumber").value, "120");
     equal(page.getElementById("modelTransitionNumber").value, "50");
-    equal(page.getElementById("drawCallProbeMode").value, "normal");
     equal(
         Array.from(page.getElementById("artworkSourceRepresentation").options)
             .map((option) => option.textContent.trim())
             .join("|"),
         "SOURCE A|SOURCE B"
     );
-    equal(
-        Array.from(page.getElementById("drawCallProbeMode").options)
-            .map((option) => option.textContent.trim())
-            .join("|"),
-        "NORMAL|2:1 DRAW-CALL PROBE"
-    );
+    assert(!page.getElementById("drawCallProbeMode"));
 });
 
 test("artwork source policy defaults by browser and permits DEV overrides", () => {

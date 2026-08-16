@@ -64,8 +64,6 @@ test("five-second capture freezes the existing report sample summary", () => {
         assert(captured.includes("Viewport CSS"));
         assert(captured.includes("Canvas CSS"));
         assert(captured.includes("Canvas backing"));
-        assert(captured.includes("MODE"));
-        assert(captured.includes("NORMAL"));
         assert(captured.includes("SOURCE B"));
         assert(captured.includes("Logical source"));
         assert(captured.includes("5,000 × 2,500"));
@@ -73,6 +71,8 @@ test("five-second capture freezes the existing report sample summary", () => {
         assert(captured.includes("2,500 × 1,250"));
         assert(captured.includes("Raster scale"));
         assert(captured.includes("0.50×"));
+        assert(captured.includes("Draw calls"));
+        assert(captured.includes("Artwork cols"));
         assert(captured.includes("Samples"));
         assert(captured.includes("2"));
 
@@ -132,7 +132,6 @@ function report() {
         projectedColumns: 200,
         totalColumns: 1000,
         periodCount: 10,
-        drawCallProbeMode: "normal",
         sourceRepresentation: {
             id: "b",
             label: "SOURCE B",
