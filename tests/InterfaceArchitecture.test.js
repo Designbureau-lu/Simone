@@ -73,7 +73,7 @@ test("desktop Screen 1 alone uses an always-stop snap target", async () => {
     ));
 });
 
-test("mobile Screen 1 is ordinary flow and the 90lvh curtain is the sole intro snap target", async () => {
+test("mobile Screen 1 and curtain are equal 100dvh native snap targets", async () => {
     const style = await fetch("../style.css").then((response) => response.text());
     const blobSource = await fetch(
         "../src/prototypes/identity/startIdentityBlobPresentation.js"
@@ -82,16 +82,15 @@ test("mobile Screen 1 is ordinary flow and the 90lvh curtain is the sole intro s
         "../src/prototypes/arrival/startCurtainEntrance.js"
     ).then((response) => response.text());
 
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:block;[^}]*height:100lvh;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*display:block;[^}]*height:100dvh;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.curtain-sticky-stage,\s*\.curtain-sticky-stage > \.hero\s*\{[^}]*height:100vh;[^}]*height:90lvh;/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.curtain-sticky-stage,\s*\.curtain-sticky-stage > \.hero\s*\{[^}]*height:100vh;[^}]*height:100dvh;/s.test(
         style
     ));
     assert(!/\.curtain-sticky-stage\s*\{[^}]*margin-bottom:120px;/s.test(style));
     assert(/@media \(max-width:767px\)\s*\{[^}]*scroll-snap-type:y proximity;/s.test(style));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity\s*\{[^}]*scroll-snap-align:none;[^}]*scroll-snap-stop:normal;/s.test(style));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;[^}]*scroll-snap-stop:always;/s.test(style));
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-screen-identity,\s*\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;[^}]*scroll-snap-stop:always;/s.test(style));
     assert(/animation:identity-blob-breathe 10s/.test(style));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*align-items:center;[^}]*column-gap:0\.8ch;/s.test(
         style
@@ -134,11 +133,10 @@ test("mobile snap-box diagnostic is off by default and reports real boxes", asyn
     diagnostic.update();
     assert(output.textContent.includes("window.innerHeight"));
     assert(output.textContent.includes("visualViewport.height"));
-    assert(output.textContent.includes("SCREEN 1 · NO SNAP height"));
-    assert(!output.textContent.includes("SCREEN 1 · NO SNAP snap-start"));
-    assert(output.textContent.includes("SCREEN 2 · SNAP START height"));
-    assert(output.textContent.includes("SCREEN 2 · SNAP START snap-start"));
-    assert(output.textContent.includes("SCREEN 2 · SNAP START snap distance"));
+    assert(output.textContent.includes("SCREEN 1 · 100dvh · SNAP START height"));
+    assert(output.textContent.includes("SCREEN 1 · 100dvh · SNAP START snap-start"));
+    assert(output.textContent.includes("SCREEN 2 · 100dvh · SNAP START height"));
+    assert(output.textContent.includes("SCREEN 2 · 100dvh · SNAP START snap-start"));
     assert(output.textContent.includes("EDITORIAL top"));
 
     screenOne.remove();

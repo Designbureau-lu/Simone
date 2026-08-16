@@ -4,13 +4,12 @@ Updated: 2026-08-16
 
 ## Desktop milestone
 
-- Below 768 px, Screen 1 is a stable `100lvh` ordinary-flow section at the top
-  of the single root `y proximity` scroller and is deliberately not a snap
-  target. The Curtain is the only intro snap target (`scroll-snap-align: start`)
-  and its stage and Hero presentation are both `90lvh`. Editorial content
-  follows that box directly in normal document flow, without an added transition
-  margin. These large-viewport heights remain stable while Safari chrome appears
-  or disappears; browser UI may overlap the page rather than resize the stages.
+- Below 768 px, Screen 1, the Curtain stage, and its Hero presentation are equal
+  `100dvh` boxes in the single root `y proximity` scroller. Screen 1 and Screen 2
+  are both native `start` snap targets with the original `always` stop behavior.
+  Editorial content follows Screen 2 directly in normal document flow, without
+  an added transition margin. Both screens track Safari's currently available
+  dynamic viewport as browser chrome appears or disappears.
   The curtain is not sticky. It reuses the desktop
   presentation-level entrance choreography; after landing, the existing mobile
   touch lifecycle is authoritative. Its canvas uses `touch-action: pan-y` and
@@ -44,10 +43,10 @@ Updated: 2026-08-16
   selector can reload either raster tier for direct A/B testing, and CAPTURE 5s
   reports the active source, logical dimensions, raster dimensions, and scale.
   A separate non-persistent `SHOW MOBILE SNAP BOXES` control overlays the real
-  Screen 1, Curtain, and editorial boxes. It identifies Screen 1 as `100lvh`
-  with no snap and Screen 2 as the `90lvh` start target, and reports live
-  viewport, scroll, computed height, document-boundary, and Screen 2 snap-target
-  geometry. It is off after every reload and does not alter snap behavior.
+  Screen 1, Curtain, and editorial boxes. It identifies both first screens as
+  `100dvh` start targets and reports live viewport, scroll, computed height,
+  document-boundary, and both snap-start coordinates. It is off after every
+  reload and does not alter snap behavior.
   The isolated font
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.

@@ -217,9 +217,9 @@ export function bindMobileSnapBoxDiagnostic(toggle, output) {
             `visualViewport.height: ${Number.isFinite(visualHeight) ? `${formatDiagnosticNumber(visualHeight)} px` : "unavailable"}`,
             `window.scrollY: ${formatDiagnosticNumber(window.scrollY)} px`,
             "",
-            ...layoutBoxRows("SCREEN 1 · NO SNAP", first, "100lvh"),
+            ...snapBoxRows("SCREEN 1 · 100dvh · SNAP START", first, "100dvh"),
             "",
-            ...snapBoxRows("SCREEN 2 · SNAP START", second, "90lvh"),
+            ...snapBoxRows("SCREEN 2 · 100dvh · SNAP START", second, "100dvh"),
             "",
             `EDITORIAL top: ${formatDiagnosticNumber(content.top)} px`
         ].join("\n");
