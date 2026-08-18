@@ -943,7 +943,7 @@ test("menu project selection uses the existing READ entry pipeline", () => {
     );
 });
 
-test("vertical document scroll closes an open Index without selecting", () => {
+test("Index stays open within Screen 2 and closes after leaving it", () => {
     const fixture = createFixture();
     bindConversationInterface(
         fixture.bar,
@@ -954,10 +954,31 @@ test("vertical document scroll closes an open Index without selecting", () => {
 
     fixture.trigger.click();
     assert(!fixture.panel.hidden);
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    fixture.stage.getBoundingClientRect = () => ({
+        top: -5,
+        bottom: viewportHeight - 5
+    });
+    window.dispatchEvent(new Event("scroll"));
+    assert(!fixture.panel.hidden);
+
+    fixture.stage.getBoundingClientRect = () => ({
+        top: -viewportHeight,
+        bottom: 0
+    });
     window.dispatchEvent(new Event("scroll"));
     assert(fixture.panel.hidden);
     equal(fixture.selections.length, 0);
     equal(fixture.trigger.getAttribute("aria-expanded"), "false");
+
+    fixture.trigger.click();
+    fixture.stage.getBoundingClientRect = () => ({
+        top: viewportHeight,
+        bottom: viewportHeight * 2
+    });
+    window.dispatchEvent(new Event("scroll"));
+    assert(fixture.panel.hidden);
+    equal(fixture.selections.length, 0);
 });
 
 test("desktop X reuses the existing Index close control", () => {
@@ -1088,6 +1109,8 @@ test("curtain canvas preserves native vertical touch panning", async () => {
 });
 
 function createFixture() {
+    const stage = document.createElement("section");
+    stage.className = "curtain-sticky-stage";
     const bar = document.createElement("header");
     bar.className = "conversation-bar";
     bar.innerHTML = `
@@ -1102,7 +1125,8 @@ function createFixture() {
             <ul data-conversation-projects></ul>
         </nav>
     `;
-    document.body.append(bar);
+    stage.append(bar);
+    document.body.append(stage);
     const projects = [
         { title: "Blister", year: "2023" },
         { title: "Bubles", year: "2024" },
@@ -1124,6 +1148,7 @@ function createFixture() {
     const synchronizeNavigation = () => {};
 
     return {
+        stage,
         bar,
         output: bar.querySelector("output"),
         trigger: bar.querySelector("[data-conversation-menu-trigger]"),

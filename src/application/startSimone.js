@@ -1179,6 +1179,7 @@ export function bindConversationInterface(
     const trigger = element.querySelector("[data-conversation-menu-trigger]");
     const panel = element.querySelector(".conversation-project-list");
     const list = element.querySelector("[data-conversation-projects]");
+    const curtainScreen = element.closest(".curtain-sticky-stage");
     if (!(conversation instanceof HTMLOutputElement)
         || !(trigger instanceof HTMLButtonElement)
         || !(panel instanceof HTMLElement)
@@ -1300,7 +1301,9 @@ export function bindConversationInterface(
         }
     });
     window.addEventListener("scroll", () => {
-        if (menuOpen) {
+        if (menuOpen
+            && curtainScreen instanceof HTMLElement
+            && !containsVisualViewportCenter(curtainScreen)) {
             closeMenu({ restoreFocus: false });
         }
     }, { passive: true });
@@ -1317,6 +1320,14 @@ export function bindConversationInterface(
             return title.value;
         }
     });
+}
+
+export function containsVisualViewportCenter(element) {
+    const bounds = element.getBoundingClientRect();
+    const viewportTop = window.visualViewport?.offsetTop ?? 0;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const viewportCenter = viewportTop + viewportHeight / 2;
+    return bounds.top <= viewportCenter && bounds.bottom >= viewportCenter;
 }
 
 export function createTitleTransition(
