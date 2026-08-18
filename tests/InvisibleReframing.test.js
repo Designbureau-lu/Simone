@@ -36,6 +36,45 @@ test("Moses click tolerance preserves drag as the dominant gesture", () => {
     assert(!isCurtainClick(6, 0));
 });
 
+test("curtain click keeps local reveal without selecting an Index project", () => {
+    const canvas = createTouchCanvas();
+    const project = { title: "Airbag" };
+    let revealCalls = 0;
+    let projectCalls = 0;
+    let hintCalls = 0;
+    const application = {
+        viewport: { projectedExtent: 400 },
+        beginLocalInteraction: () => ({ periodIndex: 1 }),
+        desktopCurtainNeighborReach: () => 40,
+        interactionDisplacementScale: () => 1,
+        desktopCurtainDirectDragScale: () => 0.5,
+        projectAtPresentationX: () => project,
+        revealLocalInteraction: () => {
+            revealCalls += 1;
+            return true;
+        }
+    };
+    const conversation = {
+        showProject: () => {
+            projectCalls += 1;
+        },
+        showDragHint: () => {
+            hintCalls += 1;
+        },
+        clearProjectSelection() {},
+        markDragLearned() {},
+        markExplorationInactive() {}
+    };
+    bindCurtainDragging(canvas, application, () => {}, conversation);
+
+    canvas.dispatchEvent(pointerEvent("pointerdown", 1, 100, 100, 0));
+    canvas.dispatchEvent(pointerEvent("pointerup", 1, 100, 100, 16));
+
+    equal(revealCalls, 1);
+    equal(projectCalls, 0);
+    equal(hintCalls, 1);
+});
+
 test("touch intent uses asymmetric dominance beyond a 12px dead zone", () => {
     equal(touchGestureIntent(12, 0), "pending");
     equal(touchGestureIntent(0, 12), "pending");
@@ -1845,10 +1884,28 @@ function createTouchCanvas() {
 }
 
 function touchEvent(type, pointerId, clientX, clientY, timeStamp) {
+    return pointerEvent(
+        type,
+        pointerId,
+        clientX,
+        clientY,
+        timeStamp,
+        "touch"
+    );
+}
+
+function pointerEvent(
+    type,
+    pointerId,
+    clientX,
+    clientY,
+    timeStamp,
+    pointerType = "mouse"
+) {
     const event = new Event(type, { cancelable: true });
     Object.defineProperties(event, {
         button: { value: 0 },
-        pointerType: { value: "touch" },
+        pointerType: { value: pointerType },
         pointerId: { value: pointerId },
         clientX: { value: clientX },
         clientY: { value: clientY },

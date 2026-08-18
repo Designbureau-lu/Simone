@@ -935,6 +935,29 @@ test("menu project selection uses the existing READ entry pipeline", () => {
     );
     equal(controller.title, "Airbag");
     assert(fixture.panel.hidden);
+    equal(
+        fixture.list.querySelector(
+            '[aria-current="true"] .conversation-project-title'
+        )?.textContent,
+        "Airbag"
+    );
+});
+
+test("vertical document scroll closes an open Index without selecting", () => {
+    const fixture = createFixture();
+    bindConversationInterface(
+        fixture.bar,
+        fixture.application,
+        fixture.synchronizeViewport,
+        fixture.synchronizeNavigation
+    );
+
+    fixture.trigger.click();
+    assert(!fixture.panel.hidden);
+    window.dispatchEvent(new Event("scroll"));
+    assert(fixture.panel.hidden);
+    equal(fixture.selections.length, 0);
+    equal(fixture.trigger.getAttribute("aria-expanded"), "false");
 });
 
 test("desktop X reuses the existing Index close control", () => {
@@ -976,10 +999,16 @@ test("manual curtain movement can clear only the visual Index selection", () => 
     );
 });
 
-test("mouse and touch drag thresholds own Index selection clearing", async () => {
+test("curtain clicks do not select Index rows and drags still clear them", async () => {
     const source = await fetch("../src/application/startSimone.js").then(
         (response) => response.text()
     );
+    assert(/revealLocalInteraction\(grabbedInteraction\)\)\s*\{\s*conversation\.showDragHint\(\);/s.test(
+        source
+    ));
+    assert(!/revealLocalInteraction\(grabbedInteraction\)\)\s*\{\s*conversation\.showProject/s.test(
+        source
+    ));
     assert(/drag\.dragLearned\s*=\s*true;\s*conversation\.clearProjectSelection\(\);/s.test(
         source
     ));

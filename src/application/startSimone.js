@@ -1040,7 +1040,7 @@ export function bindCurtainDragging(
         canvas.classList.remove("is-dragging");
         if (clickReveal && grabbedProject) {
             if (application.revealLocalInteraction(grabbedInteraction)) {
-                conversation.showProject(grabbedProject);
+                conversation.showDragHint();
             }
         } else if (clickReveal) {
             conversation.showDragHint();
@@ -1299,6 +1299,11 @@ export function bindConversationInterface(
             closeMenu();
         }
     });
+    window.addEventListener("scroll", () => {
+        if (menuOpen) {
+            closeMenu({ restoreFocus: false });
+        }
+    }, { passive: true });
 
     synchronizeProjects();
     return Object.freeze({
