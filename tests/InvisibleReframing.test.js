@@ -1547,6 +1547,58 @@ test("mobile project landing retains first and last archive bounds", () => {
     ), 1000);
 });
 
+test("already-aligned initial project opens once without viewport movement", () => {
+    const { application, rangeCalls } = flatProjectFixture(0);
+    const animation = captureAnimationFrames();
+
+    assert(application.navigateToProject(0, null, "flat-semantic-span"));
+    equal(application.currentProjectIndex, 0);
+    equal(animation.pendingCount(), 1);
+    animation.runNext(0);
+    equal(rangeCalls.length, 1);
+    equal(animation.pendingCount(), 1);
+    animation.runNext(1000);
+    equal(rangeCalls.length, 2);
+    equal(animation.pendingCount(), 0);
+    animation.restore();
+});
+
+test("non-aligned project navigates then opens exactly once", () => {
+    const { application, rangeCalls } = flatProjectFixture(0);
+    const animation = captureAnimationFrames();
+
+    assert(application.navigateToProject(1, null, "flat-semantic-span"));
+    equal(application.currentProjectIndex, 1);
+    equal(animation.pendingCount(), 1);
+    animation.runNext(0);
+    animation.runNext(450);
+    equal(rangeCalls.length, 0);
+    equal(animation.pendingCount(), 1);
+    animation.runNext(450);
+    animation.runNext(1450);
+    equal(rangeCalls.length, 2);
+    equal(animation.pendingCount(), 0);
+    animation.restore();
+});
+
+test("initial project still navigates back and opens once after moving away", () => {
+    const { application, rangeCalls } = flatProjectFixture(320);
+    const animation = captureAnimationFrames();
+
+    assert(application.navigateToProject(0, null, "flat-semantic-span"));
+    equal(application.currentProjectIndex, 0);
+    animation.runNext(0);
+    animation.runNext(450);
+    equal(application.viewport.projectedOffset, 0);
+    equal(rangeCalls.length, 0);
+    equal(animation.pendingCount(), 1);
+    animation.runNext(450);
+    animation.runNext(1450);
+    equal(rangeCalls.length, 2);
+    equal(animation.pendingCount(), 0);
+    animation.restore();
+});
+
 test("selected project opens as one uniform semantic period span", () => {
     const viewport = createViewport(0);
     const application = createApplication(viewport);
@@ -1869,6 +1921,32 @@ function semanticNavigationApplication(useLeadingProjectAlignment) {
     return application;
 }
 
+function flatProjectFixture(offset) {
+    const application = semanticNavigationApplication(true);
+    application.viewport.shiftProjectedOffset(
+        offset - application.viewport.projectedOffset
+    );
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    field.configureFor(1400, 100);
+    const rangeCalls = [];
+    const setVisibleFactorRange = field.setVisibleFactorRange.bind(field);
+    field.setVisibleFactorRange = (...arguments_) => {
+        rangeCalls.push(arguments_);
+        return setVisibleFactorRange(...arguments_);
+    };
+    application.curtainField = field;
+    application.parameters.maximumVisibleFactor = 0.9;
+    application.render = () => {};
+    application.setProjectNavigation({
+        enabled: true,
+        projects: [
+            { title: "First", artworkStart: 0, artworkEnd: 300 },
+            { title: "Second", artworkStart: 320, artworkEnd: 680 }
+        ]
+    });
+    return { application, rangeCalls };
+}
+
 function createTouchCanvas() {
     const canvas = new EventTarget();
     canvas.width = 400;
@@ -1925,6 +2003,7 @@ function captureAnimationFrames() {
     window.cancelAnimationFrame = () => {};
 
     return {
+        pendingCount: () => frames.length,
         runNext(timestamp) {
             const frame = frames.shift();
             assert(frame, "Expected a scheduled animation frame");

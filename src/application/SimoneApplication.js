@@ -328,14 +328,20 @@ export class SimoneApplication {
         this.attentionMode = ATTENTION_MODE_READ;
         const targetOffset = projection.requestedNavigationTarget;
         this.prioritizeArtworkForDestination?.(targetOffset);
-        this.animateViewportToProjectedOffset(
-            targetOffset,
-            onFrame,
-            () => openingMode === PROJECT_OPENING_FLAT_SPAN
+        this.currentProjectIndex = targetIndex;
+        const completeNavigation = () => (
+            openingMode === PROJECT_OPENING_FLAT_SPAN
                 ? this.#applyFlatSemanticProjectOpen()
                 : this.#applySemanticAutoOpen()
         );
-        this.currentProjectIndex = targetIndex;
+        const navigationStarted = this.animateViewportToProjectedOffset(
+            targetOffset,
+            onFrame,
+            completeNavigation
+        );
+        if (!navigationStarted) {
+            completeNavigation();
+        }
 
         return true;
     }
