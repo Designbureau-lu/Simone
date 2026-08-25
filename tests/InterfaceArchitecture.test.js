@@ -3,6 +3,8 @@ import {
     bindDebugPanel,
     bindMobileSnapBoxDiagnostic,
     bindConversationInterface,
+    bindCurtainPinchHint,
+    CURTAIN_PINCH_HINT_CONFIG,
     createTitleTransition,
     selectedArtworkRepresentationId
 } from "../src/application/startSimone.js";
@@ -1107,6 +1109,109 @@ test("curtain canvas preserves native vertical touch panning", async () => {
     assert(/\.curtain-presentation canvas\s*\{[^}]*touch-action:pan-y;/s.test(
         source
     ));
+});
+
+test("mobile pinch hint is contextual, clamped, dismissible and session-scoped", async () => {
+    const source = await fetch("../index.html").then((response) => response.text());
+    const style = await fetch("../style.css").then((response) => response.text());
+    const page = new DOMParser().parseFromString(source, "text/html");
+    const sourceHint = page.querySelector("[data-curtain-pinch-hint]");
+    equal(sourceHint.querySelector("img").getAttribute("src"), "assets/pinch.svg");
+    assert(sourceHint.hidden);
+    assert(/@media \(max-width:767px\)[\s\S]*?\.curtain-pinch-hint\s*\{[^}]*position:absolute;[^}]*z-index:30;[^}]*border-radius:50%;[^}]*pointer-events:none;/s.test(style));
+    assert(/@keyframes curtain-pinch-hint-dismiss/.test(style));
+    equal(CURTAIN_PINCH_HINT_CONFIG.bubbleSize, 80);
+    equal(CURTAIN_PINCH_HINT_CONFIG.displayDuration, 1800);
+    equal(CURTAIN_PINCH_HINT_CONFIG.upwardDrift, 10);
+    equal(CURTAIN_PINCH_HINT_CONFIG.dragHintCount, 3);
+
+    const stage = document.createElement("section");
+    stage.className = "curtain-sticky-stage";
+    const presentation = document.createElement("div");
+    presentation.className = "curtain-presentation";
+    presentation.innerHTML = '<div class="curtain-pinch-hint" data-curtain-pinch-hint hidden></div>';
+    stage.append(presentation);
+    document.body.append(stage);
+    stage.getBoundingClientRect = () => ({
+        top: 0,
+        bottom: window.innerHeight
+    });
+    presentation.getBoundingClientRect = () => ({
+        top: 100,
+        left: 20,
+        width: 320,
+        height: 500
+    });
+    const hint = bindCurtainPinchHint(presentation, {
+        config: { ...CURTAIN_PINCH_HINT_CONFIG, displayDuration: 60000 },
+        isMobile: () => true
+    });
+    const bubble = presentation.querySelector("[data-curtain-pinch-hint]");
+
+    assert(hint.showAt(20, 100));
+    equal(bubble.style.left, "40px");
+    equal(bubble.style.top, "40px");
+    if (window.matchMedia("(max-width: 767px)").matches) {
+        equal(getComputedStyle(bubble).pointerEvents, "none");
+        equal(getComputedStyle(bubble).width, "80px");
+    } else {
+        equal(getComputedStyle(bubble).display, "none");
+    }
+    assert(!bubble.hidden);
+    hint.dismiss();
+    assert(bubble.hidden);
+
+    assert(hint.showAt(160, 300));
+    stage.getBoundingClientRect = () => ({
+        top: window.innerHeight,
+        bottom: window.innerHeight * 2
+    });
+    window.dispatchEvent(new Event("scroll"));
+    assert(bubble.hidden);
+    stage.getBoundingClientRect = () => ({
+        top: 0,
+        bottom: window.innerHeight
+    });
+
+    assert(!hint.recordDragAt(160, 300));
+    assert(!hint.recordDragAt(160, 300));
+    assert(hint.recordDragAt(160, 300));
+    assert(!bubble.hidden);
+    hint.markPinchDiscovered();
+    assert(hint.pinchDiscovered);
+    assert(bubble.hidden);
+    assert(!hint.showAt(160, 300));
+    assert(!hint.recordDragAt(160, 300));
+
+    const applicationSource = await fetch(
+        "../src/application/startSimone.js"
+    ).then((response) => response.text());
+    assert(/beginTouchPinch[\s\S]*?pinchHint\?\.dismiss\(\);[\s\S]*?pinchHint\?\.markPinchDiscovered\(\);/s.test(
+        applicationSource
+    ));
+    assert(/if \(clickReveal\)[\s\S]*?pinchHint\?\.showAt\(event\.clientX, event\.clientY\);/s.test(
+        applicationSource
+    ));
+    assert(/allowClickReveal && completed\.dragLearned[\s\S]*?pinchHint\?\.recordDragAt\(event\.clientX, event\.clientY\);/s.test(
+        applicationSource
+    ));
+});
+
+test("opening Index dismisses an active pinch hint", () => {
+    const fixture = createFixture();
+    let dismissals = 0;
+    bindConversationInterface(
+        fixture.bar,
+        fixture.application,
+        fixture.synchronizeViewport,
+        fixture.synchronizeNavigation,
+        () => {
+            dismissals += 1;
+        }
+    );
+
+    fixture.trigger.click();
+    equal(dismissals, 1);
 });
 
 function createFixture() {

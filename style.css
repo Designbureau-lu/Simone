@@ -2007,3 +2007,93 @@ select{
     cursor:grabbing;
 
 }
+
+.curtain-pinch-hint{
+
+    display:none;
+
+}
+
+@media (max-width:767px){
+
+    .curtain-pinch-hint{
+
+        position:absolute;
+
+        z-index:30;
+
+        display:flex;
+
+        width:var(--curtain-pinch-hint-size,80px);
+
+        height:var(--curtain-pinch-hint-size,80px);
+
+        box-sizing:border-box;
+
+        align-items:center;
+
+        justify-content:center;
+
+        border-radius:50%;
+
+        background:rgba(255,255,255,0.9);
+
+        pointer-events:none;
+
+    }
+
+    .curtain-pinch-hint[hidden]{
+
+        display:none;
+
+    }
+
+    .curtain-pinch-hint img{
+
+        display:block;
+
+        width:38px;
+
+        height:auto;
+
+    }
+
+    .curtain-pinch-hint.is-visible{
+
+        animation:curtain-pinch-hint-dismiss
+            var(--curtain-pinch-hint-duration,1800ms) ease-out forwards;
+
+    }
+
+}
+
+@keyframes curtain-pinch-hint-dismiss{
+
+    0%{
+
+        opacity:0;
+
+        transform:translate(-50%,-50%);
+
+    }
+
+    10%,65%{
+
+        opacity:1;
+
+        transform:translate(-50%,-50%);
+
+    }
+
+    100%{
+
+        opacity:0;
+
+        transform:translate(
+            -50%,
+            calc(-50% - var(--curtain-pinch-hint-drift,10px))
+        );
+
+    }
+
+}

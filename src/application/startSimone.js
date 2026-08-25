@@ -118,11 +118,13 @@ export function startSimone() {
         application,
         synchronizeViewportControl
     );
+    const pinchHint = bindCurtainPinchHint(curtainPresentation);
     const conversation = bindConversationInterface(
         conversationBarElement,
         application,
         synchronizeViewportControl,
-        synchronizeSemanticNavigation
+        synchronizeSemanticNavigation,
+        pinchHint.dismiss
     );
     const synchronizeInterface = () => {
         synchronizeSemanticNavigation();
@@ -132,7 +134,8 @@ export function startSimone() {
         canvas,
         application,
         synchronizeViewportControl,
-        conversation
+        conversation,
+        pinchHint
     );
     bindViewingSurfaceResize(
         curtainPresentation,
@@ -693,7 +696,8 @@ export function bindCurtainDragging(
     canvas,
     application,
     synchronizeViewportControl,
-    conversation
+    conversation,
+    pinchHint = null
 ) {
     let drag = null;
     let touchExploration = null;
@@ -746,6 +750,7 @@ export function bindCurtainDragging(
     };
 
     const beginTouchPinch = () => {
+        pinchHint?.dismiss();
         const pointers = Array.from(touchPointers.values());
         const width = canvas.clientWidth;
         if (pointers.length !== 2 || width <= 0) {
@@ -778,6 +783,7 @@ export function bindCurtainDragging(
             canvas.setPointerCapture(pointer.pointerId);
         }
         canvas.classList.add("is-dragging");
+        pinchHint?.markPinchDiscovered();
         return true;
     };
 
@@ -1102,6 +1108,7 @@ export function bindCurtainDragging(
             } else if (!completed.project) {
                 conversation.showDragHint();
             }
+            pinchHint?.showAt(event.clientX, event.clientY);
         } else {
             application.settleTouchExploration(
                 completed.interaction,
@@ -1124,6 +1131,9 @@ export function bindCurtainDragging(
                 synchronizeViewportControl,
                 conversation.markExplorationInactive
             );
+            if (allowClickReveal && completed.dragLearned) {
+                pinchHint?.recordDragAt(event.clientX, event.clientY);
+            }
         }
     };
 
@@ -1169,11 +1179,106 @@ export function bindCurtainDragging(
     });
 }
 
+export function bindCurtainPinchHint(
+    presentation,
+    {
+        config = CURTAIN_PINCH_HINT_CONFIG,
+        isMobile = () => window.matchMedia("(max-width: 767px)").matches
+    } = {}
+) {
+    const bubble = presentation.querySelector("[data-curtain-pinch-hint]");
+    const curtainScreen = presentation.closest(".curtain-sticky-stage");
+    if (!(presentation instanceof HTMLElement)
+        || !(bubble instanceof HTMLElement)
+        || !(curtainScreen instanceof HTMLElement)) {
+        throw new Error("Curtain pinch hint elements are incomplete.");
+    }
+
+    let hideTimer = null;
+    let completedDragCount = 0;
+    let pinchDiscovered = false;
+
+    bubble.style.setProperty("--curtain-pinch-hint-size", `${config.bubbleSize}px`);
+    bubble.style.setProperty(
+        "--curtain-pinch-hint-duration",
+        `${config.displayDuration}ms`
+    );
+    bubble.style.setProperty(
+        "--curtain-pinch-hint-drift",
+        `${config.upwardDrift}px`
+    );
+
+    const dismiss = () => {
+        if (hideTimer !== null) {
+            window.clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+        bubble.hidden = true;
+        bubble.classList.remove("is-visible");
+    };
+    const showAt = (clientX, clientY) => {
+        if (pinchDiscovered || !isMobile()
+            || !containsVisualViewportCenter(curtainScreen)) {
+            return false;
+        }
+
+        dismiss();
+        const bounds = presentation.getBoundingClientRect();
+        const radius = config.bubbleSize / 2;
+        const localX = bounds.width <= config.bubbleSize
+            ? bounds.width / 2
+            : clamp(clientX - bounds.left, radius, bounds.width - radius);
+        const localY = bounds.height <= config.bubbleSize
+            ? bounds.height / 2
+            : clamp(clientY - bounds.top, radius, bounds.height - radius);
+        bubble.style.left = `${localX}px`;
+        bubble.style.top = `${localY}px`;
+        bubble.hidden = false;
+        void bubble.offsetWidth;
+        bubble.classList.add("is-visible");
+        hideTimer = window.setTimeout(dismiss, config.displayDuration);
+        return true;
+    };
+    const recordDragAt = (clientX, clientY) => {
+        if (pinchDiscovered || !isMobile()) {
+            return false;
+        }
+        completedDragCount += 1;
+        return completedDragCount === config.dragHintCount
+            ? showAt(clientX, clientY)
+            : false;
+    };
+    const markPinchDiscovered = () => {
+        pinchDiscovered = true;
+        dismiss();
+    };
+
+    window.addEventListener("scroll", () => {
+        if (!bubble.hidden && !containsVisualViewportCenter(curtainScreen)) {
+            dismiss();
+        }
+    }, { passive: true });
+
+    return Object.freeze({
+        dismiss,
+        markPinchDiscovered,
+        recordDragAt,
+        showAt,
+        get completedDragCount() {
+            return completedDragCount;
+        },
+        get pinchDiscovered() {
+            return pinchDiscovered;
+        }
+    });
+}
+
 export function bindConversationInterface(
     element,
     application,
     synchronizeViewportControl,
-    synchronizeSemanticNavigation
+    synchronizeSemanticNavigation,
+    dismissPinchHint = () => {}
 ) {
     const conversation = element.querySelector("[data-conversation-text]");
     const trigger = element.querySelector("[data-conversation-menu-trigger]");
@@ -1203,6 +1308,7 @@ export function bindConversationInterface(
         }
     };
     const openMenu = () => {
+        dismissPinchHint();
         menuOpen = true;
         synchronizeProjects();
         panel.hidden = false;
@@ -1539,6 +1645,12 @@ const TOUCH_CURTAIN_DIRECTIONAL_RETENTION = 1.00;
 const TOUCH_CURTAIN_DIRECTIONAL_RESISTANCE = 3.00;
 const TOUCH_CURTAIN_REVEAL_RETENTION = 0.60;
 const TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 1.50;
+export const CURTAIN_PINCH_HINT_CONFIG = Object.freeze({
+    bubbleSize: 80,
+    displayDuration: 1800,
+    upwardDrift: 10,
+    dragHintCount: 3
+});
 const VIEWPORT_INERTIA_GAIN = 1.75;
 const VIEWPORT_INERTIA_DAMPING = 4.00;
 const TOUCH_CURTAIN_SETTLE_DURATION = 360;
