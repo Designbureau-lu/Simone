@@ -2036,7 +2036,7 @@ select{
 
         border-radius:50%;
 
-        background:rgba(255,255,255,0.9);
+        background:rgba(255,255,255,0.8);
 
         pointer-events:none;
 
@@ -2089,7 +2089,7 @@ select{
 
         transform:translate(
             -50%,
-            calc(-50% - var(--curtain-pinch-hint-drift,20px))
+            calc(-50% - var(--curtain-pinch-hint-drift,40px))
         );
 
     }

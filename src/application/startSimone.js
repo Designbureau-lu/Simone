@@ -1651,7 +1651,7 @@ const TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 1.50;
 export const CURTAIN_PINCH_HINT_CONFIG = Object.freeze({
     bubbleSize: 80,
     displayDuration: 1800,
-    upwardDrift: 20,
+    upwardDrift: 40,
     firstDragHintCount: 4,
     dragHintInterval: 8
 });

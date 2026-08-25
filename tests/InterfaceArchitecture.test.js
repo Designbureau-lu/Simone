@@ -1119,10 +1119,12 @@ test("mobile pinch hint is contextual, clamped, dismissible and session-scoped",
     equal(sourceHint.querySelector("img").getAttribute("src"), "assets/pinch.svg");
     assert(sourceHint.hidden);
     assert(/@media \(max-width:767px\)[\s\S]*?\.curtain-pinch-hint\s*\{[^}]*position:absolute;[^}]*z-index:30;[^}]*border-radius:50%;[^}]*pointer-events:none;/s.test(style));
+    assert(/\.curtain-pinch-hint\s*\{[^}]*background:rgba\(255,255,255,0\.8\);/s.test(style));
     assert(/@keyframes curtain-pinch-hint-dismiss/.test(style));
+    assert(/var\(--curtain-pinch-hint-drift,40px\)/.test(style));
     equal(CURTAIN_PINCH_HINT_CONFIG.bubbleSize, 80);
     equal(CURTAIN_PINCH_HINT_CONFIG.displayDuration, 1800);
-    equal(CURTAIN_PINCH_HINT_CONFIG.upwardDrift, 20);
+    equal(CURTAIN_PINCH_HINT_CONFIG.upwardDrift, 40);
     equal(CURTAIN_PINCH_HINT_CONFIG.firstDragHintCount, 4);
     equal(CURTAIN_PINCH_HINT_CONFIG.dragHintInterval, 8);
 
