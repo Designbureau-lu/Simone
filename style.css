@@ -1174,6 +1174,12 @@ select{
 
         grid-area:title;
 
+        position:sticky;
+
+        top:clamp(96px,14vh,180px);
+
+        align-self:start;
+
         justify-self:end;
 
         text-align:right;
