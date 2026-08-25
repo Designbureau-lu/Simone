@@ -986,6 +986,12 @@ select{
 
 }
 
+.editorial-side{
+
+    display:contents;
+
+}
+
 .visit-information h2{
 
     font:400 var(--type-section)/0.98 "Söhne Mono Buch",monospace;
@@ -1162,17 +1168,15 @@ select{
 
         grid-template-columns:minmax(0,1fr) minmax(0,1fr);
 
-        grid-template-areas:
-            ". title"
-            "body actions";
+        grid-template-areas:"body side";
 
         column-gap:clamp(64px,8vw,160px);
 
     }
 
-    .editorial-title{
+    .editorial-side{
 
-        grid-area:title;
+        grid-area:side;
 
         position:sticky;
 
@@ -1180,7 +1184,19 @@ select{
 
         align-self:start;
 
+        display:flex;
+
+        flex-direction:column;
+
+        align-items:flex-end;
+
+        gap:32px;
+
         justify-self:end;
+
+    }
+
+    .editorial-title{
 
         text-align:right;
 
@@ -1195,12 +1211,6 @@ select{
     }
 
     .editorial-actions{
-
-        grid-area:actions;
-
-        justify-self:end;
-
-        align-self:start;
 
         flex-direction:column;
 
@@ -1245,7 +1255,21 @@ select{
 
     .editorial-actions{
 
+        order:3;
+
         justify-content:flex-end;
+
+    }
+
+    .editorial-title{
+
+        order:1;
+
+    }
+
+    .editorial-body{
+
+        order:2;
 
     }
 

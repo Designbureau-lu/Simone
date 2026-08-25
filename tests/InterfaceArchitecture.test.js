@@ -495,11 +495,12 @@ test("lower information is semantic live HTML with section-owned actions", async
     );
     equal(
         Array.from(editorialSections).map((section) => (
-            section.querySelectorAll(":scope > .editorial-actions .information-pill")
+            section.querySelectorAll(":scope > .editorial-side > .editorial-actions .information-pill")
                 .length
         )).join("|"),
         "2|1|1"
     );
+    equal(information.querySelectorAll(":scope > .editorial-section > .editorial-side").length, 3);
     equal(information.querySelectorAll(".visit-information-block").length, 2);
     assert(information.querySelector(".exhibition-footer-logos[src='assets/logos.svg']"));
     equal(information.querySelectorAll(".information-pill").length, 5);
@@ -535,7 +536,7 @@ test("lower information uses the shared type system and constrained body copy", 
     assert(/\.visit-information-block p\s*\{[^}]*font:400 var\(--type-information\)\/1\.5 "Söhne Mono Buch",monospace;/s.test(
         source
     ));
-    assert(/@media \(min-width:768px\)\s*\{[\s\S]*?\.editorial-title\s*\{[^}]*grid-area:title;[^}]*justify-self:end;[^}]*text-align:right;/s.test(
+    assert(/@media \(min-width:768px\)\s*\{[\s\S]*?\.editorial-side\s*\{[^}]*grid-area:side;[^}]*position:sticky;[^}]*top:clamp\(96px,14vh,180px\);[^}]*align-self:start;[^}]*justify-self:end;[\s\S]*?\.editorial-title\s*\{[^}]*text-align:right;/s.test(
         source
     ));
 });
