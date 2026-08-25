@@ -1122,8 +1122,9 @@ test("mobile pinch hint is contextual, clamped, dismissible and session-scoped",
     assert(/@keyframes curtain-pinch-hint-dismiss/.test(style));
     equal(CURTAIN_PINCH_HINT_CONFIG.bubbleSize, 80);
     equal(CURTAIN_PINCH_HINT_CONFIG.displayDuration, 1800);
-    equal(CURTAIN_PINCH_HINT_CONFIG.upwardDrift, 10);
-    equal(CURTAIN_PINCH_HINT_CONFIG.dragHintCount, 3);
+    equal(CURTAIN_PINCH_HINT_CONFIG.upwardDrift, 20);
+    equal(CURTAIN_PINCH_HINT_CONFIG.firstDragHintCount, 4);
+    equal(CURTAIN_PINCH_HINT_CONFIG.dragHintInterval, 8);
 
     const stage = document.createElement("section");
     stage.className = "curtain-sticky-stage";
@@ -1175,6 +1176,13 @@ test("mobile pinch hint is contextual, clamped, dismissible and session-scoped",
 
     assert(!hint.recordDragAt(160, 300));
     assert(!hint.recordDragAt(160, 300));
+    assert(!hint.recordDragAt(160, 300));
+    assert(hint.recordDragAt(160, 300));
+    assert(!bubble.hidden);
+    hint.dismiss();
+    for (let dragCount = 5; dragCount <= 11; dragCount += 1) {
+        assert(!hint.recordDragAt(160, 300));
+    }
     assert(hint.recordDragAt(160, 300));
     assert(!bubble.hidden);
     hint.markPinchDiscovered();

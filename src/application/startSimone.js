@@ -1244,7 +1244,10 @@ export function bindCurtainPinchHint(
             return false;
         }
         completedDragCount += 1;
-        return completedDragCount === config.dragHintCount
+        const reminderDue = completedDragCount >= config.firstDragHintCount
+            && (completedDragCount - config.firstDragHintCount)
+                % config.dragHintInterval === 0;
+        return reminderDue
             ? showAt(clientX, clientY)
             : false;
     };
@@ -1648,8 +1651,9 @@ const TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 1.50;
 export const CURTAIN_PINCH_HINT_CONFIG = Object.freeze({
     bubbleSize: 80,
     displayDuration: 1800,
-    upwardDrift: 10,
-    dragHintCount: 3
+    upwardDrift: 20,
+    firstDragHintCount: 4,
+    dragHintInterval: 8
 });
 const VIEWPORT_INERTIA_GAIN = 1.75;
 const VIEWPORT_INERTIA_DAMPING = 4.00;

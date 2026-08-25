@@ -2081,8 +2081,6 @@ select{
 
         opacity:1;
 
-        transform:translate(-50%,-50%);
-
     }
 
     100%{
@@ -2091,7 +2089,7 @@ select{
 
         transform:translate(
             -50%,
-            calc(-50% - var(--curtain-pinch-hint-drift,10px))
+            calc(-50% - var(--curtain-pinch-hint-drift,20px))
         );
 
     }
