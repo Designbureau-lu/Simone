@@ -1,0 +1,39 @@
+Project	Year	Columns	Page
+Blister	2013	3	1
+Airbag	1998	3	2
+Bubles	1994,1995	3	3
+What if	2009	1	4
+Le grand soufflé	1996	5	5
+Jérémy	1999	3	6
+Eisberg	2021	2	7
+Filtre	2006	4	8
+White  Noise	1999	4	9
+Prototypes d’epaces infinis	1999,2001	2	10
+Whitening	2005	3	11
+500 pieces	1997	2	12
+View  finder	2008	1	13
+Fine Sélection	2011	2	14
+NY-space	2004	2	15
+So weiß, weißer gehts nicht	2001	5	18
+Inlays	2011	2	19
+Glaçons	2001	3	20
+Second Life	2010	5	21
+Genus	2022	3	22
+Untermieter	1996	2	23
+Magnificatio	2021	6	24
+Rising up	2018	2	25
+Pied-à-terre	2003,2004	2	26
+Implantate	2019	4	29
+Distributeur	2003	2	30
+Jagdschlößchen	1997	4	31
+Re-Rooted	2025	2	32
+Shifting shapes	2010	3	33
+Curtain wall	2002,2004	5	35
+Meeting	2010	2	36
+A couple of full moons	2003,2004	3	37
+Clashtest	2018	5	38
+Lenka, Denise, Charlotte,...	2004	3	39
+Petite galerie des glaces	2002	2	40
+Seaworld  Biel-Bienne	2000	3	41
+Le va-et-vient du Mont Saint-Watou	2000	2	42
+Instant	2006	3	44

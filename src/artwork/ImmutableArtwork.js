@@ -242,25 +242,21 @@ function validateMetadata(metadata) {
 }
 
 function sourceRepresentationFor(segments) {
-    const descriptions = new Map(segments.map((segment) => {
-        const scale = segment.sourceWidth / segment.width;
-        const description = `${segment.representationLabel} `
-            + `${segment.sourceWidth}×${segment.sourceHeight}`
-            + ` / LOGICAL ${segment.width}×${segment.height}`;
-        return [description, Object.freeze({
-            id: segment.representationId,
-            label: segment.representationLabel,
-            logicalWidth: segment.width,
-            logicalHeight: segment.height,
-            rasterWidth: segment.sourceWidth,
-            rasterHeight: segment.sourceHeight,
-            rasterScale: scale,
-            description
-        })];
-    }));
-    return descriptions.size === 1
-        ? [...descriptions.values()][0]
-        : Object.freeze({
+    const identities = new Set(segments.map((segment) => (
+        `${segment.representationId}\0${segment.representationLabel}`
+    )));
+    const scales = new Set(segments.map((segment) => (
+        segment.sourceWidth / segment.width
+    )));
+    const logicalHeights = new Set(segments.map(({ height }) => height));
+    const rasterHeights = new Set(segments.map(
+        ({ sourceHeight }) => sourceHeight
+    ));
+    if (identities.size !== 1
+        || scales.size !== 1
+        || logicalHeights.size !== 1
+        || rasterHeights.size !== 1) {
+        return Object.freeze({
             id: "mixed",
             label: "MIXED SOURCES",
             logicalWidth: null,
@@ -270,6 +266,30 @@ function sourceRepresentationFor(segments) {
             rasterScale: null,
             description: "MIXED SOURCE REPRESENTATIONS"
         });
+
+    }
+
+    const first = segments[0];
+    const logicalWidths = new Set(segments.map(({ width }) => width));
+    const rasterWidths = new Set(segments.map(({ sourceWidth }) => sourceWidth));
+    const rasterScale = [...scales][0];
+    const variableWidth = logicalWidths.size > 1 || rasterWidths.size > 1;
+    const description = variableWidth
+        ? `${first.representationLabel} VARIABLE WIDTH / `
+            + `LOGICAL HEIGHT ${first.height}`
+        : `${first.representationLabel} `
+            + `${first.sourceWidth}×${first.sourceHeight}`
+            + ` / LOGICAL ${first.width}×${first.height}`;
+    return Object.freeze({
+        id: first.representationId,
+        label: first.representationLabel,
+        logicalWidth: variableWidth ? null : first.width,
+        logicalHeight: first.height,
+        rasterWidth: variableWidth ? null : first.sourceWidth,
+        rasterHeight: first.sourceHeight,
+        rasterScale,
+        description
+    });
 }
 
 function sourceWidthFor(source) {

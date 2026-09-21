@@ -1,8 +1,6 @@
 import { loadArtwork } from "../artwork/loadArtwork.js";
 import { ImmutableArtwork } from "../artwork/ImmutableArtwork.js";
 import {
-    artworkRepresentationIdsFromManifest,
-    artworkSegmentsFromManifest,
     representationLabel
 } from "../artwork/ArtworkManifest.js";
 import {
@@ -31,6 +29,11 @@ import { SurfaceShading } from "../shading/SurfaceShading.js";
 import { CurtainField } from "../surface/CurtainField.js";
 import { SurfaceParameters } from "../surface/SurfaceParameters.js";
 import { Viewport } from "../viewport/Viewport.js";
+import {
+    artworkSegmentsFromProjectCatalog,
+    PROJECT_REPRESENTATION_IDS,
+    projectCatalogFromTsv
+} from "../projects/ProjectCatalog.js";
 
 /** Composition root for the existing surface architecture. */
 export function startSimone() {
@@ -295,22 +298,24 @@ export async function loadManifestArtwork(
     onNavigation = null,
     representationControl = null
 ) {
-    const manifestUrl = manifestUrlFor(
-        "public/artwork.json",
+    const catalogUrl = manifestUrlFor(
+        "public/SIMONE-export/SIMONE-projects.txt",
         document.baseURI
     );
 
     try {
-        const response = await fetch(manifestUrl);
+        const response = await fetch(catalogUrl);
         if (!response.ok) {
             throw new Error(
-                `Image manifest request failed with ${response.status}.`
+                `Project catalog request failed with ${response.status}.`
             );
         }
 
-        const manifestSource = await response.text();
-        const availableRepresentationIds =
-            artworkRepresentationIdsFromManifest(manifestSource);
+        const catalog = projectCatalogFromTsv(
+            await response.text(),
+            new URL("public/SIMONE-export/", document.baseURI)
+        );
+        const availableRepresentationIds = PROJECT_REPRESENTATION_IDS;
         const representationId = selectedArtworkRepresentationId(
             availableRepresentationIds
         );
@@ -322,15 +327,15 @@ export async function loadManifestArtwork(
                 representationId
             );
         }
-        const segments = artworkSegmentsFromManifest(
-            manifestSource,
-            document.baseURI,
+        const segments = artworkSegmentsFromProjectCatalog(
+            catalog,
             representationId
         );
         console.info([
-            "Loaded artwork.json",
+            "Loaded SIMONE-projects.txt artwork catalog",
             `Loaded at: ${manifestLoadTime()}`,
-            `Images: ${segments.length}`,
+            `Projects / images: ${segments.length}`,
+            `Intrinsic width: ${catalog.logicalWidth}`,
             `Representation: ${representationLabel(representationId)}`
         ].join("\n"));
         const artwork = ImmutableArtwork.fromMetadata(segments);
@@ -360,7 +365,7 @@ export async function loadManifestArtwork(
         application.startBackgroundArtworkLoading();
         await navigation;
     } catch (error) {
-        console.error("SIMONE could not load its image manifest.", error);
+        console.error("SIMONE could not load its project artwork catalog.", error);
     }
 }
 
