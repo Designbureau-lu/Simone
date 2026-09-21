@@ -12,6 +12,7 @@ import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
 import { SurfaceShading } from "../src/shading/SurfaceShading.js";
 import { Viewport } from "../src/viewport/Viewport.js";
 import {
+    continuousProjectedWidth,
     inertiaPriorityCorridor,
     panPriorityCorridor,
     predictedInertialCameraTravel
@@ -210,6 +211,121 @@ test("folded columns retain individual draw calls", () => {
 
     const metrics = renderer.endFrame();
     assert(metrics.drawImageCalls === 4);
+});
+
+test("fold branch transitions share continuous projected boundaries", () => {
+    for (const carrierDistance of [120, 600]) {
+        for (const visibleFactor of [0.516, 0.6, 0.73, 0.9]) {
+            const placements = projectedFoldPlacements(
+                visibleFactor,
+                carrierDistance
+            );
+            const widths = continuousWidthsFor(placements);
+            const transitions = branchTransitions(placements);
+
+            assertTransitionKinds(placements, transitions);
+            for (const sourceX of transitions) {
+                closeTo(
+                    placements[sourceX].targetX + widths[sourceX],
+                    placements[sourceX + 1].targetX
+                );
+            }
+        }
+    }
+});
+
+test("fold branch transitions share rounded backing-store boundaries", () => {
+    for (const carrierDistance of [120, 600]) {
+        for (const visibleFactor of [0.516, 0.6, 0.73, 0.9]) {
+            const placements = projectedFoldPlacements(
+                visibleFactor,
+                carrierDistance
+            );
+            const widths = continuousWidthsFor(placements);
+
+            for (const viewportOffset of [0.17, 19.625, 73.41]) {
+                for (const scale of [0.75, 1, 2.5, 4]) {
+                    for (const sourceX of branchTransitions(placements)) {
+                        const end = Math.round(
+                            (placements[sourceX].targetX
+                                + widths[sourceX]
+                                - viewportOffset) * scale
+                        );
+                        const nextStart = Math.round(
+                            (placements[sourceX + 1].targetX
+                                - viewportOffset) * scale
+                        );
+                        assert(end === nextStart);
+                    }
+                }
+            }
+        }
+    }
+});
+
+test("opaque folded raster leaves no background at branch transitions", () => {
+    const carrierDistance = 120;
+    const placements = projectedFoldPlacements(0.516, carrierDistance);
+    const widths = continuousWidthsFor(placements);
+    const viewportOffset = 0.37;
+    const scale = 4;
+    const source = document.createElement("canvas");
+    source.width = placements.length;
+    source.height = 5;
+    const sourceContext = source.getContext("2d");
+    sourceContext.fillStyle = "rgb(0, 160, 80)";
+    sourceContext.fillRect(0, 0, source.width, source.height);
+
+    const canvas = document.createElement("canvas");
+    const renderer = new ViewportCanvasColumnRenderer(canvas);
+    const firstX = (placements[0].targetX - viewportOffset) * scale;
+    const lastIndex = placements.length - 1;
+    const lastX = (
+        placements[lastIndex].targetX
+            + widths[lastIndex]
+            - viewportOffset
+    ) * scale;
+    renderer.beginFrame({
+        width: Math.ceil(lastX) + 2,
+        height: source.height
+    }, cueTestAppearance());
+
+    for (let sourceX = 0; sourceX < placements.length; sourceX += 1) {
+        const placement = placements[sourceX];
+        renderer.drawColumn({
+            source,
+            sourceX,
+            sourceY: 0,
+            sourceWidth: 1,
+            sourceHeight: source.height,
+            width: 1,
+            height: source.height,
+            artworkX: sourceX
+        }, {
+            x: (placement.targetX - viewportOffset) * scale,
+            y: 0,
+            width: widths[sourceX] * scale,
+            height: source.height
+        }, {
+            ...cueColumnAppearance(placement.branch),
+            periodIndex: placement.periodIndex
+        });
+    }
+    renderer.endFrame();
+
+    const context = canvas.getContext("2d");
+    const pixels = context.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    ).data;
+    const paintedStart = Math.round(firstX);
+    const paintedEnd = Math.round(lastX);
+    for (let x = paintedStart; x < paintedEnd; x += 1) {
+        const alpha = pixels[(2 * canvas.width + x) * 4 + 3];
+        assert(alpha === 255, `Expected opaque coverage at backing pixel ${x}`);
+    }
 });
 
 test("viewport sampling keeps the complete global Period model", () => {
@@ -968,6 +1084,55 @@ function foldPlacements(visibleFactor) {
     return Array.from({ length: 120 }, (_, sourceX) => (
         surface.mapColumn({ sourceX }, field)
     ));
+}
+
+function projectedFoldPlacements(visibleFactor, carrierDistance) {
+    const field = new CurtainField({ resetCurtainState: visibleFactor });
+    const parameters = new SurfaceParameters({ carrierDistance });
+    const surface = new CircularFoldSurface();
+    const artworkWidth = carrierDistance * 2;
+    field.configureFor(artworkWidth, carrierDistance);
+    field.resolve(parameters);
+    surface.frameFor({ width: artworkWidth, height: 400 }, field);
+    return Array.from({ length: artworkWidth }, (_, sourceX) => (
+        surface.mapColumn({ sourceX }, field)
+    ));
+}
+
+function continuousWidthsFor(placements) {
+    const widths = new Array(placements.length);
+    let lastWidth = 1;
+    for (let sourceX = 0; sourceX < placements.length; sourceX += 1) {
+        const width = continuousProjectedWidth(
+            placements[sourceX],
+            placements[sourceX + 1] ?? null,
+            lastWidth
+        );
+        if (width !== 0) {
+            lastWidth = width;
+        }
+        widths[sourceX] = width;
+    }
+    return widths;
+}
+
+function branchTransitions(placements) {
+    const transitions = [];
+    for (let sourceX = 0; sourceX + 1 < placements.length; sourceX += 1) {
+        if (placements[sourceX].branch
+            !== placements[sourceX + 1].branch) {
+            transitions.push(sourceX);
+        }
+    }
+    return transitions;
+}
+
+function assertTransitionKinds(placements, transitions) {
+    const kinds = new Set(transitions.map((sourceX) => (
+        `${placements[sourceX].branch}->${placements[sourceX + 1].branch}`
+    )));
+    assert(kinds.has("front->rear"));
+    assert(kinds.has("rear->front"));
 }
 
 function deepestPlacement(placements) {

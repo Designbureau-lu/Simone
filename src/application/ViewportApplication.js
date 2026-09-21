@@ -384,10 +384,11 @@ export class ViewportApplication extends SimoneApplication {
         const nextPlacement = sourceX + 1 < this.artwork.width
             ? this.#placementAt(this.#currentSurface, sourceX + 1)
             : null;
-        const width = nextPlacement
-            && nextPlacement.branch === placement.branch
-            ? nextPlacement.targetX - placement.targetX
-            : 1;
+        const width = continuousProjectedWidth(
+            placement,
+            nextPlacement,
+            1
+        );
 
         return Object.freeze({ placement, width });
     }
@@ -405,10 +406,11 @@ export class ViewportApplication extends SimoneApplication {
         for (let sourceX = start; sourceX < end; sourceX += 1) {
             const placement = placements[sourceX];
             const nextPlacement = placements[sourceX + 1];
-            const width = nextPlacement
-                && nextPlacement.branch === placement.branch
-                ? nextPlacement.targetX - placement.targetX
-                : lastWidth;
+            const width = continuousProjectedWidth(
+                placement,
+                nextPlacement,
+                lastWidth
+            );
 
             if (width !== 0) {
                 lastWidth = width;
@@ -485,6 +487,16 @@ export class ViewportApplication extends SimoneApplication {
         });
     }
 
+}
+
+export function continuousProjectedWidth(
+    placement,
+    nextPlacement,
+    fallbackWidth
+) {
+    return nextPlacement
+        ? nextPlacement.targetX - placement.targetX
+        : fallbackWidth;
 }
 
 export function predictedInertialCameraTravel(
