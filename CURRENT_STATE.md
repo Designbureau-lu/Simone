@@ -1,6 +1,29 @@
 # SIMONE Current State
 
-Updated: 2026-08-16
+Updated: 2026-09-21
+
+## Stage 3 project navigation migration
+
+- Production artwork and project navigation now share the single parsed
+  `public/SIMONE-export/SIMONE-projects.txt` ProjectCatalog. Navigation uses
+  each ordered record's cumulative intrinsic `sourceStart`, `sourceEnd`, and
+  `logicalWidth` directly; Page gaps affect ordering metadata but add no
+  physical curtain space. The former 4,400-unit semantic image grid,
+  4,400-to-5,000 conversion, `ArtworkLayout`, and `projects.txt` fetch/parser
+  are no longer active or present in production code.
+- Desktop project destinations retain project-centre alignment and the
+  existing optical offset. Coarse-pointer destinations retain leading-edge
+  alignment. Hit testing, READ opening, NEXT/PREVIOUS, Index selection, and
+  scheduler destination priority all use intrinsic project ranges. SOURCE A
+  and SOURCE B therefore share identical navigation geometry.
+- `ImmutableArtwork` now contains only intrinsic source mapping. Its former
+  semantic conversion methods were removed. The obsolete full-curtain base
+  renderer and branch-sensitive projection path were also removed from
+  `SimoneApplication`; production rendering remains solely in the verified
+  `ViewportApplication` path.
+- Legacy metadata and assembled artwork assets remain in `public/` pending
+  deployed visual verification. Stage 3 is implemented locally but not yet
+  committed.
 
 ## Desktop milestone
 
@@ -58,19 +81,13 @@ Updated: 2026-08-16
   specimen and its DEV-only faces/loading probes have been removed; production
   identity font files and rules remain authoritative.
 
-- Artwork metadata separates one authoritative intrinsic segment from its
-  raster representations and from READ's semantic navigation grid. Every
-  segment is `5000 × 2500` intrinsic units, and the curtain geometry maps
-  its 5,000 immutable columns directly across those 5,000 units. The complete
-  surface is therefore 60,000 units wide and contains 500 Periods at the
-  approved 120-unit Carrier Distance; a completely flat segment reconstructs
-  at its source 2:1 aspect ratio. READ metadata remains unchanged at 4,400
-  semantic units per segment (`10 × (400 + 40)`) and is converted explicitly
-  to intrinsic source/geometry coordinates only at navigation boundaries. The
-  semantic grid totals 52,800 units but does not define curtain width. SOURCE A
-  contains the reference `5000 × 2500` files in `public/images/artwork/`.
-  SOURCE B contains the corresponding `2500 × 1250` files in
-  `public/images/source-b/`. Chrome selects SOURCE B on desktop and mobile
+- Artwork and navigation metadata now come from the 38 ordered variable-width
+  projects in `public/SIMONE-export/SIMONE-projects.txt`. Columns derive each
+  project's intrinsic width in 500-unit increments; the concatenated curtain
+  is 56,500 × 2,500 intrinsic units. SOURCE A contains full-resolution project
+  images in `public/SIMONE-export/source-a/`; SOURCE B contains geometrically
+  identical half-resolution images in `public/SIMONE-export/source-b/`.
+  Chrome selects SOURCE B on desktop and mobile
   because its measured rendering performance is substantially better. Safari,
   Firefox, and other non-Chrome browsers default to SOURCE A. This policy uses
   browser identity, never viewport dimensions or DPR. The `0.5` raster scale affects source sampling only: geometry,

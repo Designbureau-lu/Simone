@@ -49,7 +49,7 @@ export function startSimone() {
     const performanceOverviewElement = document.getElementById(
         "performanceOverview"
     );
-    const semanticNavigationElement = document.getElementById(
+    const projectNavigationElement = document.getElementById(
         "semanticNavigation"
     );
     const conversationBarElement = document.getElementById(
@@ -70,7 +70,7 @@ export function startSimone() {
         || !(viewportPosition instanceof HTMLInputElement)
         || !(viewportPositionValue instanceof HTMLOutputElement)
         || !(performanceOverviewElement instanceof HTMLElement)
-        || !(semanticNavigationElement instanceof HTMLElement)
+        || !(projectNavigationElement instanceof HTMLElement)
         || !(conversationBarElement instanceof HTMLElement)
         || !(debugPanelElement instanceof HTMLElement)
         || !(debugReopenElement instanceof HTMLButtonElement)
@@ -116,8 +116,8 @@ export function startSimone() {
         viewportPositionValue,
         application
     );
-    const synchronizeSemanticNavigation = bindSemanticNavigation(
-        semanticNavigationElement,
+    const synchronizeProjectNavigationControls = bindProjectNavigationControls(
+        projectNavigationElement,
         application,
         synchronizeViewportControl
     );
@@ -126,11 +126,11 @@ export function startSimone() {
         conversationBarElement,
         application,
         synchronizeViewportControl,
-        synchronizeSemanticNavigation,
+        synchronizeProjectNavigationControls,
         pinchHint.dismiss
     );
     const synchronizeInterface = () => {
-        synchronizeSemanticNavigation();
+        synchronizeProjectNavigationControls();
         conversation.synchronizeProjects();
     };
     bindCurtainDragging(
@@ -154,10 +154,7 @@ export function startSimone() {
 
         try {
             await application.importArtwork(files);
-            await loadProjectNavigation(
-                application,
-                synchronizeInterface
-            );
+            synchronizeInterface();
         } catch (error) {
             console.error("SIMONE could not import the artwork.", error);
         }
@@ -352,10 +349,7 @@ export async function loadManifestArtwork(
                 application.render();
             }
         });
-        const navigation = loadProjectNavigation(
-            application,
-            onNavigation
-        );
+        configureProjectNavigation(application, catalog, onNavigation);
         await scheduler.request(
             initialSegments,
             SegmentPriority.INITIAL_VIEWPORT
@@ -363,7 +357,6 @@ export async function loadManifestArtwork(
         application.render();
         initialCurtainPresented = true;
         application.startBackgroundArtworkLoading();
-        await navigation;
     } catch (error) {
         console.error("SIMONE could not load its project artwork catalog.", error);
     }
@@ -427,53 +420,26 @@ function bindArtworkRepresentationControl(control, availableIds, selectedId) {
     }, { once: true });
 }
 
-export async function loadProjectNavigation(application, onUpdate = null) {
-    const projectsUrl = manifestUrlFor(
-        "public/projects.txt",
-        document.baseURI
-    );
-
+export function configureProjectNavigation(
+    application,
+    catalog,
+    onUpdate = null
+) {
     try {
-        const response = await fetch(projectsUrl);
-        if (!response.ok) {
-            throw new Error(
-                `Project manifest request failed with ${response.status}.`
-            );
-        }
-
-        const navigation = createProjectNavigation({
-            source: await response.text(),
-            loadedImageCount: application.imageCount
-        });
+        const navigation = createProjectNavigation(catalog);
         console.info([
-            "Loaded projects.txt",
-            `Loaded at: ${manifestLoadTime()}`,
+            "Configured ProjectCatalog navigation",
             `Projects: ${navigation.projects.length}`,
-            `Total span: ${navigation.projectSpanUnits}`,
-            `Unused units: ${navigation.unusedUnits}`
+            `Intrinsic width: ${navigation.logicalWidth}`
         ].join("\n"));
         application.setProjectNavigation(navigation);
         onUpdate?.();
-
-        if (!navigation.enabled) {
-            console.error(
-                `SIMONE semantic navigation is disabled: ${navigation.error}`
-            );
-            return;
-        }
-
-        console.info("SIMONE semantic project navigation", navigation);
-        if (navigation.unusedUnits > 0) {
-            console.warn(
-                `${navigation.unusedUnits} artwork units remain after the `
-                    + "final project span."
-            );
-        }
+        console.info("SIMONE intrinsic project navigation", navigation);
     } catch (error) {
         application.setProjectNavigation(null);
         onUpdate?.();
         console.error(
-            "SIMONE could not configure semantic project navigation.",
+            "SIMONE could not configure project navigation.",
             error
         );
     }
@@ -503,7 +469,7 @@ function manifestLoadTime() {
     });
 }
 
-export function bindSemanticNavigation(
+export function bindProjectNavigationControls(
     element,
     application,
     synchronizeViewportControl
@@ -516,7 +482,7 @@ export function bindSemanticNavigation(
         || !(next instanceof HTMLButtonElement)
         || !(select instanceof HTMLSelectElement)
         || !(label instanceof HTMLOutputElement)) {
-        throw new Error("Semantic navigation controls are incomplete.");
+        throw new Error("Project navigation controls are incomplete.");
     }
 
     const synchronize = () => {
@@ -1285,7 +1251,7 @@ export function bindConversationInterface(
     element,
     application,
     synchronizeViewportControl,
-    synchronizeSemanticNavigation,
+    synchronizeProjectNavigationControls,
     dismissPinchHint = () => {}
 ) {
     const conversation = element.querySelector("[data-conversation-text]");
@@ -1339,7 +1305,7 @@ export function bindConversationInterface(
             index,
             synchronizeViewportControl,
             () => {
-                synchronizeSemanticNavigation();
+                synchronizeProjectNavigationControls();
                 synchronizeProjects();
             }
         );
@@ -1386,7 +1352,7 @@ export function bindConversationInterface(
         title.set(project.title);
     };
     const showDragHint = () => {
-        // A click outside semantic content does not change visitor context.
+        // A click outside project content does not change visitor context.
     };
     const markDragLearned = () => {
         title.set(EXPLORATION_TITLE);

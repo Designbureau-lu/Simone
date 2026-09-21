@@ -1028,17 +1028,13 @@ test("drag cancels Moses and restores its exact pre-click curtain state", () => 
     animation.restore();
 });
 
-test("clicked projected artwork resolves to its semantic project", () => {
+test("clicked projected artwork resolves to its intrinsic project", () => {
     const application = createApplication(createViewport(0));
-    application.artwork = {
-        sourceXForSemanticX: (semanticX) => semanticX
-    };
-    application.semanticImageWidth = 1000;
     application.projectNavigation = {
         enabled: true,
         projects: [
-            { title: "First", artworkStart: 0, artworkEnd: 3 },
-            { title: "Second", artworkStart: 3, artworkEnd: 6 }
+            { title: "First", sourceStart: 0, sourceEnd: 3 },
+            { title: "Second", sourceStart: 3, sourceEnd: 6 }
         ]
     };
     application.projectedColumns = [
@@ -1050,6 +1046,8 @@ test("clicked projected artwork resolves to its semantic project", () => {
         { placement: { targetX: 60 }, width: 10 }
     ];
 
+    equal(application.projectAtPresentationX(39)?.title, "First");
+    equal(application.projectAtPresentationX(40)?.title, "Second");
     equal(application.projectAtPresentationX(45)?.title, "Second");
     equal(application.projectAtPresentationX(5), null);
 });
@@ -1439,7 +1437,7 @@ test("project selection resets before using shared indexed navigation", () => {
     equal(sequence[1][0], "navigate");
     equal(sequence[1][1], 4);
     equal(sequence[1][2], synchronized);
-    equal(sequence[1][3], "flat-semantic-span");
+    equal(sequence[1][3], "flat-project-range");
 });
 
 test("Index selection prioritizes its destination before Reset", () => {
@@ -1466,14 +1464,16 @@ test("Index selection prioritizes its destination before Reset", () => {
 });
 
 test("desktop project landing remains centered for wide and narrow projects", () => {
-    const application = semanticNavigationApplication(false);
+    const application = projectNavigationApplication(false);
     const wide = application.projectProjectionFor({
-        artworkStart: 300,
-        artworkEnd: 900
+        sourceStart: 300,
+        sourceEnd: 900,
+        logicalWidth: 600
     });
     const narrow = application.projectProjectionFor({
-        artworkStart: 500,
-        artworkEnd: 700
+        sourceStart: 500,
+        sourceEnd: 700,
+        logicalWidth: 200
     });
 
     closeTo(wide.requestedNavigationTarget, 440);
@@ -1483,14 +1483,16 @@ test("desktop project landing remains centered for wide and narrow projects", ()
 });
 
 test("mobile project landing aligns its leading gutter for any project width", () => {
-    const application = semanticNavigationApplication(true);
+    const application = projectNavigationApplication(true);
     const wide = application.projectProjectionFor({
-        artworkStart: 300,
-        artworkEnd: 900
+        sourceStart: 300,
+        sourceEnd: 900,
+        logicalWidth: 600
     });
     const narrow = application.projectProjectionFor({
-        artworkStart: 500,
-        artworkEnd: 700
+        sourceStart: 500,
+        sourceEnd: 700,
+        logicalWidth: 200
     });
 
     closeTo(wide.requestedNavigationTarget, 300);
@@ -1500,7 +1502,7 @@ test("mobile project landing aligns its leading gutter for any project width", (
 });
 
 test("NEXT and Index selection share the responsive project target", () => {
-    const application = semanticNavigationApplication(true);
+    const application = projectNavigationApplication(true);
     const targets = [];
     application.animateViewportToProjectedOffset = (target) => {
         targets.push(target);
@@ -1513,8 +1515,8 @@ test("NEXT and Index selection share the responsive project target", () => {
     application.setProjectNavigation({
         enabled: true,
         projects: [
-            { title: "First", artworkStart: 0, artworkEnd: 200 },
-            { title: "Second", artworkStart: 300, artworkEnd: 900 }
+            { title: "First", sourceStart: 0, sourceEnd: 200, logicalWidth: 200 },
+            { title: "Second", sourceStart: 300, sourceEnd: 900, logicalWidth: 600 }
         ]
     });
 
@@ -1527,14 +1529,16 @@ test("NEXT and Index selection share the responsive project target", () => {
 });
 
 test("mobile project landing retains first and last archive bounds", () => {
-    const application = semanticNavigationApplication(true);
+    const application = projectNavigationApplication(true);
     const first = application.projectProjectionFor({
-        artworkStart: 0,
-        artworkEnd: 200
+        sourceStart: 0,
+        sourceEnd: 200,
+        logicalWidth: 200
     });
     const last = application.projectProjectionFor({
-        artworkStart: 1200,
-        artworkEnd: 1400
+        sourceStart: 1200,
+        sourceEnd: 1400,
+        logicalWidth: 200
     });
 
     closeTo(application.viewport.projectedOffsetAfterShift(
@@ -1551,7 +1555,7 @@ test("already-aligned initial project opens once without viewport movement", () 
     const { application, rangeCalls } = flatProjectFixture(0);
     const animation = captureAnimationFrames();
 
-    assert(application.navigateToProject(0, null, "flat-semantic-span"));
+    assert(application.navigateToProject(0, null, "flat-project-range"));
     equal(application.currentProjectIndex, 0);
     equal(animation.pendingCount(), 1);
     animation.runNext(0);
@@ -1567,7 +1571,7 @@ test("non-aligned project navigates then opens exactly once", () => {
     const { application, rangeCalls } = flatProjectFixture(0);
     const animation = captureAnimationFrames();
 
-    assert(application.navigateToProject(1, null, "flat-semantic-span"));
+    assert(application.navigateToProject(1, null, "flat-project-range"));
     equal(application.currentProjectIndex, 1);
     equal(animation.pendingCount(), 1);
     animation.runNext(0);
@@ -1585,7 +1589,7 @@ test("initial project still navigates back and opens once after moving away", ()
     const { application, rangeCalls } = flatProjectFixture(320);
     const animation = captureAnimationFrames();
 
-    assert(application.navigateToProject(0, null, "flat-semantic-span"));
+    assert(application.navigateToProject(0, null, "flat-project-range"));
     equal(application.currentProjectIndex, 0);
     animation.runNext(0);
     animation.runNext(450);
@@ -1599,7 +1603,7 @@ test("initial project still navigates back and opens once after moving away", ()
     animation.restore();
 });
 
-test("selected project opens as one uniform semantic period span", () => {
+test("selected project opens exactly its intrinsic period range", () => {
     const viewport = createViewport(0);
     const application = createApplication(viewport);
     const animation = captureAnimationFrames();
@@ -1608,9 +1612,6 @@ test("selected project opens as one uniform semantic period span", () => {
     application.curtainField = field;
     application.render = () => {};
     application.artwork.width = 1000;
-    application.artwork.sourceXForSemanticX = (semanticX) => semanticX;
-    application.semanticArtworkWidth = 1000;
-    application.semanticImageWidth = 1000;
     application.geometryArtworkWidth = 1000;
     application.projectedContentBounds = { start: 0, end: 900 };
     application.projectedColumns = Array.from(
@@ -1626,8 +1627,8 @@ test("selected project opens as one uniform semantic period span", () => {
     application.setProjectNavigation({
         enabled: true,
         projects: [
-            { title: "First", artworkStart: 0, artworkEnd: 300 },
-            { title: "Second", artworkStart: 320, artworkEnd: 680 }
+            { title: "First", sourceStart: 0, sourceEnd: 300, logicalWidth: 300 },
+            { title: "Second", sourceStart: 320, sourceEnd: 680, logicalWidth: 360 }
         ]
     });
     const prioritizedDestinations = [];
@@ -1638,7 +1639,7 @@ test("selected project opens as one uniform semantic period span", () => {
     assert(application.navigateToProject(
         1,
         null,
-        "flat-semantic-span"
+        "flat-project-range"
     ));
     closeTo(prioritizedDestinations[0], 340);
     animation.runNext(0);
@@ -1662,16 +1663,13 @@ test("selected project opens as one uniform semantic period span", () => {
     animation.restore();
 });
 
-test("semantic project navigation moves both ways without wrapping", () => {
+test("variable-width project navigation moves both ways without wrapping", () => {
     const viewport = createViewport(100);
     const application = createApplication(viewport);
     const animation = captureAnimationFrames();
     application.render = () => {};
     application.projectedColumns = [];
     application.artwork.width = 1000;
-    application.artwork.sourceXForSemanticX = (semanticX) => semanticX;
-    application.semanticArtworkWidth = 1000;
-    application.semanticImageWidth = 1000;
     application.geometryArtworkWidth = 1000;
     application.projectedContentBounds = { start: 0, end: 900 };
     application.projectedColumns[0] = {
@@ -1731,9 +1729,9 @@ test("semantic project navigation moves both ways without wrapping", () => {
         totalUnits: 10,
         layout: { unitWidth: 100, gutterWidth: 40 },
         projects: [
-            { title: "First", artworkStart: 0, artworkEnd: 300 },
-            { title: "Second", artworkStart: 300, artworkEnd: 700 },
-            { title: "Third", artworkStart: 700, artworkEnd: 1000 }
+            { title: "First", sourceStart: 0, sourceEnd: 300, logicalWidth: 300 },
+            { title: "Second", sourceStart: 300, sourceEnd: 700, logicalWidth: 400 },
+            { title: "Third", sourceStart: 700, sourceEnd: 1000, logicalWidth: 300 }
         ]
     });
 
@@ -1800,40 +1798,30 @@ test("semantic project navigation moves both ways without wrapping", () => {
     animation.restore();
 });
 
-test("later project spans cannot change an earlier projected boundary", () => {
+test("project projection uses the catalog intrinsic boundary directly", () => {
     const application = createApplication(createViewport(100));
-    const project = { title: "Bubles", artworkStart: 1320 };
+    const project = {
+        title: "Bubles",
+        sourceStart: 1500,
+        sourceEnd: 3000,
+        logicalWidth: 1500
+    };
     application.artwork.width = 5000;
-    application.artwork.sourceXForSemanticX = (semanticX) => Math.floor(
-        semanticX * 5000 / 4400
-    );
-    application.semanticArtworkWidth = 4400;
-    application.semanticImageWidth = 4400;
     application.geometryArtworkWidth = 5000;
     application.projectedColumns = [];
     application.projectedColumns[1500] = {
         placement: { targetX: 1335.92 }
     };
     application.projectedContentBounds = { start: 0, end: 4500 };
-    application.projectNavigation = {
-        totalUnits: 10,
-        projectSpanUnits: 6,
-        layout: { unitWidth: 440 }
-    };
-    const before = application.projectProjectionFor(project);
+    const projection = application.projectProjectionFor(project);
 
-    application.projectNavigation = {
-        ...application.projectNavigation,
-        projectSpanUnits: 10
-    };
-    const after = application.projectProjectionFor(project);
-
-    equal(before.projectArtworkStart, 1320);
-    equal(before.sourceX, 1500);
-    closeTo(before.requestedNextTarget, after.requestedNextTarget);
+    equal(projection.projectSourceStart, 1500);
+    equal(projection.projectSourceEnd, 3000);
+    equal(projection.sourceX, 1500);
+    closeTo(projection.requestedNextTarget, 1335.92);
 });
 
-test("intrinsic geometry stays separate from semantic navigation width", () => {
+test("artwork initialization retains only intrinsic geometry width", () => {
     const application = createApplication(createViewport(0));
     application.curtainField = new CurtainField();
     application.parameters = new SurfaceParameters();
@@ -1844,8 +1832,6 @@ test("intrinsic geometry stays separate from semantic navigation width", () => {
         imageCount: 12
     });
 
-    equal(application.semanticImageWidth, 4_400);
-    equal(application.semanticArtworkWidth, 52_800);
     equal(application.geometryArtworkWidth, 60_000);
     equal(application.curtainField.periods.length, 500);
 });
@@ -1894,18 +1880,15 @@ function createApplication(
     return application;
 }
 
-function semanticNavigationApplication(useLeadingProjectAlignment) {
+function projectNavigationApplication(useLeadingProjectAlignment) {
     const application = createApplication(
         createViewport(100),
         400,
         useLeadingProjectAlignment
     );
     application.artwork = {
-        width: 1400,
-        sourceXForSemanticX: (semanticX) => semanticX
+        width: 1400
     };
-    application.semanticArtworkWidth = 1400;
-    application.semanticImageWidth = 1400;
     application.geometryArtworkWidth = 1400;
     application.projectedContentBounds = { start: 0, end: 1000 };
     application.projectedColumns = Array.from(
@@ -1922,7 +1905,7 @@ function semanticNavigationApplication(useLeadingProjectAlignment) {
 }
 
 function flatProjectFixture(offset) {
-    const application = semanticNavigationApplication(true);
+    const application = projectNavigationApplication(true);
     application.viewport.shiftProjectedOffset(
         offset - application.viewport.projectedOffset
     );
@@ -1940,8 +1923,8 @@ function flatProjectFixture(offset) {
     application.setProjectNavigation({
         enabled: true,
         projects: [
-            { title: "First", artworkStart: 0, artworkEnd: 300 },
-            { title: "Second", artworkStart: 320, artworkEnd: 680 }
+            { title: "First", sourceStart: 0, sourceEnd: 300, logicalWidth: 300 },
+            { title: "Second", sourceStart: 320, sourceEnd: 680, logicalWidth: 360 }
         ]
     });
     return { application, rangeCalls };

@@ -15,7 +15,6 @@ import {
     SegmentPriority
 } from "../src/artwork/ArtworkSegmentScheduler.js";
 import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
-import { createProjectNavigation } from "../src/navigation/ProjectNavigation.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
 import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
 
@@ -51,12 +50,18 @@ check(
     "image URL did not preserve the application base path"
 );
 check(
-    manifestUrlFor("public/projects.txt", "http://localhost:8000/")
+    manifestUrlFor(
+        "public/SIMONE-export/SIMONE-projects.txt",
+        "http://localhost:8000/"
+    )
         .searchParams.has("t"),
     "development manifest URL was not cache-busted"
 );
 check(
-    !manifestUrlFor("public/projects.txt", "https://example.test/simone/")
+    !manifestUrlFor(
+        "public/SIMONE-export/SIMONE-projects.txt",
+        "https://example.test/simone/"
+    )
         .searchParams.has("t"),
     "production manifest URL was unexpectedly cache-busted"
 );
@@ -207,13 +212,6 @@ check(
     }).every(Boolean),
     "decoded metadata artwork changed final column rendering descriptors"
 );
-check(
-    metadataArtwork.semanticXForSourceX(4, 100)
-        === legacyArtwork.semanticXForSourceX(4, 100)
-        && metadataArtwork.sourceXForSemanticX(120, 100)
-            === legacyArtwork.sourceXForSemanticX(120, 100),
-    "metadata artwork coordinate conversion differs from the legacy model"
-);
 
 const parityManifest = JSON.stringify({
     version: 2,
@@ -276,13 +274,6 @@ check(
     )),
     "flat source columns are not monotonic across 5000 geometry units"
 );
-check(
-    productionArtwork.sourceXForSemanticX(0, 4400) === 0
-        && productionArtwork.sourceXForSemanticX(1320, 4400) === 1500
-        && productionArtwork.sourceXForSemanticX(2200, 4400) === 2500
-        && productionArtwork.sourceXForSemanticX(4400, 4400) === 5000,
-    "semantic 4400-unit project boundaries do not map to intrinsic geometry"
-);
 const fullInstallationField = new CurtainField();
 fullInstallationField.configureFor(60_000, 120);
 check(
@@ -301,16 +292,10 @@ check(
             === placementValues(halfResolutionPlacement),
     "raster tier changed intrinsic Period placement"
 );
-const productionNavigation = createProjectNavigation({
-    source: "First,3\nSecond,2",
-    loadedImageCount: productionArtwork.imageCount
-});
 check(
-    productionNavigation.projects.length === 2
-        && productionArtwork.sourceXForSemanticX(2200, 4400) === 2500
-        && halfResolutionArtwork.sourceXForSemanticX(2200, 4400) === 2500
+    productionArtwork.width === halfResolutionArtwork.width
         && productionArtwork.imageCount === halfResolutionArtwork.imageCount,
-    "raster tier changed semantic project or viewport navigation targets"
+    "raster tier changed intrinsic artwork navigation geometry"
 );
 const scheduledProductionArtwork = ImmutableArtwork.fromMetadata(
     artworkSegmentsFromManifest(

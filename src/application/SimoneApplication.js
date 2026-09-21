@@ -1,12 +1,3 @@
-import {
-    artworkLayout,
-    resolveArtworkLayout
-} from "../navigation/ArtworkLayout.js";
-import {
-    lowerAnchoredTop,
-    structuralSliceHeight
-} from "../rendering/StructuralSliceProjection.js";
-
 /**
  * Application layer: coordinates the domain pipeline and owns no pixel logic.
  *
@@ -44,8 +35,6 @@ export class SimoneApplication {
         this.projectedColumns = Object.freeze([]);
         this.projectedContentBounds = null;
         this.imageCount = 0;
-        this.semanticArtworkWidth = 0;
-        this.semanticImageWidth = 0;
         this.geometryArtworkWidth = 0;
         this.sceneVisibleFactor = curtainField.resetCurtainState;
         this.horizontalReframeFrame = null;
@@ -74,9 +63,6 @@ export class SimoneApplication {
         this.currentProjectIndex = null;
         this.artwork = artwork;
         this.imageCount = this.artwork.imageCount;
-        const layout = resolveArtworkLayout(artworkLayout);
-        this.semanticImageWidth = layout.repetitionsPerImage * layout.unitWidth;
-        this.semanticArtworkWidth = this.imageCount * this.semanticImageWidth;
         this.geometryArtworkWidth = this.artwork.width;
         this.viewport.setProjectedWindow(0, 0);
         this.#configureCurtainField();
@@ -320,7 +306,7 @@ export class SimoneApplication {
             return false;
         }
 
-        console.info("SIMONE semantic project projection", {
+        console.info("SIMONE intrinsic project projection", {
             project: project.title,
             ...projection
         });
@@ -331,8 +317,8 @@ export class SimoneApplication {
         this.currentProjectIndex = targetIndex;
         const completeNavigation = () => (
             openingMode === PROJECT_OPENING_FLAT_SPAN
-                ? this.#applyFlatSemanticProjectOpen()
-                : this.#applySemanticAutoOpen()
+                ? this.#applyFlatProjectOpen()
+                : this.#applyProjectAutoOpen()
         );
         const navigationStarted = this.animateViewportToProjectedOffset(
             targetOffset,
@@ -378,22 +364,18 @@ export class SimoneApplication {
     }
 
     projectProjectionFor(project) {
-        const semanticArtworkWidth = this.semanticArtworkWidth;
-        const actualAssembledArtworkWidth = this.artwork.width;
-        const sourceX = this.sourceXForSemanticX(project.artworkStart);
-        const scaleFactor = actualAssembledArtworkWidth
-            / semanticArtworkWidth;
+        const sourceX = project.sourceStart;
         const projectedColumn = this.projectedColumnAt(sourceX);
         if (!projectedColumn) {
             return null;
         }
 
         const requestedNextTarget = projectedColumn.placement.targetX;
-        const semanticCenter = (
-            project.artworkStart + project.artworkEnd
+        const intrinsicCenter = (
+            project.sourceStart + project.sourceEnd
         ) / 2;
-        const centerSourceX = Number.isFinite(semanticCenter)
-            ? this.sourceXForSemanticX(semanticCenter)
+        const centerSourceX = Number.isFinite(intrinsicCenter)
+            ? Math.floor(intrinsicCenter)
             : null;
         const centerProjectedColumn = centerSourceX === null
             ? null
@@ -414,12 +396,11 @@ export class SimoneApplication {
         );
 
         return Object.freeze({
-            semanticArtworkWidth,
             geometryArtworkWidth: this.geometryArtworkWidth,
-            actualAssembledArtworkWidth,
             renderedArtworkWidth,
-            projectArtworkStart: project.artworkStart,
-            scaleFactor,
+            projectSourceStart: project.sourceStart,
+            projectSourceEnd: project.sourceEnd,
+            projectLogicalWidth: project.logicalWidth,
             sourceX,
             requestedNextTarget,
             requestedCenteredTarget,
@@ -430,7 +411,6 @@ export class SimoneApplication {
             viewportNormalizedPosition: this.viewport.position,
             minimumViewportPosition: viewportBounds.minimum,
             maximumViewportPosition: viewportBounds.maximum,
-            loadedImageCount: this.imageCount,
             artworkWidth: this.artwork.width
         });
     }
@@ -604,9 +584,8 @@ export class SimoneApplication {
         }
 
         return this.projectNavigation.projects.find((project) => {
-            const start = this.sourceXForSemanticX(project.artworkStart);
-            const end = this.sourceXForSemanticX(project.artworkEnd);
-            return sourceX >= start && sourceX < end;
+            return sourceX >= project.sourceStart
+                && sourceX < project.sourceEnd;
         }) ?? null;
     }
 
@@ -1054,7 +1033,7 @@ export class SimoneApplication {
             return null;
         }
 
-        const grabSourceX = this.sourceXForSemanticX(project.artworkStart);
+        const grabSourceX = project.sourceStart;
         const grabColumn = this.projectedColumnAt(grabSourceX);
         if (!grabColumn) {
             return null;
@@ -1067,11 +1046,11 @@ export class SimoneApplication {
                     grabColumn.placement.periodIndex
                 ),
             grabProjectedX,
-            projectWidth: project.artworkEnd - project.artworkStart
+            projectWidth: project.logicalWidth
         });
     }
 
-    #applySemanticAutoOpen() {
+    #applyProjectAutoOpen() {
         const grab = this.#rightwardInteractionAtCurrentProjectStart();
         if (!grab?.interaction) {
             return;
@@ -1082,7 +1061,7 @@ export class SimoneApplication {
         const drag = (timestamp) => {
             startedAt ??= timestamp;
             const progress = Math.min(
-                (timestamp - startedAt) / SEMANTIC_AUTO_OPEN_DURATION,
+                (timestamp - startedAt) / PROJECT_AUTO_OPEN_DURATION,
                 1
             );
             const horizontalDisplacement = finalDisplacement
@@ -1106,16 +1085,16 @@ export class SimoneApplication {
         this.horizontalReframeFrame = requestAnimationFrame(drag);
     }
 
-    #applyFlatSemanticProjectOpen() {
+    #applyFlatProjectOpen() {
         const project = this.projectNavigation?.projects[
             this.currentProjectIndex
         ];
-        if (!project || project.artworkEnd <= project.artworkStart) {
+        if (!project || project.sourceEnd <= project.sourceStart) {
             return;
         }
 
-        const firstSourceX = this.sourceXForSemanticX(project.artworkStart);
-        const lastSourceX = this.sourceXForSemanticX(project.artworkEnd - 1);
+        const firstSourceX = project.sourceStart;
+        const lastSourceX = project.sourceEnd - 1;
         const firstPeriodIndex = this.projectedColumnAt(firstSourceX)
             ?.placement.periodIndex;
         const lastPeriodIndex = this.projectedColumnAt(lastSourceX)
@@ -1159,165 +1138,7 @@ export class SimoneApplication {
     }
 
     render() {
-        if (!this.artwork) {
-            return;
-        }
-
-        const frameStartedAt = performance.now();
-        const curtainFieldStartedAt = performance.now();
-        const parameters = this.curtainField.resolve(this.parameters);
-        const curtainFieldTime = performance.now() - curtainFieldStartedAt;
-
-        const geometryStartedAt = performance.now();
-        const phase = this.phaseResolver.resolve(parameters);
-        const surface = this.surfaces[phase];
-        const appearance = this.shading.appearanceFor();
-
-        const contentFrame = surface.frameFor(
-            this.#intrinsicArtworkFrame(),
-            this.curtainField
-        );
-        const projectedColumns = this.#projectGeometry(surface);
-        this.projectedColumns = Object.freeze(projectedColumns);
-        this.viewport.presentationExtent = contentFrame.width;
-        const contentBounds = boundsFor(
-            projectedColumns,
-            0,
-            projectedColumns.length
-        );
-        this.projectedContentBounds = contentBounds;
-
-        if (this.viewport.projectedExtent === 0) {
-            this.viewport.setProjectedWindow(
-                contentBounds.start,
-                INITIAL_PROJECTED_EXTENT
-            );
-        }
-
-        this.viewport.setProjectedContentRange(
-            contentBounds.start,
-            contentBounds.end
-        );
-        const geometryTime = performance.now() - geometryStartedAt;
-
-        const renderingStartedAt = performance.now();
-        this.renderer.beginFrame(contentFrame, appearance);
-        const viewportStartedAt = performance.now();
-        const artworkRange = this.viewport.sourceRangeFor(projectedColumns);
-        const viewportTime = performance.now() - viewportStartedAt;
-
-        for (
-            let sourceX = artworkRange.start;
-            sourceX < artworkRange.end;
-            sourceX += 1
-        ) {
-            const column = this.artwork.columnAt(sourceX);
-            const projectedColumn = projectedColumns[sourceX];
-            const placement = projectedColumn.placement;
-            const destinationWidth = this.viewport.presentationWidthBetween(
-                placement.targetX,
-                placement.targetX + projectedColumn.width
-            );
-            const localParameters = this.curtainField.resolvedParametersAt(
-                placement.periodIndex
-            );
-            const brightness = this.shading.factorFor(
-                placement,
-                localParameters
-            );
-            const destinationHeight = structuralSliceHeight(
-                column.height,
-                placement.targetY,
-                placement.periodMaximumTargetY
-            );
-
-            this.renderer.drawColumn(
-                column,
-                {
-                    x: this.viewport.toPresentationX(placement.targetX),
-                    y: lowerAnchoredTop(
-                        column.height,
-                        placement.targetY,
-                        destinationHeight
-                    ),
-                    width: destinationWidth,
-                    height: destinationHeight
-                },
-                {
-                    brightness,
-                    alpha: placement.alpha,
-                    branch: placement.branch,
-                    periodIndex: placement.periodIndex,
-                    localSlope: placement.localSlope,
-                    foldProgress: localParameters.foldProgress,
-                    crestLifecycleMultiplier:
-                        this.shading.crestLifecycleFor(localParameters)
-                }
-            );
-        }
-
-        const renderingTime = performance.now() - renderingStartedAt
-            - viewportTime;
-
-        const overlayStartedAt = performance.now();
-        const rendererMetrics = this.renderer.endFrame();
-        const overlayTime = performance.now() - overlayStartedAt;
-        const totalTime = performance.now() - frameStartedAt;
-
-        this.performanceOverview?.update({
-            totalTime,
-            curtainFieldTime,
-            geometryTime,
-            viewportTime,
-            renderingTime,
-            overlayTime,
-            totalColumns: this.artwork.width,
-            visibleColumns: artworkRange.end - artworkRange.start,
-            periodCount: this.curtainField.periods.length,
-            sourceDescription: this.artwork.sourceDescription,
-            sourceRepresentation: this.artwork.sourceRepresentation,
-            projectedExtent: this.viewport.projectedExtent,
-            imageCount: this.imageCount,
-            visibleFactor: this.sceneVisibleFactor,
-            carrierDistance: this.parameters.carrierDistance,
-            ...rendererMetrics
-        });
-    }
-
-    #projectGeometry(surface) {
-        const placements = new Array(this.artwork.width);
-
-        for (let sourceX = 0; sourceX < this.artwork.width; sourceX += 1) {
-            const column = this.artwork.columnAt(sourceX);
-            const geometryColumn = Object.freeze({
-                ...column,
-                sourceX: column.artworkX
-            });
-            placements[sourceX] = surface.mapColumn(
-                geometryColumn,
-                this.curtainField
-            );
-        }
-
-        const projectedColumns = new Array(placements.length);
-        let lastWidth = 1;
-
-        for (let sourceX = 0; sourceX < placements.length; sourceX += 1) {
-            const placement = placements[sourceX];
-            const nextPlacement = placements[sourceX + 1];
-            const width = nextPlacement
-                && nextPlacement.branch === placement.branch
-                ? nextPlacement.targetX - placement.targetX
-                : lastWidth;
-
-            if (width !== 0) {
-                lastWidth = width;
-            }
-
-            projectedColumns[sourceX] = Object.freeze({ placement, width });
-        }
-
-        return projectedColumns;
+        throw new Error("SimoneApplication rendering must be implemented.");
     }
 
     #configureCurtainField() {
@@ -1327,53 +1148,12 @@ export class SimoneApplication {
         );
     }
 
-    #intrinsicArtworkFrame() {
-        return Object.freeze({
-            width: this.geometryArtworkWidth,
-            height: this.artwork.height
-        });
-    }
-
-    sourceXForSemanticX(semanticX) {
-        return this.artwork.sourceXForSemanticX(
-            semanticX,
-            this.semanticImageWidth
-        );
-    }
-
-}
-
-const INITIAL_PROJECTED_EXTENT = 5000;
-
-function boundsFor(projectedColumns, start, end) {
-    let minimum = Infinity;
-    let maximum = -Infinity;
-
-    for (let sourceX = start; sourceX < end; sourceX += 1) {
-        const { placement, width } = projectedColumns[sourceX];
-        minimum = Math.min(
-            minimum,
-            placement.targetX,
-            placement.targetX + width
-        );
-        maximum = Math.max(
-            maximum,
-            placement.targetX,
-            placement.targetX + width
-        );
-    }
-
-    if (!Number.isFinite(minimum) || !Number.isFinite(maximum)) {
-        throw new RangeError("Projected geometry has no visible bounds.");
-    }
-
-    return Object.freeze({ start: minimum, end: maximum });
 }
 
 const HORIZONTAL_REFRAME_DISTANCE_FACTOR = 0.5;
 const HORIZONTAL_REFRAME_DURATION = 450;
 const DESKTOP_REFRAME_DURATION = 550;
-const SEMANTIC_AUTO_OPEN_DURATION = 125;
+const PROJECT_AUTO_OPEN_DURATION = 125;
 const PROJECT_REVEAL_DURATION = 1000;
 const RESET_CURTAIN_DURATION = 600;
 const READ_ENTRY_RESET_STATE = 0.5;
@@ -1392,7 +1172,7 @@ const MOSES_REMAINING_FOLD = 0.08;
 const ATTENTION_MODE_EXPLORE = "explore";
 const ATTENTION_MODE_READ = "read";
 const PROJECT_OPENING_PROTOTYPE = "prototype";
-const PROJECT_OPENING_FLAT_SPAN = "flat-semantic-span";
+const PROJECT_OPENING_FLAT_SPAN = "flat-project-range";
 const MAXIMUM_VIEWPORT_INERTIA_FRAME_DURATION = 32;
 const MINIMUM_VIEWPORT_INERTIA_VELOCITY = 0.05;
 const DESKTOP_CURTAIN_DIRECT_DRAG_SCALE = 0.5;

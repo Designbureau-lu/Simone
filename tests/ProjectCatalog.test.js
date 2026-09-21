@@ -3,6 +3,7 @@ import {
     projectCatalogFromTsv
 } from "../src/projects/ProjectCatalog.js";
 import { ImmutableArtwork } from "../src/artwork/ImmutableArtwork.js";
+import { createProjectNavigation } from "../src/navigation/ProjectNavigation.js";
 
 const tests = [];
 const baseUrl = "https://example.test/simone/public/SIMONE-export/";
@@ -226,6 +227,28 @@ test("establishes identical variable intrinsic geometry for A and B", () => {
     equal(artworkB.sourceRepresentation.rasterScale, 0.5);
     equal(artworkA.sourceRepresentation.label, "SOURCE A");
     equal(artworkB.sourceRepresentation.label, "SOURCE B");
+});
+
+test("SOURCE A and B share the same catalog navigation geometry", () => {
+    const catalog = parse([
+        "Project\tYear\tColumns\tPage",
+        "One\t2001\t1\t1",
+        "Three\t2003\t3\t4"
+    ]);
+    const navigation = createProjectNavigation(catalog);
+    const artworkA = ImmutableArtwork.fromMetadata(
+        artworkSegmentsFromProjectCatalog(catalog, "a")
+    );
+    const artworkB = ImmutableArtwork.fromMetadata(
+        artworkSegmentsFromProjectCatalog(catalog, "b")
+    );
+
+    equal(artworkA.width, navigation.logicalWidth);
+    equal(artworkB.width, navigation.logicalWidth);
+    equal(navigation.projects[0].sourceStart, 0);
+    equal(navigation.projects[0].sourceEnd, 500);
+    equal(navigation.projects[1].sourceStart, 500);
+    equal(navigation.projects[1].sourceEnd, 2000);
 });
 
 test("real catalog creates 38 variable segments across 56500 units", async () => {

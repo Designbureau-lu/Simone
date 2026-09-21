@@ -94,14 +94,15 @@ Canvas
 
 **Responsibilities**
 
-- Parse ordered intrinsic segment dimensions and multiple raster-source
-  representations from `public/artwork.json` before decoding.
+- Parse ordered variable-width project dimensions and both raster-source
+  representations from `public/SIMONE-export/SIMONE-projects.txt` before
+  decoding.
 - Establish the complete virtual-artwork coordinate system from metadata.
 - Select a raster representation without changing intrinsic segment spans.
 - Load and decode viewport-critical segments through a bounded priority queue,
   then continue remaining segments in the background.
 - Reprioritize queued segments from the current guarded viewport, signed Pan
-  direction, predicted inertia corridor, and semantic destination. Active
+  direction, predicted inertia corridor, and project destination. Active
   requests and decodes are never cancelled or restarted.
 - Present decoded sources through that stable coordinate system without
   assembling a giant intermediate canvas.
@@ -129,45 +130,24 @@ Canvas
 
 **Responsibilities**
 
-- Define the 4,400-unit-per-segment semantic READ grid independently of the
-  5,000-unit intrinsic artwork and curtain geometry.
-- Parse UTF-8 project-span metadata.
-- Convert cumulative semantic unit ranges explicitly into intrinsic artwork
-  coordinates when navigation needs them.
-- Disable semantic navigation when project spans exceed loaded capacity.
-
-**Current layout**
-
-- Gutter width: 40 px.
-- Column width: 400 px.
-- Repetitions per loaded image: 10.
-- Unit width: gutter width + column width.
-
-These values describe semantic project placement only. They do not set the
-physical width of the artwork-bearing curtain. Each segment occupies its full
-5,000-column intrinsic geometry span.
+- Consume the ordered, validated ProjectCatalog records used by artwork.
+- Preserve each project's cumulative intrinsic `sourceStart`, `sourceEnd`, and
+  `logicalWidth` as the only project-navigation geometry.
+- Preserve ProjectCatalog/Page order for Index and NEXT/PREVIOUS navigation.
 
 ## Coordinate Systems
 
-SIMONE keeps three horizontal coordinate systems explicit:
+SIMONE keeps two horizontal coordinate systems explicit:
 
-- **Intrinsic artwork:** each of the 12 source segments is `5,000 × 2,500`,
-  for 60,000 immutable intrinsic columns in total.
-- **Semantic READ/navigation:** project metadata uses
-  `10 × (400 + 40) = 4,400` units per segment, or 52,800 units in total.
-  Navigation converts these semantic coordinates explicitly into intrinsic
-  artwork coordinates. Semantic width never determines physical geometry.
-- **Curtain geometry:** the installation spans the 60,000 intrinsic units.
-  With Carrier Distance `120`, `CurtainField` owns 500 Periods. Geometry maps
-  source columns directly into this intrinsic range.
-
-The 40-unit semantic gutter belongs to project placement in READ mode; it is
-not blank material inserted into the printed artwork and does not reduce the
-physical width of a source segment.
+- **Intrinsic artwork/project space:** 38 ProjectCatalog records concatenate
+  directly into 56,500 immutable intrinsic columns. Each project's width is
+  `Columns × 500`, and its image boundary is its project boundary.
+- **Curtain geometry:** geometry maps those same source columns into projected
+  fold positions. SOURCE A/B raster resolution never changes this space.
 
 **Interaction-mode boundary**
 
-Project metadata and semantic navigation belong to READ mode only. EXPLORE
+Project metadata and project navigation belong to READ mode only. EXPLORE
 must not depend on project ranges, project identity, or navigation state.
 NEXT/PREVIOUS are temporary READ evaluation controls rather than general
 curtain interactions.
@@ -345,8 +325,8 @@ individual-column path. There is no approximate or “nearly flat” merge.
 Viewport presentation uses the virtual curtain-frame height as the common
 reference for both X and Y. The top/bottom fold-depth allowance therefore
 remains visible without applying a different horizontal scale to the artwork.
-A completely flat `5,000 × 2,500` segment consequently measures exactly `2:1`
-in continuous projected coordinates.
+A completely flat project consequently retains its exact intrinsic
+width-to-2,500-height ratio in continuous projected coordinates.
 
 ### Application
 
@@ -410,10 +390,10 @@ continuity take precedence over exact visible material length.
 Decoded source-column descriptors are immutable and cached for the lifetime of
 an imported artwork. Intrinsic coordinates and decoded-source coordinates stay
 separate in those descriptors so decoded dimensions can be validated without
-defining curtain geometry. SOURCE A is the reference production raster: the
-full-resolution `5,000 × 2,500` artwork for each segment. SOURCE B is the
-corresponding `2,500 × 1,250` raster at a `0.5` scale.
-Both sources represent the same 5,000 intrinsic columns; source rectangles use
+defining curtain geometry. SOURCE A is each project's full-resolution
+`logicalWidth × 2,500` raster. SOURCE B is the corresponding half-resolution
+raster at a `0.5` scale.
+Both sources represent the same intrinsic project columns; source rectangles use
 the exact rational scale without independently rounding fractional coordinates.
 Chrome selects SOURCE B in production because controlled real-device testing
 showed substantially better rendering performance. Safari, Firefox, and other
@@ -504,7 +484,7 @@ separation movement by `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN = 1.50`.
 Returning to one finger immediately starts a fresh pan.
 
 Projects are secondary in EXPLORE. The local click/Moses opening is assistance
-around a physical click position, not project navigation or semantic project
+around a physical click position, not project navigation or project
 isolation. It reuses the existing symmetric local-deformation snapshot,
 animates outward, and returns to that snapshot. A small pointer movement
 tolerance distinguishes it from a click, and the application attention-mode
@@ -534,8 +514,8 @@ Select Project
     -> Reading
 ```
 
-The flat region is the project's exact semantic interval: from its left gutter
-to its right edge. It is not an “open N columns” heuristic, and the result is a
+The flat region is the project's exact intrinsic interval from `sourceStart`
+to `sourceEnd`. It is not an “open N columns” heuristic, and the result is a
 project presentation rather than a generic opening gesture. Gentle transition
 folds on each side will eventually connect that flat interval to the normally
 dense curtain.
@@ -547,11 +527,12 @@ previous project before revealing a new selection.
 
 A temporary project dropdown is a second entry point into this same prototype
 pipeline. It supplies a selected project index after animated Reset; the shared
-indexed navigator continues to own semantic lookup and Viewport movement. The
-selected semantic span is presented uniformly at full visibility, and its
-semantic midpoint is geometrically aligned with the Viewport midpoint. A
+indexed navigator continues to own intrinsic project lookup and Viewport
+movement. The selected intrinsic range is presented uniformly at full
+visibility, and its intrinsic midpoint is geometrically aligned with the
+Viewport midpoint. A
 single presentation-only offset then supplies consistent optical centering
-without changing that semantic calculation. Gentle transition folds and the
+without changing that intrinsic calculation. Gentle transition folds and the
 final reading composition remain future refinements in that shared pipeline
 rather than individual controls.
 

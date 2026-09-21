@@ -1,18 +1,106 @@
-import { artworkLayout } from "../src/navigation/ArtworkLayout.js";
-import {
-    imageFilenamesFromManifest
-} from "../src/application/startSimone.js";
-import {
-    createProjectNavigation,
-    parseProjects
-} from "../src/navigation/ProjectNavigation.js";
+import { createProjectNavigation } from "../src/navigation/ProjectNavigation.js";
+import { projectCatalogFromTsv } from "../src/projects/ProjectCatalog.js";
 
 const tests = [];
 
-test("central layout configuration defines the current logical unit", () => {
-    equal(artworkLayout.gutterWidth, 40);
-    equal(artworkLayout.columnWidth, 400);
-    equal(artworkLayout.repetitionsPerImage, 10);
+test("navigation uses validated ProjectCatalog records unchanged", () => {
+    const catalog = catalogFor([
+        "Wide\t2001,2003\t3\t1",
+        "Narrow\t1998\t1\t2"
+    ]);
+    const navigation = createProjectNavigation(catalog);
+
+    equal(navigation.projects, catalog.projects);
+    equal(navigation.logicalWidth, 2000);
+    equal(navigation.projects[0].sourceStart, 0);
+    equal(navigation.projects[0].sourceEnd, 1500);
+    equal(navigation.projects[1].sourceStart, 1500);
+    equal(navigation.projects[1].sourceEnd, 2000);
+});
+
+test("page order controls Index order while page gaps add no width", () => {
+    const navigation = createProjectNavigation(catalogFor([
+        "Third\t2003\t2\t8",
+        "First\t2001\t1\t1",
+        "Second\t2002\t3\t5"
+    ]));
+
+    equal(
+        navigation.projects.map((project) => project.title).join(","),
+        "First,Second,Third"
+    );
+    equal(
+        navigation.projects.map((project) => project.page).join(","),
+        "1,5,8"
+    );
+    equal(navigation.projects[0].sourceEnd, 500);
+    equal(navigation.projects[1].sourceStart, 500);
+    equal(navigation.projects[1].sourceEnd, 2000);
+    equal(navigation.projects[2].sourceStart, 2000);
+    equal(navigation.logicalWidth, 3000);
+});
+
+test("navigation preserves required title and opaque year text", () => {
+    const project = createProjectNavigation(catalogFor([
+        "Le grand soufflE\t1998,2001\t5\t5"
+    ])).projects[0];
+
+    equal(project.title, "Le grand soufflE");
+    equal(project.year, "1998,2001");
+});
+
+test("all supported project widths remain intrinsic and contiguous", () => {
+    const navigation = createProjectNavigation(catalogFor(
+        Array.from({ length: 6 }, (_, index) => (
+            `Width ${index + 1}\t200${index}\t${index + 1}\t${index + 1}`
+        ))
+    ));
+
+    let expectedStart = 0;
+    navigation.projects.forEach((project, index) => {
+        equal(project.sourceStart, expectedStart);
+        equal(project.logicalWidth, (index + 1) * 500);
+        expectedStart += project.logicalWidth;
+        equal(project.sourceEnd, expectedStart);
+    });
+    equal(navigation.logicalWidth, 10_500);
+});
+
+test("legacy image-capacity navigation input is not accepted", () => {
+    throws(() => createProjectNavigation({
+        source: "Legacy,3",
+        loadedImageCount: 12
+    }));
+});
+
+test("navigation rejects discontinuous intrinsic project ranges", () => {
+    throws(() => createProjectNavigation({
+        logicalWidth: 1000,
+        projects: [{ sourceStart: 0, sourceEnd: 500, logicalWidth: 400 }]
+    }));
+    throws(() => createProjectNavigation({
+        logicalWidth: 1000,
+        projects: [
+            { sourceStart: 0, sourceEnd: 500, logicalWidth: 500 },
+            { sourceStart: 600, sourceEnd: 1000, logicalWidth: 400 }
+        ]
+    }));
+});
+
+test("real catalog drives all 38 projects and the authoritative width", async () => {
+    const response = await fetch(
+        "../public/SIMONE-export/SIMONE-projects.txt"
+    );
+    const source = await response.text();
+    const catalog = projectCatalogFromTsv(
+        source,
+        "https://example.test/SIMONE-export/"
+    );
+    const navigation = createProjectNavigation(catalog);
+
+    equal(navigation.projects.length, 38);
+    equal(navigation.logicalWidth, 56_500);
+    equal(navigation.projects.at(-1).sourceEnd, 56_500);
 });
 
 test("canonical surface defaults match the public tuning", async () => {
@@ -32,78 +120,14 @@ test("canonical surface defaults match the public tuning", async () => {
     equal(curtain.resetCurtainState, 0.5);
 });
 
-test("UTF-8 CSV parsing preserves quoted punctuation and validates spans", () => {
-    const projects = parseProjects(
-        "\uFEFF# comment\r\"Lenka, Denise, Charlotte,...\",3\rJérémy,2\u00a0\r"
-    );
-    equal(projects.length, 2);
-    equal(projects[0].title, "Lenka, Denise, Charlotte,...");
-    equal(projects[0].span, 3);
-    equal(projects[1].title, "Jérémy");
-    equal(projects[1].year, null);
-    equal(projects[1].span, 2);
-    throws(() => parseProjects("Invalid,1.5"));
-    throws(() => parseProjects("Invalid,0"));
-});
-
-test("project year is optional metadata before the semantic span", () => {
-    const projects = parseProjects("Dissolution,2024,3\nUndated,2");
-    equal(projects[0].title, "Dissolution");
-    equal(projects[0].year, "2024");
-    equal(projects[0].span, 3);
-    equal(projects[1].year, null);
-});
-
-test("project coordinates derive from logical units, not image dimensions", () => {
-    const navigation = createProjectNavigation({
-        source: "Alpha,3\nBeta,2",
-        loadedImageCount: 1
-    });
-    equal(navigation.totalUnits, 10);
-    equal(navigation.projectSpanUnits, 5);
-    equal(navigation.unusedUnits, 5);
-    equal(navigation.projects[0].startUnit, 0);
-    equal(navigation.projects[0].endUnit, 3);
-    equal(navigation.projects[0].artworkStart, 0);
-    equal(navigation.projects[0].artworkEnd, 1320);
-    equal(navigation.projects[1].artworkStart, 1320);
-    equal(navigation.projects[1].artworkEnd, 2200);
-});
-
-test("project spans exceeding available units disable navigation", () => {
-    const navigation = createProjectNavigation({
-        source: "Too large,11",
-        loadedImageCount: 1
-    });
-    equal(navigation.enabled, false);
-    assert(navigation.error.includes("11 units"));
-    assert(navigation.error.includes("10 artwork units"));
-});
-
-test("current project capacity follows the image manifest", async () => {
-    const [projectsResponse, imagesResponse] = await Promise.all([
-        fetch("../public/projects.txt"),
-        fetch("../public/images.txt")
-    ]);
-    const loadedImageCount = imageFilenamesFromManifest(
-        await imagesResponse.text()
-    ).length;
-    const navigation = createProjectNavigation({
-        source: await projectsResponse.text(),
-        loadedImageCount
-    });
-    equal(navigation.enabled, true);
-    equal(
-        navigation.totalUnits,
-        loadedImageCount * artworkLayout.repetitionsPerImage
-    );
-    equal(
-        navigation.unusedUnits,
-        navigation.totalUnits - navigation.projectSpanUnits
-    );
-});
-
 await run();
+
+function catalogFor(rows) {
+    return projectCatalogFromTsv(
+        ["Project\tYear\tColumns\tPage", ...rows].join("\n"),
+        "https://example.test/SIMONE-export/"
+    );
+}
 
 function equal(actual, expected) {
     assert(actual === expected, `Expected ${actual} to equal ${expected}`);
