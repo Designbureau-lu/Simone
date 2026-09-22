@@ -4,15 +4,15 @@ Updated: 2026-09-22
 
 ## Desktop curtain wheel input
 
-- A wheel event addressed to the curtain canvas on a fine-pointer device pans
-  the existing projected Viewport horizontally. The dominant `deltaY` or
-  `deltaX` axis uses the same display-to-projected scale and direct-drag factor
-  as desktop curtain dragging. The bounded movement renders through the normal
+- A horizontally dominant wheel event addressed to the curtain canvas on a
+  fine-pointer device pans the existing projected Viewport horizontally.
+  `deltaX` uses the same display-to-projected scale and direct-drag factor as
+  desktop curtain dragging. The bounded movement renders through the normal
   application path and sends its applied displacement to scheduler Pan
   priority; it does not navigate projects or introduce another coordinate.
-- Native wheel behavior is prevented for eligible curtain-canvas input even at
-  either horizontal artwork bound, so continued wheel input cannot scroll the
-  document away from Screen 2. Index-open, coarse-pointer, browser-zoom,
+- Native wheel behavior is prevented for horizontally dominant curtain-canvas
+  input, including at either horizontal artwork bound. Vertically dominant and
+  ordinary mouse-wheel `deltaY`, Index-open, coarse-pointer, browser-zoom,
   zero-delta, and non-canvas interface cases retain native scrolling.
 
 ## Stage 3 project navigation migration

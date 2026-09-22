@@ -1159,7 +1159,7 @@ export function bindCurtainWheel(
             return;
         }
 
-        const delta = dominantWheelDelta(event, canvas.clientHeight);
+        const delta = horizontalWheelDelta(event, canvas.clientHeight);
         if (delta === 0) {
             return;
         }
@@ -1181,21 +1181,20 @@ export function bindCurtainWheel(
     }, { passive: false });
 }
 
-export function dominantWheelDelta(event, pageExtent) {
-    const rawDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
-        ? event.deltaX
-        : event.deltaY;
-    if (!Number.isFinite(rawDelta) || rawDelta === 0) {
+export function horizontalWheelDelta(event, pageExtent) {
+    if (!Number.isFinite(event.deltaX)
+        || event.deltaX === 0
+        || Math.abs(event.deltaX) <= Math.abs(event.deltaY)) {
         return 0;
     }
 
     if (event.deltaMode === 1) {
-        return rawDelta * 16;
+        return event.deltaX * 16;
     }
     if (event.deltaMode === 2) {
-        return rawDelta * pageExtent;
+        return event.deltaX * pageExtent;
     }
-    return rawDelta;
+    return event.deltaX;
 }
 
 export function bindCurtainPinchHint(

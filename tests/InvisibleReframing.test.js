@@ -2,7 +2,7 @@ import { SimoneApplication } from "../src/application/SimoneApplication.js";
 import {
     bindCurtainDragging,
     bindCurtainWheel,
-    dominantWheelDelta,
+    horizontalWheelDelta,
     horizontalReframeDirection,
     isCurtainClick,
     lowPass,
@@ -31,7 +31,7 @@ test("ordinary and outward drags do not request reframing", () => {
     equal(horizontalReframeDirection(0.05, -100, 400), 0);
 });
 
-test("vertical and horizontal wheel deltas use the desktop curtain scale", () => {
+test("dominant horizontal wheel delta uses the desktop Pan path", () => {
     const canvas = createTouchCanvas();
     const displacements = [];
     let synchronizations = 0;
@@ -61,19 +61,53 @@ test("vertical and horizontal wheel deltas use the desktop curtain scale", () =>
         { isFinePointer: () => true }
     );
 
-    const vertical = wheelEvent({ deltaY: 40 });
-    canvas.dispatchEvent(vertical);
     const horizontal = wheelEvent({ deltaX: -60, deltaY: 10 });
     canvas.dispatchEvent(horizontal);
 
-    equal(displacements[0], 40);
-    equal(displacements[1], -60);
-    equal(synchronizations, 2);
-    equal(selectionClears, 2);
-    assert(vertical.defaultPrevented);
+    equal(displacements.length, 1);
+    equal(displacements[0], -60);
+    equal(synchronizations, 1);
+    equal(selectionClears, 1);
     assert(horizontal.defaultPrevented);
-    equal(dominantWheelDelta(wheelEvent({ deltaY: 3, deltaMode: 1 }), 300), 48);
-    equal(dominantWheelDelta(wheelEvent({ deltaY: -1, deltaMode: 2 }), 300), -300);
+    equal(horizontalWheelDelta(
+        wheelEvent({ deltaX: 3, deltaMode: 1 }),
+        300
+    ), 48);
+    equal(horizontalWheelDelta(
+        wheelEvent({ deltaX: -1, deltaMode: 2 }),
+        300
+    ), -300);
+});
+
+test("dominant vertical and ordinary mouse-wheel input remain native", () => {
+    const canvas = createTouchCanvas();
+    let panCalls = 0;
+    bindCurtainWheel(
+        canvas,
+        {
+            interactionDisplacementScale: () => 1,
+            desktopCurtainDirectDragScale: () => 0.5,
+            panViewportHorizontal: () => {
+                panCalls += 1;
+                return 20;
+            }
+        },
+        () => {},
+        {
+            indexOpen: false,
+            clearProjectSelection() {},
+            markDragLearned() {}
+        },
+        { isFinePointer: () => true }
+    );
+    const dominantVertical = wheelEvent({ deltaX: 10, deltaY: 40 });
+    const mouseWheel = wheelEvent({ deltaY: 100 });
+    canvas.dispatchEvent(dominantVertical);
+    canvas.dispatchEvent(mouseWheel);
+
+    equal(panCalls, 0);
+    assert(!dominantVertical.defaultPrevented);
+    assert(!mouseWheel.defaultPrevented);
 });
 
 test("wheel preserves native scrolling for Index and coarse pointers", () => {
@@ -104,7 +138,7 @@ test("wheel preserves native scrolling for Index and coarse pointers", () => {
             },
             { isFinePointer: () => scenario.isFinePointer }
         );
-        const event = wheelEvent({ deltaY: 40 });
+        const event = wheelEvent({ deltaX: 40 });
         canvas.dispatchEvent(event);
 
         equal(
@@ -117,8 +151,8 @@ test("wheel preserves native scrolling for Index and coarse pointers", () => {
 
 test("wheel owns scrolling at both horizontal curtain bounds", () => {
     const scenarios = [
-        { offset: 0, deltaY: -40 },
-        { offset: 1000, deltaY: 40 }
+        { offset: 0, deltaX: -40 },
+        { offset: 1000, deltaX: 40 }
     ];
     for (const scenario of scenarios) {
         const canvas = createTouchCanvas();
@@ -142,7 +176,7 @@ test("wheel owns scrolling at both horizontal curtain bounds", () => {
             },
             { isFinePointer: () => true }
         );
-        const event = wheelEvent({ deltaY: scenario.deltaY });
+        const event = wheelEvent({ deltaX: scenario.deltaX });
         canvas.dispatchEvent(event);
 
         equal(application.viewport.projectedOffset, scenario.offset);
@@ -171,7 +205,7 @@ test("control-wheel browser zoom remains native", () => {
         },
         { isFinePointer: () => true }
     );
-    const event = wheelEvent({ deltaY: 40, ctrlKey: true });
+    const event = wheelEvent({ deltaX: 40, ctrlKey: true });
     canvas.dispatchEvent(event);
 
     equal(panCalls, 0);
