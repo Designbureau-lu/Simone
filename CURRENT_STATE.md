@@ -118,7 +118,8 @@ Updated: 2026-09-21
   curtain stage align at `start`, and Screen 1 retains `scroll-snap-stop:
   always`. The curtain canvas, geometry, camera, artwork, interaction, and
   rendering remain the approved production implementation.
-- Desktop identity typography uses Söhne Mono evaluation fonts with
+- Desktop identity typography uses the licensed Söhne Mono Buch and
+  Extraleicht WOFF2 webfonts with
   `--color-text: #3c3c3c`, `--type-display: clamp(4rem, 5vw, 6rem)`,
   `--type-section: clamp(2.5rem, 3.2vw, 4rem)`, shared information token
   `--type-information: 1.4rem`, and `--page-margin: 150px`. Date and venue now

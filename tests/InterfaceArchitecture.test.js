@@ -28,6 +28,19 @@ import {
 
 const tests = [];
 
+test("production uses only the licensed Söhne Mono WOFF2 faces", async () => {
+    const style = await fetch("../style.css").then((response) => response.text());
+
+    assert(/font-family:"Söhne Mono Buch";[^}]*src:url\("fonts\/soehne-mono-buch\.woff2"\) format\("woff2"\);[^}]*font-weight:400;/s.test(
+        style
+    ));
+    assert(/font-family:"Söhne Mono Extraleicht";[^}]*src:url\("fonts\/soehne-mono-extraleicht\.woff2"\) format\("woff2"\);[^}]*font-weight:200;/s.test(
+        style
+    ));
+    assert(!style.includes("test-soehne"));
+    assert(!/\.otf(?:["')?])/iu.test(style));
+});
+
 test("human scroll directly controls the pre-snap curtain position", () => {
     const motion = createEntranceMotion();
     motion.updateScrollProgress(0.75);

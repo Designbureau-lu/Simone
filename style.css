@@ -2,7 +2,7 @@
 
     font-family:"Söhne Mono Buch";
 
-    src:url("fonts/test-soehne-mono-buch.woff2") format("woff2");
+    src:url("fonts/soehne-mono-buch.woff2") format("woff2");
 
     font-style:normal;
 
@@ -30,7 +30,7 @@
 
     font-family:"Söhne Mono Extraleicht";
 
-    src:url("fonts/test-soehne-mono-extraleicht.woff2") format("woff2");
+    src:url("fonts/soehne-mono-extraleicht.woff2") format("woff2");
 
     font-style:normal;
 
