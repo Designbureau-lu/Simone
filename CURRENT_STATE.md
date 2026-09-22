@@ -10,9 +10,10 @@ Updated: 2026-09-22
   as desktop curtain dragging. The bounded movement renders through the normal
   application path and sends its applied displacement to scheduler Pan
   priority; it does not navigate projects or introduce another coordinate.
-- Native wheel behavior is prevented only when the curtain actually moves.
-  Index-open, coarse-pointer, browser-zoom, zero-delta, non-canvas interface,
-  and horizontal-bound cases retain native scrolling.
+- Native wheel behavior is prevented for eligible curtain-canvas input even at
+  either horizontal artwork bound, so continued wheel input cannot scroll the
+  document away from Screen 2. Index-open, coarse-pointer, browser-zoom,
+  zero-delta, and non-canvas interface cases retain native scrolling.
 
 ## Stage 3 project navigation migration
 

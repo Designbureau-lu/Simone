@@ -1170,6 +1170,7 @@ export function bindCurtainWheel(
         const appliedDisplacement = application.panViewportHorizontal(
             displacement
         );
+        event.preventDefault();
         if (appliedDisplacement === 0) {
             return;
         }
@@ -1177,7 +1178,6 @@ export function bindCurtainWheel(
         conversation.clearProjectSelection();
         conversation.markDragLearned();
         synchronizeViewportControl();
-        event.preventDefault();
     }, { passive: false });
 }
 

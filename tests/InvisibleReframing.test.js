@@ -76,11 +76,10 @@ test("vertical and horizontal wheel deltas use the desktop curtain scale", () =>
     equal(dominantWheelDelta(wheelEvent({ deltaY: -1, deltaMode: 2 }), 300), -300);
 });
 
-test("wheel preserves native scrolling for Index, coarse pointers, and bounds", () => {
+test("wheel preserves native scrolling for Index and coarse pointers", () => {
     const cases = [
         { indexOpen: true, isFinePointer: true, applied: 20 },
-        { indexOpen: false, isFinePointer: false, applied: 20 },
-        { indexOpen: false, isFinePointer: true, applied: 0 }
+        { indexOpen: false, isFinePointer: false, applied: 20 }
     ];
 
     for (const scenario of cases) {
@@ -114,6 +113,69 @@ test("wheel preserves native scrolling for Index, coarse pointers, and bounds", 
         );
         assert(!event.defaultPrevented);
     }
+});
+
+test("wheel owns scrolling at both horizontal curtain bounds", () => {
+    const scenarios = [
+        { offset: 0, deltaY: -40 },
+        { offset: 1000, deltaY: 40 }
+    ];
+    for (const scenario of scenarios) {
+        const canvas = createTouchCanvas();
+        const application = createApplication(createViewport(scenario.offset));
+        application.interactionDisplacementScale = () => 1;
+        application.desktopCurtainDirectDragScale = () => 0.5;
+        application.render = () => {
+            throw new Error("Bounded wheel input must not render.");
+        };
+        application.prioritizeArtworkForPan = () => {
+            throw new Error("Bounded wheel input must not prioritize artwork.");
+        };
+        bindCurtainWheel(
+            canvas,
+            application,
+            () => {},
+            {
+                indexOpen: false,
+                clearProjectSelection() {},
+                markDragLearned() {}
+            },
+            { isFinePointer: () => true }
+        );
+        const event = wheelEvent({ deltaY: scenario.deltaY });
+        canvas.dispatchEvent(event);
+
+        equal(application.viewport.projectedOffset, scenario.offset);
+        assert(event.defaultPrevented);
+    }
+});
+
+test("control-wheel browser zoom remains native", () => {
+    const canvas = createTouchCanvas();
+    let panCalls = 0;
+    bindCurtainWheel(
+        canvas,
+        {
+            interactionDisplacementScale: () => 1,
+            desktopCurtainDirectDragScale: () => 0.5,
+            panViewportHorizontal: () => {
+                panCalls += 1;
+                return 20;
+            }
+        },
+        () => {},
+        {
+            indexOpen: false,
+            clearProjectSelection() {},
+            markDragLearned() {}
+        },
+        { isFinePointer: () => true }
+    );
+    const event = wheelEvent({ deltaY: 40, ctrlKey: true });
+    canvas.dispatchEvent(event);
+
+    equal(panCalls, 0);
+    assert(!event.defaultPrevented);
 });
 
 test("wheel pan uses bounded viewport movement and scheduler priority", () => {
@@ -2061,13 +2123,18 @@ function createTouchCanvas() {
     return canvas;
 }
 
-function wheelEvent({ deltaX = 0, deltaY = 0, deltaMode = 0 } = {}) {
+function wheelEvent({
+    deltaX = 0,
+    deltaY = 0,
+    deltaMode = 0,
+    ctrlKey = false
+} = {}) {
     const event = new Event("wheel", { cancelable: true });
     Object.defineProperties(event, {
         deltaX: { value: deltaX },
         deltaY: { value: deltaY },
         deltaMode: { value: deltaMode },
-        ctrlKey: { value: false }
+        ctrlKey: { value: ctrlKey }
     });
     return event;
 }
