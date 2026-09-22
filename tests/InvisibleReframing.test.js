@@ -1,6 +1,8 @@
 import { SimoneApplication } from "../src/application/SimoneApplication.js";
 import {
     bindCurtainDragging,
+    bindCurtainWheel,
+    dominantWheelDelta,
     horizontalReframeDirection,
     isCurtainClick,
     lowPass,
@@ -27,6 +29,120 @@ test("ordinary and outward drags do not request reframing", () => {
     equal(horizontalReframeDirection(0.95, 100, 400), 0);
     equal(horizontalReframeDirection(0.05, 40, 400), 0);
     equal(horizontalReframeDirection(0.05, -100, 400), 0);
+});
+
+test("vertical and horizontal wheel deltas use the desktop curtain scale", () => {
+    const canvas = createTouchCanvas();
+    const displacements = [];
+    let synchronizations = 0;
+    let selectionClears = 0;
+    const application = {
+        interactionDisplacementScale: () => 2,
+        desktopCurtainDirectDragScale: () => 0.5,
+        panViewportHorizontal: (displacement) => {
+            displacements.push(displacement);
+            return displacement;
+        }
+    };
+    const conversation = {
+        indexOpen: false,
+        clearProjectSelection: () => {
+            selectionClears += 1;
+        },
+        markDragLearned() {}
+    };
+    bindCurtainWheel(
+        canvas,
+        application,
+        () => {
+            synchronizations += 1;
+        },
+        conversation,
+        { isFinePointer: () => true }
+    );
+
+    const vertical = wheelEvent({ deltaY: 40 });
+    canvas.dispatchEvent(vertical);
+    const horizontal = wheelEvent({ deltaX: -60, deltaY: 10 });
+    canvas.dispatchEvent(horizontal);
+
+    equal(displacements[0], 40);
+    equal(displacements[1], -60);
+    equal(synchronizations, 2);
+    equal(selectionClears, 2);
+    assert(vertical.defaultPrevented);
+    assert(horizontal.defaultPrevented);
+    equal(dominantWheelDelta(wheelEvent({ deltaY: 3, deltaMode: 1 }), 300), 48);
+    equal(dominantWheelDelta(wheelEvent({ deltaY: -1, deltaMode: 2 }), 300), -300);
+});
+
+test("wheel preserves native scrolling for Index, coarse pointers, and bounds", () => {
+    const cases = [
+        { indexOpen: true, isFinePointer: true, applied: 20 },
+        { indexOpen: false, isFinePointer: false, applied: 20 },
+        { indexOpen: false, isFinePointer: true, applied: 0 }
+    ];
+
+    for (const scenario of cases) {
+        const canvas = createTouchCanvas();
+        let panCalls = 0;
+        const application = {
+            interactionDisplacementScale: () => 1,
+            desktopCurtainDirectDragScale: () => 0.5,
+            panViewportHorizontal: () => {
+                panCalls += 1;
+                return scenario.applied;
+            }
+        };
+        bindCurtainWheel(
+            canvas,
+            application,
+            () => {},
+            {
+                indexOpen: scenario.indexOpen,
+                clearProjectSelection() {},
+                markDragLearned() {}
+            },
+            { isFinePointer: () => scenario.isFinePointer }
+        );
+        const event = wheelEvent({ deltaY: 40 });
+        canvas.dispatchEvent(event);
+
+        equal(
+            panCalls,
+            scenario.indexOpen || !scenario.isFinePointer ? 0 : 1
+        );
+        assert(!event.defaultPrevented);
+    }
+});
+
+test("wheel pan uses bounded viewport movement and scheduler priority", () => {
+    const viewport = createViewport(990);
+    const application = createApplication(viewport);
+    let renderCalls = 0;
+    const priorities = [];
+    application.render = () => {
+        renderCalls += 1;
+    };
+    application.prioritizeArtworkForPan = (displacement) => {
+        priorities.push(displacement);
+    };
+    application.currentProjectIndex = 4;
+    application.attentionMode = "read";
+
+    equal(application.panViewportHorizontal(100), 10);
+    equal(viewport.projectedOffset, 1000);
+    equal(renderCalls, 1);
+    equal(priorities[0], 10);
+    equal(application.attentionMode, "explore");
+    equal(application.currentProjectIndex, 4);
+    equal(application.panViewportHorizontal(100), 0);
+    equal(renderCalls, 1);
+    equal(priorities.length, 1);
+
+    application.attentionMode = "read";
+    equal(application.panViewportHorizontal(100), 0);
+    equal(application.attentionMode, "read");
 });
 
 test("Moses click tolerance preserves drag as the dominant gesture", () => {
@@ -1934,6 +2050,7 @@ function createTouchCanvas() {
     const canvas = new EventTarget();
     canvas.width = 400;
     canvas.clientWidth = 400;
+    canvas.clientHeight = 300;
     canvas.clientLeft = 0;
     canvas.classList = document.createElement("div").classList;
     canvas.getBoundingClientRect = () => ({ left: 0 });
@@ -1942,6 +2059,17 @@ function createTouchCanvas() {
     canvas.hasPointerCapture = (pointerId) => captures.has(pointerId);
     canvas.releasePointerCapture = (pointerId) => captures.delete(pointerId);
     return canvas;
+}
+
+function wheelEvent({ deltaX = 0, deltaY = 0, deltaMode = 0 } = {}) {
+    const event = new Event("wheel", { cancelable: true });
+    Object.defineProperties(event, {
+        deltaX: { value: deltaX },
+        deltaY: { value: deltaY },
+        deltaMode: { value: deltaMode },
+        ctrlKey: { value: false }
+    });
+    return event;
 }
 
 function touchEvent(type, pointerId, clientX, clientY, timeStamp) {

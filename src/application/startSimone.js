@@ -138,6 +138,12 @@ export function startSimone() {
         conversation,
         pinchHint
     );
+    bindCurtainWheel(
+        canvas,
+        application,
+        synchronizeViewportControl,
+        conversation
+    );
     bindViewingSurfaceResize(
         curtainPresentation,
         application,
@@ -1134,6 +1140,64 @@ export function bindCurtainDragging(
     });
 }
 
+export function bindCurtainWheel(
+    canvas,
+    application,
+    synchronizeViewportControl,
+    conversation,
+    {
+        isFinePointer = () => window.matchMedia?.(
+            "(pointer: fine)"
+        ).matches === true
+    } = {}
+) {
+    canvas.addEventListener("wheel", (event) => {
+        if (!isFinePointer()
+            || conversation.indexOpen
+            || event.ctrlKey
+            || canvas.clientWidth <= 0) {
+            return;
+        }
+
+        const delta = dominantWheelDelta(event, canvas.clientHeight);
+        if (delta === 0) {
+            return;
+        }
+
+        const displacement = delta
+            * application.interactionDisplacementScale(canvas.clientWidth)
+            * application.desktopCurtainDirectDragScale();
+        const appliedDisplacement = application.panViewportHorizontal(
+            displacement
+        );
+        if (appliedDisplacement === 0) {
+            return;
+        }
+
+        conversation.clearProjectSelection();
+        conversation.markDragLearned();
+        synchronizeViewportControl();
+        event.preventDefault();
+    }, { passive: false });
+}
+
+export function dominantWheelDelta(event, pageExtent) {
+    const rawDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+        ? event.deltaX
+        : event.deltaY;
+    if (!Number.isFinite(rawDelta) || rawDelta === 0) {
+        return 0;
+    }
+
+    if (event.deltaMode === 1) {
+        return rawDelta * 16;
+    }
+    if (event.deltaMode === 2) {
+        return rawDelta * pageExtent;
+    }
+    return rawDelta;
+}
+
 export function bindCurtainPinchHint(
     presentation,
     {
@@ -1380,6 +1444,9 @@ export function bindConversationInterface(
         clearProjectSelection,
         markDragLearned,
         markExplorationInactive,
+        get indexOpen() {
+            return menuOpen;
+        },
         get title() {
             return title.value;
         }

@@ -191,6 +191,33 @@ export class SimoneApplication {
         this.render();
     }
 
+    panViewportHorizontal(displacement) {
+        if (!this.artwork || !Number.isFinite(displacement)) {
+            return 0;
+        }
+
+        const targetOffset = this.viewport.projectedOffsetAfterShift(
+            displacement
+        );
+        if (targetOffset === this.viewport.projectedOffset) {
+            return 0;
+        }
+
+        this.cancelDesktopCurtainInertia();
+        this.enterExploreMode();
+        this.cancelTouchExplorationResponse();
+        this.cancelLocalReveal();
+        this.cancelHorizontalReframe();
+        this.cancelResetCurtainAnimation();
+
+        const appliedDisplacement = this.viewport.shiftProjectedOffset(
+            targetOffset - this.viewport.projectedOffset
+        );
+        this.render();
+        this.prioritizeArtworkForPan?.(appliedDisplacement);
+        return appliedDisplacement;
+    }
+
     reframeHorizontal(direction, interaction, onFrame = null) {
         if (!this.artwork || (direction !== -1 && direction !== 1)) {
             return false;
