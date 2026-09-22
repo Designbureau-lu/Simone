@@ -1,9 +1,6 @@
 import { loadArtwork } from "../artwork/loadArtwork.js";
 import { ImmutableArtwork } from "../artwork/ImmutableArtwork.js";
 import {
-    representationLabel
-} from "../artwork/ArtworkManifest.js";
-import {
     ArtworkSegmentScheduler,
     SegmentLoadState,
     SegmentPriority
@@ -32,7 +29,8 @@ import { Viewport } from "../viewport/Viewport.js";
 import {
     artworkSegmentsFromProjectCatalog,
     PROJECT_REPRESENTATION_IDS,
-    projectCatalogFromTsv
+    projectCatalogFromTsv,
+    representationLabel
 } from "../projects/ProjectCatalog.js";
 
 /** Composition root for the existing surface architecture. */
@@ -545,20 +543,6 @@ function synchronizeProjectOptions(select, projects) {
     select.replaceChildren(...projects.map((project, index) => (
         new Option(project.title, String(index))
     )));
-}
-
-export function imageFilenamesFromManifest(manifest) {
-    return manifest.split(/\r?\n/u)
-        .filter((line) => line.trim() !== "" && !line.startsWith("#"));
-}
-
-export function imageSourcesForFilenames(filenames, applicationBaseUrl) {
-    const imageDirectory = new URL("public/images/", applicationBaseUrl);
-
-    return filenames.map((name) => Object.freeze({
-        name,
-        url: new URL(encodeURIComponent(name), imageDirectory).href
-    }));
 }
 
 function bindViewportControl(input, output, application) {

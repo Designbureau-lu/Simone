@@ -7,12 +7,12 @@ optimization decisions.
 
 Later real-device A/B testing established a production-safe operational answer
 without changing the renderer or intrinsic geometry. Chrome on desktop and
-Android uses SOURCE B (`2,500 × 1,250` raster per logical `5,000 × 2,500`
-segment), where interaction performance was substantially better. Safari,
-Firefox, and other non-Chrome browsers use reference SOURCE A (`5,000 × 2,500`).
-DEV can override either representation for comparison. Source selection changes
-decoded raster density only: the curtain remains 60,000 intrinsic units wide,
-with the same 500 Periods, geometry, navigation, and draw architecture.
+Android uses the half-resolution SOURCE B project images, where interaction
+performance was substantially better. Safari, Firefox, and other non-Chrome
+browsers use the full-resolution SOURCE A project images. DEV can override
+either representation for comparison. Source selection changes decoded raster
+density only: the current 38-project curtain remains 56,500 intrinsic units
+wide, with the same 471 Periods, geometry, navigation, and draw architecture.
 
 The browser-internal reason Chrome benefits so strongly from the lower raster
 remains unknown, but it is no longer an unresolved production-policy question.
@@ -139,7 +139,7 @@ locate the camera and adds four whole guard Periods on each side. Exact
 per-column arc sampling is then performed only for the corresponding global
 source range. Columns retain their original virtual-artwork coordinates.
 
-Semantic navigation can request a project outside the current sampled range.
+Project navigation can request a project outside the current sampled range.
 `ViewportApplication.projectedColumnAt()` handles that case by mapping the
 requested global source coordinate directly through the already-resolved
 global Period table. It does not create a viewport-relative coordinate or
@@ -467,7 +467,7 @@ Frame, shading, draw-call, and p95 rendering measurements are unchanged. The
 1 ms current/median variations are browser timing noise. Rear regions now skip
 one crest gradient and one `fillRect()`, so the change adds no work.
 
-## Current crest-pass cost
+## Historical crest-pass cost
 
 The active front-only crest pass was measured against the same renderer with
 only that pass temporarily disabled. Each case used 10 warm-up frames and 30
@@ -484,12 +484,13 @@ The crest adds one gradient and one `fillRect()` per visible front fold region.
 It does not change source-column `drawImage()` calls or measured rendering time;
 its cost appears in the shading/overlay phase.
 
-## Viewport-first cold startup
+## Historical viewport-first cold startup
 
-The production manifest now supplies dimensions before decoding, allowing the
-global curtain and artwork coordinates to exist while source segments remain
-unavailable. In a fresh local Firefox profile, the initial guarded desktop
-viewport requested three of twelve 5000 × 2500 JPEG segments before first
+The former fixed-segment production manifest supplied dimensions before
+decoding, allowing the global curtain and artwork coordinates to exist while
+source segments remained unavailable. In a fresh local Firefox profile, the
+initial guarded desktop viewport requested three of twelve 5000 × 2500 JPEG
+segments before first
 `drawImage()`. Remaining requests began only after the first synchronous render
 completed. The first presentation opportunity measured 389 ms, compared with
 436 ms in the preceding all-images local trace. Localhost understates the real

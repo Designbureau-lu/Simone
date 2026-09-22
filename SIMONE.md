@@ -33,23 +33,22 @@ a general cloth simulator.
 ### Artwork
 
 `ImmutableArtwork` owns one continuous virtual coordinate system across ordered
-source segments and exposes immutable one-pixel-wide vertical columns as those
-segments become available. `public/artwork.json` supplies the ordered filename,
-pixel dimensions, and optional compressed byte size before image decoding, so
-global artwork, curtain, camera, and semantic coordinates are final from the
-first frame. Startup requests only segments intersecting the initial viewport
-and its existing guard region; a bounded scheduler loads the remainder in the
-background. During exploration, queued work follows the signed Pan direction
-and the corridor predicted from the existing inertia velocity, gain, damping,
-and camera bounds. Semantic destinations pre-empt background work through the
-same scheduler. Active requests continue normally. `loadArtwork` remains the
-all-at-once local-import rollback path.
-The referenced files live in `public/images/`.
+project images and exposes immutable one-pixel-wide vertical columns as those
+images become available. `public/SIMONE-export/SIMONE-projects.txt` supplies
+the ordered project metadata and cumulative intrinsic ranges before image
+decoding, so global artwork, curtain, camera, and project coordinates are final
+from the first frame. Startup requests only projects intersecting the initial
+viewport and its existing guard region; a bounded scheduler loads the remainder
+in the background. During exploration, queued work follows the signed Pan
+direction and the corridor predicted from the existing inertia velocity, gain,
+damping, and camera bounds. Project destinations pre-empt background work
+through the same scheduler. Active requests continue normally. `loadArtwork`
+remains the all-at-once local-import path.
 
-Semantic project ranges are defined in `public/projects.txt`. They are measured
-in logical Gutter|Column units, not inferred from image dimensions. The current
-central layout configuration uses a 40 px gutter, a 400 px artwork column, and
-10 repetitions per manifest segment.
+Each ProjectCatalog record owns its intrinsic `sourceStart`, `sourceEnd`, and
+`logicalWidth = Columns × 500`. SOURCE A images live in
+`public/SIMONE-export/source-a/`; geometrically identical half-resolution
+SOURCE B images live in `public/SIMONE-export/source-b/`.
 
 ### Parameters
 
@@ -277,7 +276,7 @@ SIMONE distinguishes two modes of attention:
   remains the primary gesture and projects are secondary to free exploration.
   The local click/Moses helper belongs only to EXPLORE: it temporarily opens
   around a clicked physical position, remains secondary to drag, and performs
-  no semantic navigation. It reuses the curtain's local deformation and
+  no project navigation. It reuses the curtain's local deformation and
   returns exactly to the state captured at the click.
 - **READ:** explicit project selection through a future Index combines
   navigation and presentation. The chosen project becomes flat and readable;
@@ -286,8 +285,8 @@ SIMONE distinguishes two modes of attention:
   Entering READ starts a fresh composition and does not preserve or restore the
   previous EXPLORE deformation. Reset intentionally communicates the departure
   from EXPLORE; it is no longer merely a technical function. The selected
-  project then flattens across its exact semantic boundaries—from left gutter
-  to right edge—and is presented for reading.
+  project then flattens across its exact intrinsic `sourceStart`-to-`sourceEnd`
+  range and is presented for reading.
 
 The READ sequence is:
 

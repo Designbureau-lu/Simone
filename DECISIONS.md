@@ -83,9 +83,9 @@ Present Project
 Reading
 ```
 
-READ presentation is defined by semantic project boundaries, from the
-project's left gutter through its right edge. It must flatten that complete
-span exactly; it must not be specified as an arbitrary number of columns. The
+READ presentation is defined by each ProjectCatalog record's intrinsic
+`sourceStart` and `sourceEnd`. It must flatten that complete span exactly; it
+must not be specified as an arbitrary number of columns. The
 project is presented, not simply opened. Gentle folds on both sides should
 eventually transition from the flat project into the normal dense, folded,
 unreadable curtain.

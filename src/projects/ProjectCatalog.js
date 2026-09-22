@@ -11,6 +11,10 @@ const SOURCE_B_SCALE = 0.5;
 
 export const PROJECT_REPRESENTATION_IDS = Object.freeze(["a", "b"]);
 
+export function representationLabel(id) {
+    return `SOURCE ${id.toUpperCase()}`;
+}
+
 /** Parses one authoritative InDesign project export into curtain segments. */
 export function projectCatalogFromTsv(source, exportBaseUrl) {
     if (typeof source !== "string") {
@@ -105,7 +109,7 @@ export function artworkSegmentsFromProjectCatalog(catalog, representationId) {
             sourceWidth: representation.width,
             sourceHeight: representation.height,
             representationId,
-            representationLabel: `SOURCE ${representationId.toUpperCase()}`
+            representationLabel: representationLabel(representationId)
         });
     }));
 }

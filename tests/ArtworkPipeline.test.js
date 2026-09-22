@@ -1,14 +1,6 @@
-import {
-    imageFilenamesFromManifest,
-    imageSourcesForFilenames,
-    manifestUrlFor
-} from "../src/application/startSimone.js";
+import { manifestUrlFor } from "../src/application/startSimone.js";
 import { loadArtwork } from "../src/artwork/loadArtwork.js";
 import { ImmutableArtwork } from "../src/artwork/ImmutableArtwork.js";
-import {
-    artworkRepresentationIdsFromManifest,
-    artworkSegmentsFromManifest
-} from "../src/artwork/ArtworkManifest.js";
 import {
     ArtworkSegmentScheduler,
     SegmentLoadState,
@@ -20,35 +12,6 @@ import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
 
 const failures = [];
 let assertionCount = 0;
-const filenames = imageFilenamesFromManifest([
-    "# Curtain artwork",
-    "",
-    "Exposition été.jpg",
-    "Exposition été 2.jpg",
-    "   ",
-    "# ignored.jpg",
-    "Exposition été 12.jpg"
-].join("\n"));
-
-const expected = [
-    "Exposition été.jpg",
-    "Exposition été 2.jpg",
-    "Exposition été 12.jpg"
-];
-check(
-    filenames.length === expected.length
-    && filenames.every((filename, index) => filename === expected[index]),
-    "manifest order or filename preservation changed"
-);
-const sources = imageSourcesForFilenames(
-    ["Exposition été 12.jpg"],
-    "https://example.test/simone/"
-);
-check(
-    sources[0].url
-        === "https://example.test/simone/public/images/Exposition%20%C3%A9t%C3%A9%2012.jpg",
-    "image URL did not preserve the application base path"
-);
 check(
     manifestUrlFor(
         "public/SIMONE-export/SIMONE-projects.txt",
@@ -108,74 +71,23 @@ try {
     console.error = originalConsoleError;
 }
 
-const manifestSource = JSON.stringify({
-    version: 2,
-    segments: [
-        {
-            id: "First image",
-            logicalWidth: 4,
-            logicalHeight: 2,
-            representations: [
-                { id: "a", src: "artwork/First.jpg", width: 4, height: 2, byteSize: 100 },
-                { id: "b", src: "source-b/First.jpg", width: 2, height: 1, byteSize: 50 }
-            ]
-        },
-        {
-            id: "Second image",
-            logicalWidth: 4,
-            logicalHeight: 2,
-            representations: [
-                { id: "a", src: "artwork/Second.jpg", width: 4, height: 2, byteSize: 100 },
-                { id: "b", src: "source-b/Second.jpg", width: 2, height: 1, byteSize: 50 }
-            ]
-        }
-    ]
-});
-const metadata = artworkSegmentsFromManifest(
-    manifestSource,
-    "https://example.test/simone/",
-    "a"
-);
+const metadata = Object.freeze([
+    segmentMetadata("First image", 0, 4, 2),
+    segmentMetadata("Second image", 1, 4, 2)
+]);
 check(metadata.length === 2, "structured metadata segment count changed");
 check(
-    metadata[1].url
-        === "https://example.test/simone/public/images/artwork/Second.jpg",
-    "structured metadata URL resolution changed"
+    metadata[1].url === "https://example.test/1.jpg",
+    "structured metadata URL changed"
 );
 check(
     metadata[0].width === 4
         && metadata[0].height === 2
         && metadata[0].sourceWidth === 4
         && metadata[0].sourceHeight === 2
-        && metadata[0].byteSize === 100
         && metadata[0].representationId === "a",
-    "structured metadata dimensions or byte size changed"
+    "structured metadata dimensions changed"
 );
-check(
-    artworkRepresentationIdsFromManifest(manifestSource).join(",") === "a,b",
-    "common artwork representations were not discovered"
-);
-let invalidMetadataRejected = false;
-try {
-    artworkSegmentsFromManifest(JSON.stringify({
-        version: 2,
-        segments: [{
-            id: "Broken",
-            logicalWidth: 4,
-            logicalHeight: 2,
-            representations: [{
-                id: "b",
-                src: "Broken.jpg",
-                width: 3,
-                height: 1,
-                byteSize: 10
-            }]
-        }]
-    }), "https://example.test/simone/", "b");
-} catch {
-    invalidMetadataRejected = true;
-}
-check(invalidMetadataRejected, "invalid artwork metadata was accepted");
 
 const metadataArtwork = ImmutableArtwork.fromMetadata(metadata);
 check(
@@ -194,48 +106,38 @@ const firstSource = canvasSource(4, 2);
 const secondSource = canvasSource(4, 2);
 metadataArtwork.setSegmentSource(0, firstSource);
 metadataArtwork.setSegmentSource(1, secondSource);
-const legacyArtwork = new ImmutableArtwork([firstSource, secondSource]);
+const localArtwork = new ImmutableArtwork([firstSource, secondSource]);
 check(
     metadataArtwork.allSegmentsDecoded
-        && metadataArtwork.width === legacyArtwork.width
-        && metadataArtwork.height === legacyArtwork.height,
-    "decoded metadata artwork does not match legacy dimensions"
+        && metadataArtwork.width === localArtwork.width
+        && metadataArtwork.height === localArtwork.height,
+    "decoded metadata artwork does not match local-import dimensions"
 );
 check(
-    Array.from({ length: legacyArtwork.width }, (_, sourceX) => {
+    Array.from({ length: localArtwork.width }, (_, sourceX) => {
         const current = metadataArtwork.columnAt(sourceX);
-        const previous = legacyArtwork.columnAt(sourceX);
+        const previous = localArtwork.columnAt(sourceX);
         return current.source === previous.source
             && current.sourceX === previous.sourceX
             && current.artworkX === previous.artworkX
             && current.height === previous.height;
     }).every(Boolean),
-    "decoded metadata artwork changed final column rendering descriptors"
+    "decoded metadata artwork changed local-import column descriptors"
 );
 
-const parityManifest = JSON.stringify({
-    version: 2,
-    segments: [{
-        id: "Production segment",
-        logicalWidth: 5000,
-        logicalHeight: 2500,
-        representations: [
-            { id: "a", src: "Production.jpg", width: 5000, height: 2500, byteSize: 1 },
-            { id: "b", src: "Production Half.jpg", width: 2500, height: 1250, byteSize: 1 }
-        ]
-    }]
-});
-const productionArtwork = decodedManifestArtwork(parityManifest, "a");
-const halfResolutionArtwork = decodedManifestArtwork(parityManifest, "b");
+const productionArtwork = decodedMetadataArtwork(representationMetadata("a"));
+const halfResolutionArtwork = decodedMetadataArtwork(
+    representationMetadata("b")
+);
 const productionDescriptor = productionArtwork.segmentDescriptors()[0];
 check(
-    productionArtwork.width === 5000
+    productionArtwork.width === 3000
         && productionArtwork.height === 2500
-        && productionArtwork.columnAt(4999).artworkX === 4999
+        && productionArtwork.columnAt(2999).artworkX === 2999
         && productionArtwork.columnAt(2000).sourceX === 2000
         && productionArtwork.columnAt(2000).sourceWidth === 1
         && productionDescriptor.sourceStart === 0
-        && productionDescriptor.width === 5000,
+        && productionDescriptor.width === 3000,
     "production source changed intrinsic column identity or artwork extent"
 );
 check(
@@ -257,28 +159,28 @@ flatSurface.frameFor({
     height: productionArtwork.height
 }, flatField);
 const flatFirst = flatSurface.mapColumn({ sourceX: 0 }, flatField);
-const flatLast = flatSurface.mapColumn({ sourceX: 4999 }, flatField);
+const flatLast = flatSurface.mapColumn({ sourceX: 2999 }, flatField);
 const flatDestinationWidth = flatLast.targetX - flatFirst.targetX + 1;
 check(
-    flatDestinationWidth === 5000
-        && flatDestinationWidth / productionArtwork.height === 2
+    flatDestinationWidth === 3000
+        && flatDestinationWidth / productionArtwork.height === 1.2
         && flatDestinationWidth / productionArtwork.width === 1,
-    "flat intrinsic geometry does not reconstruct the segment at 2:1"
+    "flat intrinsic geometry does not reconstruct the variable-width project"
 );
 check(
-    [0, 1, 2200, 4399, 4999].every((sourceX, index, values) => (
+    [0, 1, 1200, 2399, 2999].every((sourceX, index, values) => (
         index === 0
         || flatSurface.mapColumn({ sourceX }, flatField).targetX
             > flatSurface.mapColumn({ sourceX: values[index - 1] }, flatField)
                 .targetX
     )),
-    "flat source columns are not monotonic across 5000 geometry units"
+    "flat source columns are not monotonic across project geometry"
 );
 const fullInstallationField = new CurtainField();
-fullInstallationField.configureFor(60_000, 120);
+fullInstallationField.configureFor(56_500, 120);
 check(
-    fullInstallationField.periods.length === 500,
-    "intrinsic 60000-unit installation does not create 500 Periods"
+    fullInstallationField.periods.length === 471,
+    "authoritative installation width does not create 471 Periods"
 );
 const productionPlacement = representativePlacement(productionArtwork, 2000);
 const halfResolutionPlacement = representativePlacement(
@@ -298,11 +200,7 @@ check(
     "raster tier changed intrinsic artwork navigation geometry"
 );
 const scheduledProductionArtwork = ImmutableArtwork.fromMetadata(
-    artworkSegmentsFromManifest(
-        parityManifest,
-        "https://example.test/simone/",
-        "b"
-    )
+    representationMetadata("b")
 );
 let scheduledSource = null;
 const productionScheduler = new ArtworkSegmentScheduler({
@@ -319,8 +217,8 @@ const productionScheduler = new ArtworkSegmentScheduler({
 });
 await productionScheduler.request([0], SegmentPriority.INITIAL_VIEWPORT);
 check(
-    scheduledSource.url.endsWith("Production%20Half.jpg")
-        && scheduledSource.width === 2500
+    scheduledSource.url.endsWith("project-b.jpg")
+        && scheduledSource.width === 1500
         && scheduledSource.height === 1250
         && scheduledProductionArtwork.allSegmentsDecoded,
     "scheduler did not fetch and decode the production source"
@@ -484,21 +382,34 @@ function canvasSource(width, height) {
     return canvas;
 }
 
-function segmentMetadata(name, index) {
+function segmentMetadata(name, index, width = 2, height = 2) {
     return Object.freeze({
         name,
         url: `https://example.test/${index}.jpg`,
-        width: 2,
-        height: 2
+        width,
+        height,
+        sourceWidth: width,
+        sourceHeight: height,
+        representationId: "a",
+        representationLabel: "SOURCE A"
     });
 }
 
-function decodedManifestArtwork(manifest, representationId) {
-    const metadata = artworkSegmentsFromManifest(
-        manifest,
-        "https://example.test/simone/",
-        representationId
-    );
+function representationMetadata(representationId) {
+    const scale = representationId === "a" ? 1 : 0.5;
+    return Object.freeze([Object.freeze({
+        name: "Variable project",
+        url: `https://example.test/project-${representationId}.jpg`,
+        width: 3000,
+        height: 2500,
+        sourceWidth: 3000 * scale,
+        sourceHeight: 2500 * scale,
+        representationId,
+        representationLabel: `SOURCE ${representationId.toUpperCase()}`
+    })]);
+}
+
+function decodedMetadataArtwork(metadata) {
     const artwork = ImmutableArtwork.fromMetadata(metadata);
     artwork.setSegmentSource(0, canvasSource(
         metadata[0].sourceWidth,

@@ -1,6 +1,6 @@
 # SIMONE Current State
 
-Updated: 2026-09-21
+Updated: 2026-09-22
 
 ## Stage 3 project navigation migration
 
@@ -21,9 +21,10 @@ Updated: 2026-09-21
   renderer and branch-sensitive projection path were also removed from
   `SimoneApplication`; production rendering remains solely in the verified
   `ViewportApplication` path.
-- Legacy metadata and assembled artwork assets remain in `public/` pending
-  deployed visual verification. Stage 3 is implemented locally but not yet
-  committed.
+- The migrated artwork, navigation, fold-seam fix, and licensed typography have
+  been deployed and visually verified across desktop Chrome, Safari, and
+  mobile. The obsolete fixed-segment metadata and assembled artwork assets
+  have consequently been removed from production.
 
 ## Desktop milestone
 
@@ -94,8 +95,8 @@ Updated: 2026-09-21
   Period count, navigation, project positions, and interaction remain intrinsic.
   DEV can override either tier in every browser.
 - Viewing-space X and Y now share the virtual curtain-frame height, preserving
-  the existing top/bottom fold-depth allowance while a flat `5000 × 2500`
-  segment retains its exact 2:1 presentation ratio. The renderer combines only
+  the existing top/bottom fold-depth allowance while a flat 2:1 source region
+  retains its exact presentation ratio. The renderer combines only
   mathematically exact flat runs bounded by source, branch, and Period identity;
   these runs use one high-quality smoothed `drawImage()` over their complete
   source interval, ensuring that every source pixel participates in filtered
@@ -208,33 +209,28 @@ Updated: 2026-09-21
   exploration “Simone Decker”, and selected project title states; reduced
   motion replaces text immediately. The existing genuine-drag threshold keeps
   project titles stable through insignificant movement. Index rows retain
-  manifest order and the existing READ pipeline while presenting title and
+  ProjectCatalog order and the existing READ pipeline while presenting title and
   optional year in separate columns.
-- Made semantic project landing responsive to the primary input modality.
-  Desktop keeps the existing semantic-span center plus optical offset. On a
-  coarse primary pointer, Index and NEXT/PREVIOUS instead share the projected
-  `artworkStart` target, placing the project's leading gutter at the viewport's
-  left edge. Existing viewport bounds clamp the first and last projects;
-  gestures, manual camera movement, rendering, and loading priority are
-  unchanged.
+- Project landing responds to the primary input modality. Desktop uses the
+  intrinsic project midpoint plus the existing optical offset. On a coarse
+  primary pointer, Index and NEXT/PREVIOUS use the projected `sourceStart`
+  target. Existing viewport bounds clamp the first and last projects; gestures,
+  manual camera movement, rendering, and loading priority are unchanged.
 - Extended the viewport-first scheduler with movement-aware queued priority.
   The guarded visible range remains highest; signed Pan promotes one viewport
   ahead, inertia promotes the bounded corridor to the analytical exponential-
-  damping destination, and Index plus semantic navigation promote their target
+  damping destination, and Index plus project navigation promote their target
   viewport before movement begins. Idle work proceeds outward from the current
   viewport. Active requests and decodes are never cancelled; direction changes
   only reorder queued or loaded-waiting-to-decode segments. Camera, interaction,
   rendering, startup concurrency, and the empty-span fallback are unchanged.
-- Replaced the production all-images startup barrier with viewport-first
-  segmented loading. `public/artwork.json` now establishes ordered dimensions
-  and stable global coordinates before decoding. A deterministic scheduler
-  bounds network requests at three and decodes at two, gives the initial
-  viewport plus the existing four-Period guard priority, renders after those
-  segments settle, and loads the rest in the background. Missing or failed
-  segments retain their exact global span and do not block later segments.
-  The existing `loadArtwork()` path remains available for local import and
-  rollback. In fresh local Firefox, three of twelve image requests block first
-  draw; presentation measured 389 ms versus the previous 436 ms local trace.
+- Production uses viewport-first project-image loading. ProjectCatalog
+  establishes ordered dimensions and stable global coordinates before decode.
+  A deterministic scheduler bounds network requests at three and decodes at
+  two, gives the initial viewport plus the existing four-Period guard priority,
+  renders after those projects settle, and loads the rest in the background.
+  Missing or failed projects retain their exact global span and do not block
+  later projects. `loadArtwork()` remains available for local import.
 - Reduced `TOUCH_CURTAIN_PINCH_DISPLACEMENT_GAIN` from `2.00` to `1.50`
   after real-device evaluation. This is a 25% strength adjustment only; the
   continuous Period interpolation, center, affected region, redistribution,
@@ -270,8 +266,9 @@ Updated: 2026-09-21
   Every Period and cumulative projected Period position still resolves on every
   frame. The camera now discovers intersecting Periods from that global table,
   adds four guard Periods on each side, and projects only their globally indexed
-  artwork columns. Distant semantic-navigation targets are projected exactly
-  on demand from the same Period table. In the controlled 60,000-column desktop
+  artwork columns. Distant project-navigation targets are projected exactly
+  on demand from the same Period table. In the pre-migration controlled
+  60,000-column desktop
   trace, projected columns fell to 12,955 (78.4% fewer), column projection to
   approximately 3 ms, and median frame time from 34 ms to 26 ms. Rendering,
   shading, camera behavior, and interaction timing are unchanged.
@@ -348,16 +345,14 @@ Updated: 2026-09-21
   iterations added camera inertia, retained deformation, and direct
   two-finger curtain manipulation without changing this attachment.
 - Replaced the giant artwork assembly canvas with a continuous virtual artwork
-  coordinate system over the ordered decoded source images. Global column
-  coordinates, semantic project mapping, viewport navigation, and scrolling
-  remain unchanged; each rendered column now resolves directly to its source
-  image and local source coordinate. Production no longer allocates the former
-  60,000 × 2,500 intermediate canvas.
-- Replaced the active camera's fixed 5000-unit width with an aspect-derived
+  coordinate system over the ordered decoded source images. Each rendered
+  column resolves directly to its source image and local source coordinate;
+  production does not allocate a full-curtain intermediate canvas.
+- Replaced the active camera's former fixed-width window with an aspect-derived
   projected extent based on artwork height and the rendered curtain container.
   Portrait therefore shows a narrower window without horizontal compression,
   while landscape shows a wider window at the same visual scale. Camera-centre
-  continuity, semantic navigation, and slider synchronization are preserved
+  continuity, project navigation, and slider synchronization are preserved
   across container, orientation, and `visualViewport` size changes. The
   curtain height uses dynamic viewport units with the existing `vh` fallback.
 - Consolidated the development tools into one fixed, scrollable bottom-right
@@ -384,8 +379,8 @@ Updated: 2026-09-21
   meaningful selection cost occurs during the first drag. The initial and first
   interactive renders instead pay unusually high costs in the same full
   geometry and Canvas 2D loops used by later frames. A clean headed trace
-  isolates most of the cold penalty in the thousands of narrow `drawImage()`
-  calls sourced from the 60,000-column assembly canvas; geometry-loop warm-up
+  isolated most of the pre-migration cold penalty in thousands of narrow
+  `drawImage()` calls sourced from the former assembly canvas; geometry-loop warm-up
   is secondary. `importArtwork()` currently performs only one production render
   before interaction. A bounded set of unchanged, awaited pre-interaction
   render passes is the smallest candidate warm-up. No optimization has been
@@ -416,40 +411,6 @@ Updated: 2026-09-21
   the former instant reset. `RESET_CURTAIN_DURATION` is the single timing
   parameter. New curtain interaction, replacement reset, surface update, or
   project navigation cancels an active reset sequence.
-- Added a temporary project dropdown as another entry point into the existing
-  READ prototype pipeline. Selection first completes an animated Reset to the
-  temporary fixed 50% READ-entry target, then calls the same indexed project
-  navigator used by NEXT/PREVIOUS. At arrival, the dropdown's selected semantic
-  span becomes uniformly fully open from the Period containing `artworkStart`
-  through the Period containing `artworkEnd - 1`; surrounding Periods remain
-  at the neutral 50% state. This selected-artwork presentation uses its own
-  calm 1000 ms `PROJECT_REVEAL_DURATION`, independently of Reset and the
-  NEXT/PREVIOUS prototype. Before that presentation, the semantic midpoint
-  between `artworkStart` and `artworkEnd` is aligned with the Viewport centre,
-  then the independent `READ_CENTER_OFFSET` applies a 40 projected-pixel
-  optical correction. The shared navigator still owns project lookup and
-  positioning, while NEXT/PREVIOUS retain their existing alignment and
-  prototype opening.
-- Added static manifest loading from `public/images.txt`. SIMONE preserves
-  manifest order and filenames, ignores blank/comment lines, and continues
-  assembling the curtain when an individual listed image fails to decode.
-- Added the semantic project-navigation model independently of navigation UI.
-  Project spans load from `public/projects.txt`, accumulate in logical
-  Gutter|Column units, and convert to artwork coordinates through centralized
-  layout values. Navigation is disabled when spans exceed the capacity implied
-  by the number of successfully loaded images.
-- Added temporary PREVIOUS/NEXT evaluation controls. They maintain a current
-  project index and settle the Viewport at the adjacent project's
-  geometry-mapped `artworkStart`, without wrapping or using curtain dragging
-  or Invisible Reframing eligibility.
-- PREVIOUS/NEXT still settles the Viewport at the geometry-mapped
-  `currentProject.artworkStart`. Only after arrival, automatic opening selects
-  the Period containing that exact project boundary and begins a one-sided
-  interaction with `localPosition = 0` and no left influence. A strong
-  rightward drag increases visibility only for the boundary Period and later
-  Periods. Its displacement now comes from the selected project's exact
-  semantic width, `artworkEnd - artworkStart`, replacing the former fixed
-  prototype width.
 - Extended the projected Viewport's trailing bound to the rendered content end.
   The curtain's right edge can therefore enter and cross the visible window,
   leaving white space after the artwork regardless of image count, while the
@@ -512,7 +473,7 @@ Pinch uses two moving curtain grabs anchored to the fold centre selected at
 second-finger touchdown and never zooms the artwork or moves the camera.
 
 A local click/Moses helper is implemented exclusively for EXPLORE. A click
-within a 5 CSS-pixel movement tolerance and on a semantic project starts a
+within a 5 CSS-pixel movement tolerance and on a project starts a
 finite, symmetric local opening at that physical position. It uses the earlier
 restrained six-Period propagation, 220 ms opening, 140 ms hold, and 1200 ms
 cubic ease-out settling envelope, leaving an 8% fold reserve at maximum
@@ -526,12 +487,12 @@ The temporary click-position bubbles, cartel, text timers, and “Read more”
 control have been removed. A persistent white title area now sits independently
 above the curtain. It begins with “Konschtpräis 2026”, changes to “Simone
 Decker” once exploration crosses the existing genuine-drag threshold, and
-shows the semantic project title after a click or READ selection. Ending an
+shows the project title after a click or READ selection. Ending an
 exploration returns to the public title; insignificant movement does not evict
 a presented project title.
 
-The title area's white Index renders project titles and optional years in
-manifest order, highlights the current project, and sends a selection through
+The title area's white Index renders project titles and years in ProjectCatalog
+order, highlights the current project, and sends a selection through
 the existing Reset-and-READ pipeline. It closes with its × trigger, Escape, or
 selection and restores trigger focus after an explicit close.
 
@@ -539,14 +500,13 @@ The development panel floats outside normal layout and can collapse to its
 small fixed Dev control. The curtain fills the remaining viewport beneath the
 bar without its former border or demo framing. Beginning any curtain
 interaction explicitly returns the application from READ to EXPLORE; this
-clears the stale mode state that previously caused later semantic Moses clicks
+clears the stale mode state that previously caused later Moses clicks
 to be rejected.
 
 ### READ
 
-READ begins when the visitor explicitly selects a project, primarily through a
-future generous Index overlay. The Index may present project name, date,
-curtain position, and alternate sorting orders. Selection expresses an intent
+READ begins when the visitor explicitly selects a project through the Index.
+Selection expresses an intent
 to read, so navigation and reveal are combined.
 
 The selected project should become flat and readable while surrounding curtain
@@ -573,14 +533,14 @@ Present Project
 Reading
 ```
 
-The selected project must flatten across its exact semantic span, from its left
-gutter to its right edge. READ must not define presentation as an arbitrary
+The selected project must flatten across its exact intrinsic range, from
+`sourceStart` to `sourceEnd`. READ must not define presentation as an arbitrary
 number of columns. The work is presented, not merely opened. Gentle folds on
 both sides should transition between the flat project and the normal dense
 curtain.
 
-Animated Reset, movement to the selected project, uniform semantic-span
-presentation, semantic project width, geometric midpoint centering, and one
+Animated Reset, movement to the selected project, uniform intrinsic-range
+presentation, intrinsic project width, geometric midpoint centering, and one
 uniform configurable optical-centering offset are implemented. Gentle
 transition folds and the final reading composition remain to be designed.
 
