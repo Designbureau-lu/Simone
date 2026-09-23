@@ -87,7 +87,7 @@ test("navigation rejects discontinuous intrinsic project ranges", () => {
     }));
 });
 
-test("real catalog drives all 38 projects and the authoritative width", async () => {
+test("real catalog supplies every navigation record in Page order", async () => {
     const response = await fetch(
         "../public/SIMONE-export/SIMONE-projects.txt"
     );
@@ -97,10 +97,17 @@ test("real catalog drives all 38 projects and the authoritative width", async ()
         "https://example.test/SIMONE-export/"
     );
     const navigation = createProjectNavigation(catalog);
+    const expectedWidth = catalog.projects.reduce(
+        (width, project) => width + project.logicalWidth,
+        0
+    );
 
-    equal(navigation.projects.length, 38);
-    equal(navigation.logicalWidth, 56_500);
-    equal(navigation.projects.at(-1).sourceEnd, 56_500);
+    equal(navigation.projects.length, catalog.projects.length);
+    equal(navigation.projects, catalog.projects);
+    equal(navigation.projects[0], catalog.projects[0]);
+    equal(navigation.projects.at(-1), catalog.projects.at(-1));
+    equal(navigation.logicalWidth, expectedWidth);
+    equal(navigation.projects.at(-1).sourceEnd, expectedWidth);
 });
 
 test("canonical surface defaults match the public tuning", async () => {

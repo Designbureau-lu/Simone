@@ -251,13 +251,20 @@ test("SOURCE A and B share the same catalog navigation geometry", () => {
     equal(navigation.projects[1].sourceEnd, 2000);
 });
 
-test("real catalog creates 38 variable segments across 56500 units", async () => {
+test("real catalog rows define ordered continuous variable segments", async () => {
     const response = await fetch(
         "../public/SIMONE-export/SIMONE-projects.txt"
     );
     assert(response.ok);
+    const source = await response.text();
+    const expectedRows = source.trim().split(/\r?\n/u).slice(1)
+        .map((line) => {
+            const [title, year, columns, page] = line.split("\t");
+            return { title, year, columns: Number(columns), page: Number(page) };
+        })
+        .sort((first, second) => first.page - second.page);
     const catalog = projectCatalogFromTsv(
-        await response.text(),
+        source,
         new URL("../public/SIMONE-export/", window.location.href)
     );
     const artworkA = ImmutableArtwork.fromMetadata(
@@ -267,12 +274,31 @@ test("real catalog creates 38 variable segments across 56500 units", async () =>
         artworkSegmentsFromProjectCatalog(catalog, "b")
     );
 
-    equal(catalog.projects.length, 38);
-    equal(catalog.logicalWidth, 56500);
-    equal(artworkA.imageCount, 38);
-    equal(artworkB.imageCount, 38);
-    equal(artworkA.width, 56500);
-    equal(artworkB.width, 56500);
+    equal(catalog.projects.length, expectedRows.length);
+    let expectedStart = 0;
+    for (const [index, expected] of expectedRows.entries()) {
+        const project = catalog.projects[index];
+        equal(project.title, expected.title);
+        equal(project.year, expected.year);
+        equal(project.columns, expected.columns);
+        equal(project.page, expected.page);
+        equal(project.sourceStart, expectedStart);
+        equal(project.logicalWidth, expected.columns * 500);
+        expectedStart += project.logicalWidth;
+        equal(project.sourceEnd, expectedStart);
+    }
+    equal(catalog.logicalWidth, expectedStart);
+    equal(
+        catalog.logicalWidth,
+        catalog.projects.reduce(
+            (width, project) => width + project.logicalWidth,
+            0
+        )
+    );
+    equal(artworkA.imageCount, expectedRows.length);
+    equal(artworkB.imageCount, expectedRows.length);
+    equal(artworkA.width, expectedStart);
+    equal(artworkB.width, expectedStart);
 });
 
 await run();
