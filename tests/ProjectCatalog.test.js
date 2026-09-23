@@ -65,26 +65,41 @@ test("derives variable widths and cumulative source ranges", () => {
     equal(catalog.logicalHeight, 2500);
 });
 
-test("derives exact filenames from Page and Project", () => {
+test("derives lowercase technical filenames from Page and Project", () => {
     const [early, late] = parse([
         "Project\tYear\tColumns\tPage",
         "Blister\t2013\t3\t1",
         "So weiß, weißer gehts nicht\t2001\t4\t18"
     ]).projects;
 
-    equal(early.filename, "01_Blister.jpg");
-    equal(late.filename, "18_So weiß, weißer gehts nicht.jpg");
+    equal(early.filename, "01_blister.jpg");
+    equal(late.filename, "18_so weiß, weißer gehts nicht.jpg");
 });
 
-test("uses authoritative Project text unchanged in the filename", () => {
+test("preserves display text while deriving a lowercase NFC filename", () => {
     const project = parse([
         "Project\tYear\tColumns\tPage",
         "Jagdschlößchen\t1997,2001\t4\t31"
     ]).projects[0];
 
     equal(project.title, "Jagdschlößchen");
-    equal(project.filename, "31_Jagdschlößchen.jpg");
-    equal(project.filename, `31_${project.title}.jpg`);
+    equal(project.filename, "31_jagdschlößchen.jpg");
+    equal(project.filename.normalize("NFC"), project.filename);
+});
+
+test("title capitalization does not affect the technical filename", () => {
+    const upper = parse([
+        "Project\tYear\tColumns\tPage",
+        "NY-Space\t0000\t2\t15"
+    ]).projects[0];
+    const lower = parse([
+        "Project\tYear\tColumns\tPage",
+        "ny-space\t0000\t2\t15"
+    ]).projects[0];
+
+    equal(upper.title, "NY-Space");
+    equal(upper.filename, "15_ny-space.jpg");
+    equal(upper.filename, lower.filename);
 });
 
 test("derives SOURCE A and B dimensions from Columns", () => {
@@ -106,7 +121,7 @@ test("encodes exact filenames beneath the A and B export directories", () => {
         "Project\tYear\tColumns\tPage",
         "So weiß, weißer gehts nicht\t2001\t4\t18"
     ]).projects[0];
-    const encoded = "18_So%20wei%C3%9F%2C%20wei%C3%9Fer%20gehts%20nicht.jpg";
+    const encoded = "18_so%20wei%C3%9F%2C%20wei%C3%9Fer%20gehts%20nicht.jpg";
 
     equal(
         project.representations.a.url,

@@ -218,5 +218,6 @@ function representationFor({
 }
 
 function projectFilename(page, title) {
-    return `${String(page).padStart(2, "0")}_${title}.jpg`;
+    const technicalTitle = title.toLowerCase().normalize("NFC");
+    return `${String(page).padStart(2, "0")}_${technicalTitle}.jpg`;
 }

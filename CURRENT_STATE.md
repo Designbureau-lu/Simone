@@ -2,6 +2,14 @@
 
 Updated: 2026-09-22
 
+## Project artwork filenames
+
+- `ProjectCatalog` preserves each authoritative Project title for display while
+  deriving its technical JPEG filename from the zero-padded Page and a
+  lowercase, NFC-normalized title. SOURCE A and SOURCE B share that filename.
+  The current 52-project export uses this contract for all 104 artwork assets;
+  its intrinsic curtain remains 72,500 × 2,500 units across 605 Periods.
+
 ## Desktop curtain wheel input
 
 - A horizontally dominant wheel event addressed to the curtain canvas on a
