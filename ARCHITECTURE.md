@@ -530,11 +530,9 @@ pipeline. It supplies a selected project index after animated Reset; the shared
 indexed navigator continues to own intrinsic project lookup and Viewport
 movement. The selected intrinsic range is presented uniformly at full
 visibility, and its intrinsic midpoint is geometrically aligned with the
-Viewport midpoint. A
-single presentation-only offset then supplies consistent optical centering
-without changing that intrinsic calculation. Gentle transition folds and the
-final reading composition remain future refinements in that shared pipeline
-rather than individual controls.
+Viewport midpoint without a presentation-only optical offset. Gentle
+transition folds and the final reading composition remain future refinements
+in that shared pipeline rather than individual controls.
 
 The sequence intentionally closes the exploratory composition before
 presenting a work. Architecturally and experientially, it behaves more like

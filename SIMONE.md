@@ -304,9 +304,9 @@ Reading
 
 This composition is closer to turning a page in a book than navigating a
 website. Closing one work before presenting the next is intentionally part of
-the experience. Geometric centering is followed by one consistent,
-presentation-only optical offset. Gentle transition folds remain a future
-refinement of the final reading composition.
+the experience. Desktop READ uses strict projected intrinsic midpoint
+centering without a presentation-only optical offset. Gentle transition folds
+remain a future refinement of the final reading composition.
 
 The existing NEXT/PREVIOUS and automatic partial reveal are provisional READ
 experiments, not final interaction design.

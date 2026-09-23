@@ -32,9 +32,9 @@ Updated: 2026-09-22
   physical curtain space. The former 4,400-unit semantic image grid,
   4,400-to-5,000 conversion, `ArtworkLayout`, and `projects.txt` fetch/parser
   are no longer active or present in production code.
-- Desktop project destinations retain project-centre alignment and the
-  existing optical offset. Coarse-pointer destinations retain leading-edge
-  alignment. Hit testing, READ opening, NEXT/PREVIOUS, Index selection, and
+- Desktop project destinations use strict projected intrinsic project-centre
+  alignment without an optical offset. Coarse-pointer destinations retain
+  leading-edge alignment. Hit testing, READ opening, NEXT/PREVIOUS, Index selection, and
   scheduler destination priority all use intrinsic project ranges. SOURCE A
   and SOURCE B therefore share identical navigation geometry.
 - `ImmutableArtwork` now contains only intrinsic source mapping. Its former
@@ -233,7 +233,7 @@ Updated: 2026-09-22
   ProjectCatalog order and the existing READ pipeline while presenting title and
   optional year in separate columns.
 - Project landing responds to the primary input modality. Desktop uses the
-  intrinsic project midpoint plus the existing optical offset. On a coarse
+  projected intrinsic project midpoint without an optical offset. On a coarse
   primary pointer, Index and NEXT/PREVIOUS use the projected `sourceStart`
   target. Existing viewport bounds clamp the first and last projects; gestures,
   manual camera movement, rendering, and loading priority are unchanged.
@@ -561,9 +561,9 @@ both sides should transition between the flat project and the normal dense
 curtain.
 
 Animated Reset, movement to the selected project, uniform intrinsic-range
-presentation, intrinsic project width, geometric midpoint centering, and one
-uniform configurable optical-centering offset are implemented. Gentle
-transition folds and the final reading composition remain to be designed.
+presentation, intrinsic project width, and strict geometric midpoint centering
+are implemented. Gentle transition folds and the final reading composition
+remain to be designed.
 
 The interaction now feels closer to turning a page in a book than navigating a
 website. Closing one work before presenting the next is an intentional part of

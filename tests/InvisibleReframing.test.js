@@ -1688,8 +1688,8 @@ test("desktop project landing remains centered for wide and narrow projects", ()
         logicalWidth: 200
     });
 
-    closeTo(wide.requestedNavigationTarget, 440);
-    closeTo(narrow.requestedNavigationTarget, 440);
+    closeTo(wide.requestedNavigationTarget, 400);
+    closeTo(narrow.requestedNavigationTarget, 400);
     closeTo(wide.requestedNavigationTarget, wide.requestedCenteredTarget);
     closeTo(narrow.requestedNavigationTarget, narrow.requestedCenteredTarget);
 });
@@ -1853,10 +1853,10 @@ test("selected project opens exactly its intrinsic period range", () => {
         null,
         "flat-project-range"
     ));
-    closeTo(prioritizedDestinations[0], 340);
+    closeTo(prioritizedDestinations[0], 300);
     animation.runNext(0);
     animation.runNext(450);
-    equal(viewport.projectedOffset, 340);
+    equal(viewport.projectedOffset, 300);
     animation.runNext(450);
     animation.runNext(950);
 

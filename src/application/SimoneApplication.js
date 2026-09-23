@@ -410,7 +410,6 @@ export class SimoneApplication {
         const requestedCenteredTarget = centerProjectedColumn
             ? centerProjectedColumn.placement.targetX
                 - this.viewport.projectedExtent / 2
-                + READ_CENTER_OFFSET
             : requestedNextTarget;
         const requestedNavigationTarget = this.useLeadingProjectAlignment
             ? requestedNextTarget
@@ -1184,8 +1183,6 @@ const PROJECT_AUTO_OPEN_DURATION = 125;
 const PROJECT_REVEAL_DURATION = 1000;
 const RESET_CURTAIN_DURATION = 600;
 const READ_ENTRY_RESET_STATE = 0.5;
-// Positive values shift the presented artwork left in the Viewport.
-const READ_CENTER_OFFSET = 40;
 const MOSES_OPEN_DURATION = 220;
 const MOSES_HOLD_DURATION = 140;
 const MOSES_SETTLE_DURATION = 1200;
