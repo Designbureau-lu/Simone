@@ -529,10 +529,11 @@ A temporary project dropdown is a second entry point into this same prototype
 pipeline. It supplies a selected project index after animated Reset; the shared
 indexed navigator continues to own intrinsic project lookup and Viewport
 movement. The selected intrinsic range is presented uniformly at full
-visibility, and its intrinsic midpoint is geometrically aligned with the
-Viewport midpoint without a presentation-only optical offset. As the selected
-Periods open and their projected widths change, the Viewport follows that same
-intrinsic midpoint so its established screen-space position remains fixed.
+visibility. Desktop geometrically aligns its intrinsic midpoint with the
+Viewport midpoint without a presentation-only optical offset; coarse pointers
+align its intrinsic `sourceStart`. As the selected Periods open and their
+projected widths change, the Viewport follows that same policy-selected source
+coordinate so its established screen-space position remains fixed.
 Gentle transition folds and the final reading composition remain future
 refinements in that shared pipeline rather than individual controls.
 

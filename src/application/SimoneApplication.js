@@ -1156,9 +1156,9 @@ export class SimoneApplication {
 
         const firstSourceX = project.sourceStart;
         const lastSourceX = project.sourceEnd - 1;
-        const midpointSourceX = (
-            project.sourceStart + project.sourceEnd
-        ) / 2;
+        const openingAnchorSourceX = this.useLeadingProjectAlignment
+            ? project.sourceStart
+            : (project.sourceStart + project.sourceEnd) / 2;
         const firstPeriodIndex = this.projectedColumnAt(firstSourceX)
             ?.placement.periodIndex;
         const lastPeriodIndex = this.projectedColumnAt(lastSourceX)
@@ -1172,7 +1172,7 @@ export class SimoneApplication {
             firstPeriodIndex
         ].visibleFactor;
         const targetVisibleFactor = this.parameters.maximumVisibleFactor;
-        this.beginProjectOpeningAnchor(midpointSourceX);
+        this.beginProjectOpeningAnchor(openingAnchorSourceX);
         let startedAt = null;
         const open = (timestamp) => {
             startedAt ??= timestamp;

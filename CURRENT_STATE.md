@@ -34,9 +34,10 @@ Updated: 2026-09-22
   are no longer active or present in production code.
 - Desktop project destinations use strict projected intrinsic project-centre
   alignment without an optical offset. Coarse-pointer destinations retain
-  leading-edge alignment. During READ opening, the Viewport follows the
-  selected intrinsic midpoint as its projected position changes, preserving
-  the screen-space position established by navigation. Hit testing, READ
+  leading-edge alignment. During READ opening, the Viewport follows that same
+  policy-selected source coordinate—midpoint on desktop, `sourceStart` on a
+  coarse pointer—as its projected position changes, preserving the screen-space
+  position established by navigation. Hit testing, READ
   opening, NEXT/PREVIOUS, Index selection, and scheduler destination priority
   all use intrinsic project ranges. SOURCE A and SOURCE B therefore share
   identical navigation geometry.
@@ -238,8 +239,9 @@ Updated: 2026-09-22
 - Project landing responds to the primary input modality. Desktop uses the
   projected intrinsic project midpoint without an optical offset. On a coarse
   primary pointer, Index and NEXT/PREVIOUS use the projected `sourceStart`
-  target. The shared READ reveal anchors the selected intrinsic midpoint at the
-  screen position produced by either navigation policy while its Periods open.
+  target. The shared READ reveal anchors the intrinsic midpoint on desktop and
+  `sourceStart` on a coarse pointer at the screen position produced by that
+  navigation policy while its Periods open.
   Existing viewport bounds clamp the first and last projects; gestures, manual
   camera movement, rendering, and loading priority are unchanged.
 - Extended the viewport-first scheduler with movement-aware queued priority.

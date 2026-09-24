@@ -1937,6 +1937,59 @@ test("READ opening anchors narrow and wide intrinsic midpoints", () => {
     }
 });
 
+test("mobile READ opening anchors the project leading edge", () => {
+    const project = {
+        title: "Wide",
+        sourceStart: 2000,
+        sourceEnd: 5000,
+        logicalWidth: 3000
+    };
+    const {
+        application,
+        animation,
+        field
+    } = anchoredReadOpeningFixture(project, true);
+
+    assert(application.navigateToProject(0, null, "flat-project-range"));
+    animation.runNext(0);
+    animation.runNext(450);
+    const leadingEdgeBeforeOpening = application.viewport.toPresentationX(
+        application.projectedColumnAt(project.sourceStart).placement.targetX
+    );
+
+    animation.runNext(450);
+    closeTo(
+        application.viewport.toPresentationX(
+            application.projectedColumnAt(project.sourceStart).placement.targetX
+        ),
+        leadingEdgeBeforeOpening
+    );
+    animation.runNext(950);
+    closeTo(
+        application.viewport.toPresentationX(
+            application.projectedColumnAt(project.sourceStart).placement.targetX
+        ),
+        leadingEdgeBeforeOpening
+    );
+    animation.runNext(1450);
+    closeTo(
+        application.viewport.toPresentationX(
+            application.projectedColumnAt(project.sourceStart).placement.targetX
+        ),
+        leadingEdgeBeforeOpening
+    );
+
+    const firstPeriod = Math.floor(project.sourceStart / 120);
+    const lastPeriod = Math.floor((project.sourceEnd - 1) / 120);
+    for (let index = 0; index < field.periods.length; index += 1) {
+        equal(
+            field.periods[index].visibleFactor,
+            index >= firstPeriod && index <= lastPeriod ? 1 : 0.5
+        );
+    }
+    animation.restore();
+});
+
 test("READ midpoint anchoring preserves normal viewport clamping", () => {
     const viewport = createViewport(0);
     const application = createApplication(viewport);
@@ -2260,7 +2313,10 @@ function flatProjectFixture(offset) {
     return { application, rangeCalls };
 }
 
-function anchoredReadOpeningFixture(project) {
+function anchoredReadOpeningFixture(
+    project,
+    useLeadingProjectAlignment = false
+) {
     const artworkWidth = 6000;
     const viewport = new Viewport({
         projectedOffset: 0,
@@ -2298,7 +2354,8 @@ function anchoredReadOpeningFixture(project) {
                 mode: "viewport"
             }),
             appearanceFor: (appearance) => appearance
-        }
+        },
+        useLeadingProjectAlignment
     });
     const midpointSourceX = (
         project.sourceStart + project.sourceEnd
