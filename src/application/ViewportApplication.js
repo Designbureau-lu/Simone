@@ -197,6 +197,14 @@ export class ViewportApplication extends SimoneApplication {
         );
 
         this.viewport.presentationExtent = viewing.frame.width;
+        const projectOpeningSourceX = this.projectOpeningAnchor?.sourceX;
+        if (Number.isInteger(projectOpeningSourceX)) {
+            const midpointPlacement = surface.mapColumn(
+                { sourceX: projectOpeningSourceX },
+                this.curtainField
+            );
+            this.maintainProjectOpeningAnchor(midpointPlacement.targetX);
+        }
         const viewingAppearance = this.viewingSurface.appearanceFor(
             appearance,
             viewing.scaleX

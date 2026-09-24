@@ -34,9 +34,12 @@ Updated: 2026-09-22
   are no longer active or present in production code.
 - Desktop project destinations use strict projected intrinsic project-centre
   alignment without an optical offset. Coarse-pointer destinations retain
-  leading-edge alignment. Hit testing, READ opening, NEXT/PREVIOUS, Index selection, and
-  scheduler destination priority all use intrinsic project ranges. SOURCE A
-  and SOURCE B therefore share identical navigation geometry.
+  leading-edge alignment. During READ opening, the Viewport follows the
+  selected intrinsic midpoint as its projected position changes, preserving
+  the screen-space position established by navigation. Hit testing, READ
+  opening, NEXT/PREVIOUS, Index selection, and scheduler destination priority
+  all use intrinsic project ranges. SOURCE A and SOURCE B therefore share
+  identical navigation geometry.
 - `ImmutableArtwork` now contains only intrinsic source mapping. Its former
   semantic conversion methods were removed. The obsolete full-curtain base
   renderer and branch-sensitive projection path were also removed from
@@ -235,8 +238,10 @@ Updated: 2026-09-22
 - Project landing responds to the primary input modality. Desktop uses the
   projected intrinsic project midpoint without an optical offset. On a coarse
   primary pointer, Index and NEXT/PREVIOUS use the projected `sourceStart`
-  target. Existing viewport bounds clamp the first and last projects; gestures,
-  manual camera movement, rendering, and loading priority are unchanged.
+  target. The shared READ reveal anchors the selected intrinsic midpoint at the
+  screen position produced by either navigation policy while its Periods open.
+  Existing viewport bounds clamp the first and last projects; gestures, manual
+  camera movement, rendering, and loading priority are unchanged.
 - Extended the viewport-first scheduler with movement-aware queued priority.
   The guarded visible range remains highest; signed Pan promotes one viewport
   ahead, inertia promotes the bounded corridor to the analytical exponential-
@@ -562,8 +567,10 @@ curtain.
 
 Animated Reset, movement to the selected project, uniform intrinsic-range
 presentation, intrinsic project width, and strict geometric midpoint centering
-are implemented. Gentle transition folds and the final reading composition
-remain to be designed.
+are implemented. The Viewport compensates for the midpoint's changing projected
+position during opening, keeping its post-navigation screen-space anchor
+stable. Gentle transition folds and the final reading composition remain to be
+designed.
 
 The interaction now feels closer to turning a page in a book than navigating a
 website. Closing one work before presenting the next is an intentional part of

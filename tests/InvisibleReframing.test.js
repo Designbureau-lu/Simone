@@ -1,4 +1,5 @@
 import { SimoneApplication } from "../src/application/SimoneApplication.js";
+import { ViewportApplication } from "../src/application/ViewportApplication.js";
 import {
     bindCurtainDragging,
     bindCurtainWheel,
@@ -12,6 +13,7 @@ import { Viewport } from "../src/viewport/Viewport.js";
 import { CurtainField } from "../src/surface/CurtainField.js";
 import { SurfaceParameters } from "../src/surface/SurfaceParameters.js";
 import { SurfaceShading } from "../src/shading/SurfaceShading.js";
+import { CircularFoldSurface } from "../src/geometry/CircularFoldSurface.js";
 
 const tests = [];
 
@@ -1875,6 +1877,122 @@ test("selected project opens exactly its intrinsic period range", () => {
     animation.restore();
 });
 
+test("READ opening anchors narrow and wide intrinsic midpoints", () => {
+    for (const project of [
+        { title: "Narrow", sourceStart: 340, sourceEnd: 840, logicalWidth: 500 },
+        { title: "Wide", sourceStart: 2000, sourceEnd: 5000, logicalWidth: 3000 }
+    ]) {
+        const fixture = anchoredReadOpeningFixture(project);
+        const {
+            application,
+            animation,
+            field,
+            midpointSourceX
+        } = fixture;
+
+        assert(application.navigateToProject(0, null, "flat-project-range"));
+        animation.runNext(0);
+        animation.runNext(450);
+        const navigationOffset = application.viewport.projectedOffset;
+        const beforeOpening = application.viewport.toPresentationX(
+            application.projectedColumnAt(midpointSourceX).placement.targetX
+        );
+        animation.runNext(450);
+        closeTo(
+            application.viewport.toPresentationX(
+                application.projectedColumnAt(midpointSourceX).placement.targetX
+            ),
+            beforeOpening
+        );
+        animation.runNext(950);
+        const midpointDuringOpening = application.projectedColumnAt(
+            midpointSourceX
+        ).placement.targetX;
+        closeTo(
+            application.viewport.toPresentationX(midpointDuringOpening),
+            beforeOpening
+        );
+        assert(Math.abs(
+            midpointDuringOpening - navigationOffset - beforeOpening
+        ) > 1);
+        animation.runNext(1450);
+        closeTo(
+            application.viewport.toPresentationX(
+                application.projectedColumnAt(midpointSourceX).placement.targetX
+            ),
+            beforeOpening
+        );
+
+        const firstPeriod = Math.floor(project.sourceStart / 120);
+        const lastPeriod = Math.floor((project.sourceEnd - 1) / 120);
+        for (let index = 0; index < field.periods.length; index += 1) {
+            equal(
+                field.periods[index].visibleFactor,
+                index >= firstPeriod && index <= lastPeriod ? 1 : 0.5
+            );
+        }
+        equal(field.periods[firstPeriod - 1].visibleFactor, 0.5);
+        equal(field.periods[lastPeriod + 1].visibleFactor, 0.5);
+        animation.restore();
+    }
+});
+
+test("READ midpoint anchoring preserves normal viewport clamping", () => {
+    const viewport = createViewport(0);
+    const application = createApplication(viewport);
+    application.projectedColumns = [];
+    application.projectedColumns[10] = {
+        placement: { targetX: 0 }
+    };
+
+    assert(application.beginProjectOpeningAnchor(10));
+    equal(application.maintainProjectOpeningAnchor(-100), 0);
+    equal(viewport.projectedOffset, 0);
+
+    application.projectedColumns[10] = {
+        placement: { targetX: 1400 }
+    };
+    viewport.shiftProjectedOffset(1000);
+    assert(application.beginProjectOpeningAnchor(10));
+    equal(application.maintainProjectOpeningAnchor(2000), 0);
+    equal(viewport.projectedOffset, 1000);
+    application.endProjectOpeningAnchor();
+});
+
+test("READ midpoint anchoring respects first and last project bounds", () => {
+    for (const project of [
+        { title: "First", sourceStart: 0, sourceEnd: 500, logicalWidth: 500 },
+        { title: "Last", sourceStart: 5500, sourceEnd: 6000, logicalWidth: 500 }
+    ]) {
+        const {
+            application,
+            animation,
+            midpointSourceX
+        } = anchoredReadOpeningFixture(project);
+
+        assert(application.navigateToProject(0, null, "flat-project-range"));
+        animation.runNext(0);
+        animation.runNext(450);
+        const anchor = application.viewport.toPresentationX(
+            application.projectedColumnAt(midpointSourceX).placement.targetX
+        );
+        animation.runNext(450);
+        animation.runNext(950);
+        animation.runNext(1450);
+
+        const bounds = application.viewport.movementBounds;
+        assert(application.viewport.projectedOffset >= bounds.minimum);
+        assert(application.viewport.projectedOffset <= bounds.maximum);
+        closeTo(
+            application.viewport.toPresentationX(
+                application.projectedColumnAt(midpointSourceX).placement.targetX
+            ),
+            anchor
+        );
+        animation.restore();
+    }
+});
+
 test("variable-width project navigation moves both ways without wrapping", () => {
     const viewport = createViewport(100);
     const application = createApplication(viewport);
@@ -2140,6 +2258,74 @@ function flatProjectFixture(offset) {
         ]
     });
     return { application, rangeCalls };
+}
+
+function anchoredReadOpeningFixture(project) {
+    const artworkWidth = 6000;
+    const viewport = new Viewport({
+        projectedOffset: 0,
+        projectedExtent: 1200,
+        presentationExtent: 1200
+    });
+    viewport.setProjectedContentRange(0, 10_000);
+    const field = new CurtainField({ resetCurtainState: 0.5 });
+    const parameters = new SurfaceParameters();
+    const surface = new CircularFoldSurface();
+    const application = new ViewportApplication({
+        artworkLoader: null,
+        parameters,
+        curtainField: field,
+        viewport,
+        phaseResolver: { resolve: () => "surface" },
+        surfaces: { surface },
+        shading: {
+            appearanceFor: () => ({}),
+            factorFor: () => 1,
+            crestLifecycleFor: () => 0
+        },
+        renderer: {
+            beginFrame: () => {},
+            drawColumn: () => {},
+            endFrame: () => ({})
+        },
+        viewingSurface: {
+            resolve: () => ({
+                frame: { width: 1200, height: 600 },
+                scaleX: 1,
+                scaleY: 1,
+                pixelRatio: 1,
+                projectedExtent: 1200,
+                mode: "viewport"
+            }),
+            appearanceFor: (appearance) => appearance
+        }
+    });
+    const midpointSourceX = (
+        project.sourceStart + project.sourceEnd
+    ) / 2;
+    field.configureFor(artworkWidth, parameters.carrierDistance);
+    application.artwork = {
+        width: artworkWidth,
+        height: 2500,
+        imageCount: 1,
+        sourceDescription: "synthetic",
+        sourceRepresentation: null,
+        columnAt: () => null
+    };
+    application.imageCount = 1;
+    application.geometryArtworkWidth = artworkWidth;
+    application.setProjectNavigation({
+        enabled: true,
+        projects: [project]
+    });
+    application.render();
+
+    return {
+        application,
+        animation: captureAnimationFrames(),
+        field,
+        midpointSourceX
+    };
 }
 
 function createTouchCanvas() {

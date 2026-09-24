@@ -38,6 +38,7 @@ export class SimoneApplication {
         this.geometryArtworkWidth = 0;
         this.sceneVisibleFactor = curtainField.resetCurtainState;
         this.horizontalReframeFrame = null;
+        this.projectOpeningAnchor = null;
         this.resetCurtainFrame = null;
         this.localRevealFrame = null;
         this.localRevealState = null;
@@ -493,12 +494,46 @@ export class SimoneApplication {
     }
 
     cancelHorizontalReframe() {
+        this.endProjectOpeningAnchor();
         if (this.horizontalReframeFrame === null) {
             return;
         }
 
         cancelAnimationFrame(this.horizontalReframeFrame);
         this.horizontalReframeFrame = null;
+    }
+
+    beginProjectOpeningAnchor(sourceX) {
+        const projectedColumn = this.projectedColumnAt(sourceX);
+        if (!projectedColumn) {
+            this.projectOpeningAnchor = null;
+            return false;
+        }
+
+        this.projectOpeningAnchor = Object.freeze({
+            sourceX,
+            presentationX: this.viewport.toPresentationX(
+                projectedColumn.placement.targetX
+            )
+        });
+        return true;
+    }
+
+    maintainProjectOpeningAnchor(projectedX) {
+        if (!this.projectOpeningAnchor || !Number.isFinite(projectedX)) {
+            return 0;
+        }
+
+        const anchorProjectedX = this.viewport.toProjectedX(
+            this.projectOpeningAnchor.presentationX
+        );
+        return this.viewport.shiftProjectedOffset(
+            projectedX - anchorProjectedX
+        );
+    }
+
+    endProjectOpeningAnchor() {
+        this.projectOpeningAnchor = null;
     }
 
     beginLocalInteraction(targetX, neighborReach = undefined) {
@@ -1121,6 +1156,9 @@ export class SimoneApplication {
 
         const firstSourceX = project.sourceStart;
         const lastSourceX = project.sourceEnd - 1;
+        const midpointSourceX = (
+            project.sourceStart + project.sourceEnd
+        ) / 2;
         const firstPeriodIndex = this.projectedColumnAt(firstSourceX)
             ?.placement.periodIndex;
         const lastPeriodIndex = this.projectedColumnAt(lastSourceX)
@@ -1134,6 +1172,7 @@ export class SimoneApplication {
             firstPeriodIndex
         ].visibleFactor;
         const targetVisibleFactor = this.parameters.maximumVisibleFactor;
+        this.beginProjectOpeningAnchor(midpointSourceX);
         let startedAt = null;
         const open = (timestamp) => {
             startedAt ??= timestamp;
@@ -1157,6 +1196,7 @@ export class SimoneApplication {
                 this.horizontalReframeFrame = requestAnimationFrame(open);
             } else {
                 this.horizontalReframeFrame = null;
+                this.endProjectOpeningAnchor();
             }
         };
 
