@@ -391,7 +391,8 @@ Updated: 2026-09-22
   longer part of the panel.
 - Established the current tuning as SIMONE's canonical startup and full-Reset
   defaults: 20% minimum visibility, 100% maximum visibility, 50% Reset Curtain
-  State, 120 mm carrier distance, and 50% model transition. The development
+  State, 125 mm carrier distance, and 50% model transition. Every 500-unit
+  project column therefore spans exactly four complete Periods. The development
   controls expose those same initial values.
 - Fixed crest highlights disappearing after the first genuine drag. The drag
   correctly changed local Period geometry but also left the grabbed Period's

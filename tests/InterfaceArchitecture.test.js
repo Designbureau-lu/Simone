@@ -690,7 +690,7 @@ test("debug controls expose the canonical renderer defaults", async () => {
     equal(page.getElementById("minimumVisibleFactorNumber").value, "20");
     equal(page.getElementById("maximumVisibleFactorNumber").value, "100");
     equal(page.getElementById("resetCurtainStateNumber").value, "50");
-    equal(page.getElementById("carrierDistanceNumber").value, "120");
+    equal(page.getElementById("carrierDistanceNumber").value, "125");
     equal(page.getElementById("modelTransitionNumber").value, "50");
     equal(
         Array.from(page.getElementById("artworkSourceRepresentation").options)

@@ -5,7 +5,7 @@ export class SurfaceParameters {
     constructor({
         minimumVisibleFactor = 0.2,
         maximumVisibleFactor = 1,
-        carrierDistance = 120,
+        carrierDistance = 125,
         modelTransition = 0.5
     } = {}) {
         this.configure({

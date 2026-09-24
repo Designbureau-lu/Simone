@@ -122,9 +122,29 @@ test("canonical surface defaults match the public tuning", async () => {
 
     equal(parameters.minimumVisibleFactor, 0.2);
     equal(parameters.maximumVisibleFactor, 1);
-    equal(parameters.carrierDistance, 120);
+    equal(parameters.carrierDistance, 125);
     equal(parameters.modelTransition, 0.5);
     equal(curtain.resetCurtainState, 0.5);
+});
+
+test("production project boundaries align with the default Period grid", async () => {
+    const { SurfaceParameters } = await import(
+        "../src/surface/SurfaceParameters.js"
+    );
+    const source = await fetch(
+        "../public/SIMONE-export/SIMONE-projects.txt"
+    ).then((response) => response.text());
+    const catalog = projectCatalogFromTsv(
+        source,
+        "https://example.test/SIMONE-export/"
+    );
+    const { carrierDistance } = new SurfaceParameters();
+
+    equal(500 % carrierDistance, 0);
+    for (const project of catalog.projects) {
+        equal(project.sourceStart % carrierDistance, 0);
+        equal(project.sourceEnd % carrierDistance, 0);
+    }
 });
 
 await run();

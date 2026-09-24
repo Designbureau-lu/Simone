@@ -2163,7 +2163,7 @@ test("artwork initialization retains only intrinsic geometry width", () => {
     });
 
     equal(application.geometryArtworkWidth, 60_000);
-    equal(application.curtainField.periods.length, 500);
+    equal(application.curtainField.periods.length, 480);
 });
 
 test("viewport preserves the left bound and permits trailing white space", () => {
@@ -2269,7 +2269,7 @@ function anchoredReadOpeningFixture(project) {
     });
     viewport.setProjectedContentRange(0, 10_000);
     const field = new CurtainField({ resetCurtainState: 0.5 });
-    const parameters = new SurfaceParameters();
+    const parameters = new SurfaceParameters({ carrierDistance: 120 });
     const surface = new CircularFoldSurface();
     const application = new ViewportApplication({
         artworkLoader: null,

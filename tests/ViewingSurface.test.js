@@ -330,7 +330,7 @@ test("opaque folded raster leaves no background at branch transitions", () => {
 
 test("viewport sampling keeps the complete global Period model", () => {
     const field = new CurtainField({ resetCurtainState: 0.5 });
-    const parameters = new SurfaceParameters();
+    const parameters = new SurfaceParameters({ carrierDistance: 120 });
     const surface = new CircularFoldSurface();
     field.configureFor(1200, 120);
     field.setVisibleFactorRange(4, 5, 0.8);
@@ -365,7 +365,7 @@ test("viewport sampling keeps the complete global Period model", () => {
 
 test("guarded sampling contains every column selected by the camera", () => {
     const field = new CurtainField({ resetCurtainState: 0.5 });
-    const parameters = new SurfaceParameters();
+    const parameters = new SurfaceParameters({ carrierDistance: 120 });
     const surface = new CircularFoldSurface();
     field.configureFor(1200, 120);
     field.setVisibleFactorRange(4, 5, 0.8);
@@ -1076,7 +1076,7 @@ function exactFlatAppearance(branch, periodIndex) {
 
 function foldPlacements(visibleFactor) {
     const field = new CurtainField({ resetCurtainState: visibleFactor });
-    const parameters = new SurfaceParameters();
+    const parameters = new SurfaceParameters({ carrierDistance: 120 });
     const surface = new CircularFoldSurface();
     field.configureFor(240, 120);
     field.resolve(parameters);
@@ -1184,7 +1184,7 @@ run();
 
 function correctedFoldCueDiagnostics(visibleFactor) {
     const field = new CurtainField({ resetCurtainState: visibleFactor });
-    const parameters = new SurfaceParameters();
+    const parameters = new SurfaceParameters({ carrierDistance: 120 });
     const shading = new SurfaceShading();
     const surface = new CircularFoldSurface();
     field.configureFor(240, 120);
