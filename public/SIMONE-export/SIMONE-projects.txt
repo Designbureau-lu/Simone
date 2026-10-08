@@ -8,46 +8,44 @@ Jérémy	1999	3	6
 Eisberge	2021	2	7
 Filtre	2006	4	8
 White Noise	1999	4	9
-Prototypes d’espaces infinis	1999	2	10
+Prototypes d’espaces infinis	1999 / 2000	2	10
 Whitening	2005	3	11
-500 pièces	0000	2	12
-View finder	2008	1	13
-Fine Sélection	0000	2	14
-NY-Space	0000	2	15
-Chewing in Venice	1999	6	16
-Ghosts	2004	4	17
+Ghosts	2004	4	12
+500 pièces	1997	2	13
+View finder	2008	1	14
+Chewing in Venice	1999	6	15
+Fine Sélection	2011	2	16
+NY–Space	2004	2	17
 So weiss, weisser geht’s nicht	2001	5	18
-Inlays	2011	2	19
+A couple of full moons	2003	2	19
 Glaçons	2001	3	20
 Second Life	2010	5	21
 Genus	2025	3	22
-Untermieter	1996	2	23
-Magnificatio	2018	6	24
-Rising up	2018	2	25
-Pied-à-terre	2003	2	26
+Inlays	2011	2	23
+Magnificatio	2021	6	24
+Pied-à-terre	2004	2	25
+Rising up	2018	2	26
 21 pavillons  pour  Saint-Nazaire	1999	2	27
 Pavillons in Vaduz	2000	2	28
 Implantate	2019	4	29
 Distributeur	2003	2	30
-Jagdschlössschen	1997	4	31
+Jagdschlösschen	1997 /1998 / 1999	4	31
 Re-Rooted	2025	2	32
 Shifting shapes	2010	3	33
 Trous à Bourges	1999	1	34
 Curtain Wall	2002	5	35
 Meeting	2010	2	36
-A couple of full moons	2003	3	37
-Clashtest	2018	5	38
-Lenka,Denis, Charlotte,...	2004	3	39
-Petite galerie des glaces	2002	2	40
-Seaworld Biel‑Bienne	2000	3	41
-Le va-et‑vient du Mont Saint‑Watou	2000	2	42
-Instant	2006	2	43
-Langeweilekern	1992	2	44
-Bubble gum in Changwon	2020	2	45
-Recently in Arnhem	2001	2	46
-Turtle Show	2001	2	47
-Épinglage	1994	2	48
-Affront - affronté	1994	2	49
-Sa chambre de méditiation	1994	2	50
-Capitonner	1993	2	51
-Capsule d’Artiste II	1994	2	52
+Untermieter	1996	3	37
+Seaworld Biel‑Bienne	2000	3	38
+Instant	2006	2	39
+Langeweilekern	1992	2	40
+Lenka, Denise, Charlotte,...	2004	3	41
+Clashtest	2018	4	42
+Wiener  Baukasten	1997	2	43
+Petite galerie des glaces	2002	2	44
+Recently in Arnhem	2001	2	45
+Turtle Show	2001	1	46
+Le va‑et‑vient du Mont Saint‑Watou	2000	2	47
+Affront - Affronté	1994	2	48
+Épinglage	1994	2	49
+Luftballons	0000	2	50

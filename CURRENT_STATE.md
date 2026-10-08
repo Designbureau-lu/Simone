@@ -1,14 +1,24 @@
 # SIMONE Current State
 
-Updated: 2026-09-22
+Updated: 2026-10-08
 
 ## Project artwork filenames
 
 - `ProjectCatalog` preserves each authoritative Project title for display while
   deriving its technical JPEG filename from the zero-padded Page and a
   lowercase, NFC-normalized title. SOURCE A and SOURCE B share that filename.
-  The current 52-project export uses this contract for all 104 artwork assets;
-  its intrinsic curtain remains 72,500 × 2,500 units across 605 Periods.
+  The current 50-project export uses this contract for all 100 artwork assets;
+  its 139 columns define 69,500 × 2,500 intrinsic units across 556 Periods at
+  Carrier Distance 125. Every project boundary aligns with that Period grid.
+- Export validation: Pages 1–50 are unique and ordered; both source tiers have
+  exactly the expected JPEGs and dimensions, with no obsolete images remaining.
+  All 100 images decoded successfully in headless Chrome and were accepted by
+  `ImmutableArtwork.setSegmentSource`. All seven automated test pages passed
+  (219/219 checks), including catalog, navigation, and artwork pipeline tests.
+  No application code changes were needed.
+- Page 50, `Luftballons`, intentionally retains Year `0000` as a temporary
+  placeholder. It passes the parser's text contract and the Index displays it
+  verbatim. The export's `.DS_Store` file has been removed.
 
 ## Desktop curtain wheel input
 
