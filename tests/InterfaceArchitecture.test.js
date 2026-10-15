@@ -506,26 +506,26 @@ test("lower information is semantic live HTML with section-owned actions", async
         Array.from(editorialSections).map((section) => (
             section.querySelector("h2").textContent.replace(/\s+/g, " ").trim()
         )).join("|"),
-        "SIMONE DECKER|LETZEBUERGER KONSCHTPRAIS 2026|JURY STATEMENT"
+        "PRESENTATION|SIMONE DECKER|LËTZEBUERGER KONSCHTPRÄIS"
     );
     equal(
         Array.from(editorialSections).map((section) => (
             section.querySelectorAll(":scope > .editorial-side > .editorial-actions .information-pill")
                 .length
         )).join("|"),
-        "2|1|1"
+        "0|1|1"
     );
     equal(information.querySelectorAll(":scope > .editorial-section > .editorial-side").length, 3);
     equal(information.querySelectorAll(".visit-information-block").length, 2);
     assert(information.querySelector(".exhibition-footer-logos[src='assets/logos.svg']"));
-    equal(information.querySelectorAll(".information-pill").length, 5);
+    equal(information.querySelectorAll(".information-pill").length, 3);
     equal(information.querySelectorAll("h2 img,h2 svg").length, 0);
     equal(
         Array.from(editorialSections).map((section) => (
             Array.from(section.querySelectorAll(".editorial-title-line"))
                 .map((line) => line.textContent.trim()).join("/")
         )).join("|"),
-        "SIMONE/DECKER|LETZEBUERGER/KONSCHTPRAIS/2026|JURY/STATEMENT"
+        "PRESENTATION|SIMONE/DECKER|LËTZEBUERGER/KONSCHTPRÄIS"
     );
 });
 

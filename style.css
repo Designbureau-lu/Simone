@@ -1038,6 +1038,12 @@ select{
 
 }
 
+.editorial-body strong{
+
+    font-weight:700;
+
+}
+
 .editorial-actions{
 
     display:flex;
@@ -1264,6 +1270,12 @@ select{
     .editorial-title{
 
         order:1;
+
+    }
+
+    #presentation-heading{
+
+        font-size:min(var(--type-section),calc((100vw - 48px) / 7.2));
 
     }
 

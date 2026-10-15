@@ -1,6 +1,23 @@
 # SIMONE Current State
 
-Updated: 2026-10-08
+Updated: 2026-10-15
+
+## Landing page editorial content
+
+- Replaced the former editorial sections through Jury with Presentation,
+  Simone Decker, and Lëtzebuerger Konschtpräis using the supplied English copy.
+  Presentation preserves three introductory paragraphs and four level entries
+  covering all five underground levels, with italic titles and bold labels.
+  The biography remains an intentional Lorem Ipsum placeholder.
+- Video interview and Press release remain visible buttons without assigned
+  destinations. Each editorial section declares English; no translations or
+  language-switching behavior were invented.
+- Existing section layout and responsive styles remain in use, with a narrow
+  mobile font-size cap for the Presentation heading and explicit bold weight
+  for level labels. Curtain markup and Exhibition / Opening through the footer
+  are byte-for-byte unchanged; application logic and project data are unchanged.
+- All seven automated test pages pass (219/219 checks). Desktop (1440 px) and
+  mobile (390 px and 320 px) layouts were checked in headless Chrome.
 
 ## Project artwork filenames
 
