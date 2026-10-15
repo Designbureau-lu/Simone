@@ -9,9 +9,12 @@ Updated: 2026-10-15
   Presentation preserves three introductory paragraphs and four level entries
   covering all five underground levels, with italic titles and bold labels.
   The biography remains an intentional Lorem Ipsum placeholder.
-- Video interview and Press release remain visible buttons without assigned
-  destinations. Each editorial section declares English; no translations or
-  language-switching behavior were invented.
+- Press release now links to the supplied Ministry of Culture announcement in
+  a new tab with `noopener noreferrer`. Its existing pill styling is retained,
+  with a restrained arrow movement on hover and keyboard focus, a visible focus
+  outline, and reduced-motion support. Video interview remains unassigned.
+  Each editorial section declares English; no translations or language-switching
+  behavior were invented.
 - Existing section layout and responsive styles remain in use, with a narrow
   mobile font-size cap for the Presentation heading and explicit bold weight
   for level labels. Curtain markup and Exhibition / Opening through the footer
