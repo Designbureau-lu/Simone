@@ -1274,6 +1274,35 @@ select{
 
 }
 
+@media (min-width:768px) and (max-width:1023px){
+
+    .editorial-section{
+
+        display:flex;
+
+    }
+
+    .editorial-side{
+
+        display:contents;
+
+    }
+
+    .editorial-title,
+    .editorial-actions{
+
+        align-self:flex-end;
+
+    }
+
+    .editorial-actions{
+
+        order:1;
+
+    }
+
+}
+
 @media (max-width:767px){
 
     :root{
