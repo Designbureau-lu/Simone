@@ -2,6 +2,22 @@
 
 Updated: 2026-10-22
 
+## Footer logo layout
+
+- The footer now uses the supplied `assets/logomusee.svg` (290 × 135) and
+  `assets/logos.svg` (375 × 75) as separate accessible images. Neither SVG
+  was edited. Desktop presents a full-width, bottom-aligned logo row with the
+  museum at the left and partners at the right; below 768 px they stack in
+  that order. Each scales proportionally within its available width.
+- Existing footer padding, background, 48 px gaps, contact typography/alignment,
+  and visit action remain. Contact information follows the shared logo row,
+  increasing footer height. On a 768 px desktop, existing 150 px side padding
+  leaves 468 px for the row: each image is 210 px wide, so partner fine text is
+  small. Mobile 320/390 px layouts fit within 24 px side margins without overflow.
+- Headless Chrome screenshots and box measurements checked 320, 390, 768,
+  1440, and 1920 px widths. All seven existing browser test pages pass (219/219),
+  with the footer assertion updated for both assets. No commit or push.
+
 ## Desktop identity title centering
 
 - Removed only the desktop title's former downward transform. The existing

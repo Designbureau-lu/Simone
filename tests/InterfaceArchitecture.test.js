@@ -487,7 +487,11 @@ test("lower information is semantic live HTML with section-owned actions", async
     );
     equal(information.querySelectorAll(":scope > .editorial-section > .editorial-side").length, 3);
     equal(information.querySelectorAll(".visit-information-block").length, 2);
-    assert(information.querySelector(".exhibition-footer-logos[src='assets/logos.svg']"));
+    const logos = information.querySelector(".exhibition-footer-logos");
+    equal(logos.children.length, 2);
+    equal(logos.children[0].getAttribute("src"), "assets/logomusee.svg");
+    equal(logos.children[1].getAttribute("src"), "assets/logos.svg");
+    assert(Array.from(logos.children).every((image) => image.getAttribute("alt")));
     equal(information.querySelectorAll(".information-pill").length, 3);
     equal(information.querySelectorAll("h2 img,h2 svg").length, 0);
     equal(

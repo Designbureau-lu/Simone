@@ -1090,11 +1090,33 @@ select{
 
 .exhibition-footer-logos{
 
+    grid-column:1 / -1;
+
+    display:grid;
+
+    grid-template-columns:minmax(0,290px) minmax(0,375px);
+
+    justify-content:space-between;
+
+    align-items:end;
+
+    gap:48px;
+
+}
+
+.exhibition-footer-logos img{
+
     display:block;
 
-    width:min(480px,40vw);
+    width:100%;
 
     height:auto;
+
+}
+
+.exhibition-footer > .exhibition-contact{
+
+    grid-column:2;
 
 }
 
@@ -1266,7 +1288,25 @@ select{
 
     .exhibition-footer-logos{
 
-        width:min(100%,480px);
+        grid-template-columns:minmax(0,1fr);
+
+    }
+
+    .exhibition-footer-logos img{
+
+        max-width:375px;
+
+    }
+
+    .exhibition-footer-logos img:first-child{
+
+        max-width:290px;
+
+    }
+
+    .exhibition-footer > .exhibition-contact{
+
+        grid-column:1;
 
     }
 
