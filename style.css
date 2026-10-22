@@ -336,8 +336,6 @@ select{
 
         font-size:var(--type-display);
 
-        transform:translateY(clamp(36px,4.6vh,50px));
-
     }
 
     .arrival-identity-dates{

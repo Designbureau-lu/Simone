@@ -544,7 +544,7 @@ test("Screen 1 keeps live information around the SVG title", async () => {
     equal(screen.querySelector(".arrival-identity-dates").textContent,
         "13.11.2026 - 21.03.2027");
     equal(screen.querySelector(".arrival-identity-venue").textContent,
-        "NATIONALMUSEE UM FESCHMAART");
+        "NATIONALMUSÉE UM FËSCHMAART");
 });
 
 test("identity blob uses stable side-biased desktop and mobile presentations", () => {
@@ -610,6 +610,9 @@ test("desktop identity preserves the authored axis and typographic scales", asyn
     const source = await fetch("../style.css").then((response) => (
         response.text()
     ));
+    const desktopTitle = source.match(/\.arrival-identity-title\s*\{([^}]*)\}/s)[1];
+    assert(!/transform:/.test(desktopTitle),
+        "desktop title must stay centered in its grid row without a vertical offset");
     assert(/--color-text:#3c3c3c;/.test(source));
     assert(/--type-display:clamp\(4rem,5vw,6rem\);/.test(source));
     assert(/--type-information:1\.4rem;/.test(source));

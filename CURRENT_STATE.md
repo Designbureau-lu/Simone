@@ -2,13 +2,30 @@
 
 Updated: 2026-10-22
 
+## Desktop identity title centering
+
+- Removed only the desktop title's former downward transform. The existing
+  equal flexible rows and centered title row now place the SVG image center at
+  the midpoint between the dates' bottom and venue's top, without JavaScript
+  or a replacement offset. Title sizing, horizontal centering, surrounding
+  information positions, and all mobile styles are unchanged.
+- Headless Chrome measurements at 768 × 900, 1440 × 900, and 1920 × 900 show
+  the SVG center at 450 px, matching the required midpoint within 0.01 px.
+  Its image sizes remain 529.91 × 242.59, 596.16 × 272.94, and
+  794.88 × 363.91 px respectively. Dates and venue boxes are identical before
+  and after. Mobile boxes at 320 × 900 and 390 × 900 also match exactly.
+- All seven existing browser test pages pass (219/219). Added a desktop
+  no-transform assertion and corrected the stale venue-text expectation to
+  the already committed accented subtitle. No commit or push.
+
 ## Identity title SVG
 
 - The existing `h1.arrival-identity-title` now contains `assets/title.svg`, with
   intrinsic 830 × 380 proportions and an accessible image text equivalent.
   The wrapper retains the former 8.28em desktop width and 3.84em layout height;
   the image scales proportionally and centers vertically inside that space.
-  Desktop display sizing and the downward `clamp(36px,4.6vh,50px)` offset remain.
+  Desktop display sizing remains; the former downward offset was subsequently
+  removed as recorded above.
   Mobile retains symmetric 24 px edges, exact screen centering, the existing
   font-size formula, and the 767/768 px breakpoint. Obsolete text-column rules
   were removed; the blob, dates, venue, language selector, and curtain were not
