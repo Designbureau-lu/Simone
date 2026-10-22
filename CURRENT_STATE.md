@@ -2,6 +2,39 @@
 
 Updated: 2026-10-22
 
+## EN/FR translation infrastructure
+
+- Added 34 public text keys in `locales/en.json` and `locales/fr.json` and a
+  dependency-free `src/i18n/i18n.js` module. English is copied from the existing
+  site. Every French value is currently an explicit English placeholder,
+  listed in `_meta.englishPlaceholders`; no French editorial copy was invented.
+  `locales/README.md` documents copy editing, placeholder approval, fallback
+  synchronization, and validation.
+- EN/FR are native accessible buttons with `aria-pressed`, language autonyms,
+  and a keyboard focus outline; their original layout and typography remain.
+  Selection uses saved `simone.language`, then the primary browser language
+  (`fr` variants choose French; all others English). Storage failure is safe.
+  English placeholder text keeps English language metadata for screen readers.
+  Public static text, rich paragraphs, accessibility labels, and dynamic hidden
+  navigation/menu labels are covered; Dev controls and diagnostics stay English.
+- Candidate dictionaries are validated before application for JSON, complete
+  key coverage, metadata, interpolation tokens, and only properly nested,
+  attribute-free `em`/`strong` markup. Requests are cached; latest selection
+  wins. Failed loads retain readable English HTML/current text and can retry.
+  Proper names, project titles/data, SVGs, dates, links, and inactive buttons
+  remain unchanged. Translation initialization does not block curtain startup.
+- Real-page headless Chrome checked EN/FR at 320, 390, 768, 1440, and 1920 px:
+  public text/section boxes match the pre-change English layout within 0.02 px,
+  with no horizontal overflow. Switching preserves menu/focus, selected project,
+  artwork/navigation/canvas identities, and nonzero scroll position, with no
+  additional artwork requests. No visual layout differences; only keyboard
+  focus adds an outline. Blob poses still vary normally between page loads.
+- All seven existing browser test pages pass (219/219), plus 13 new translation
+  tests covering both production dictionaries, source fallback, priority,
+  persistence, button activation, failure cases, rich text, and request races.
+  Approved French copy will require another typography/wrapping review.
+  No commit or push; GitHub Actions configuration is unchanged.
+
 ## Desktop footer contact alignment
 
 - Desktop-only rules inside the existing `min-width:768px` media query place

@@ -139,6 +139,34 @@ select{
 
 }
 
+.arrival-identity-language button{
+
+    appearance:none;
+
+    border:0;
+
+    padding:0;
+
+    margin:0;
+
+    background:none;
+
+    color:inherit;
+
+    font:inherit;
+
+    cursor:pointer;
+
+}
+
+.arrival-identity-language button:focus-visible{
+
+    outline:1px solid currentColor;
+
+    outline-offset:4px;
+
+}
+
 @keyframes identity-blob-breathe{
 
     0%{

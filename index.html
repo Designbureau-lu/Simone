@@ -12,16 +12,16 @@
 
 <body>
 
-<section class="arrival-screen arrival-screen-identity" aria-label="Exhibition identity">
+<section class="arrival-screen arrival-screen-identity" aria-label="Exhibition identity" data-i18n-aria-label="identity.label">
     <div class="arrival-identity-blob" data-identity-blob aria-hidden="true">
         <div class="arrival-identity-blob-pose">
             <img src="assets/blop.svg" alt="">
         </div>
     </div>
     <div class="arrival-identity-content">
-        <nav class="arrival-identity-language" aria-label="Languages">
-            <span>EN</span>
-            <span>FR</span>
+        <nav class="arrival-identity-language" aria-label="Languages" data-i18n-aria-label="language.label">
+            <button type="button" data-language="en" lang="en" aria-label="English" aria-pressed="true">EN</button>
+            <button type="button" data-language="fr" lang="fr" aria-label="Français" aria-pressed="false">FR</button>
         </nav>
         <h1 class="arrival-identity-title">
             <img src="assets/title.svg" width="830" height="380"
@@ -39,24 +39,24 @@
     <output class="conversation-bar-text" data-conversation-text aria-live="polite" aria-label="LETZEBUERGER KONSCHTPRAIS">
         <span class="conversation-title-line" data-conversation-title-line aria-hidden="true">LETZEBUERGER KONSCHTPRAIS</span>
     </output>
-    <button type="button" class="conversation-menu-trigger" data-conversation-menu-trigger aria-expanded="false" aria-controls="conversationProjectList" aria-label="Open project list">☰</button>
-    <nav id="conversationProjectList" class="conversation-project-list" aria-label="Projects" hidden>
+    <button type="button" class="conversation-menu-trigger" data-conversation-menu-trigger aria-expanded="false" aria-controls="conversationProjectList" aria-label="Open project list" data-i18n-aria-label="navigation.open">☰</button>
+    <nav id="conversationProjectList" class="conversation-project-list" aria-label="Projects" data-i18n-aria-label="navigation.projects" hidden>
         <ul data-conversation-projects></ul>
     </nav>
 </header>
 
-<aside id="semanticNavigation" hidden aria-label="Temporary semantic navigation">
-    <select data-project-select disabled aria-label="Choose project">
+<aside id="semanticNavigation" hidden aria-label="Temporary semantic navigation" data-i18n-aria-label="navigation.temporary">
+    <select data-project-select disabled aria-label="Choose project" data-i18n-aria-label="navigation.chooseLabel">
         <option value="">Choose project…</option>
     </select>
     <output data-project-label>Project — / —</output>
-    <button type="button" data-project-previous disabled>PREVIOUS</button>
-    <button type="button" data-project-next disabled>NEXT</button>
+    <button type="button" data-project-previous data-i18n="navigation.previous" disabled>PREVIOUS</button>
+    <button type="button" data-project-next data-i18n="navigation.next" disabled>NEXT</button>
 </aside>
 
 <input hidden type="file" id="fileInput" accept="image/*" multiple>
 
-<aside id="debugPanel" class="debug-panel" aria-label="Development controls" hidden>
+<aside id="debugPanel" class="debug-panel" lang="en" aria-label="Development controls" hidden>
     <button type="button" class="debug-panel-close" data-debug-close aria-label="Close development controls">×</button>
 
     <div class="controls" aria-label="Periodic surface controls">
@@ -141,7 +141,7 @@ Load artwork to begin measuring.</pre>
         </div>
     </section>
 </aside>
-<button id="debugReopen" type="button" class="debug-reopen" data-debug-reopen aria-label="Open development controls">Dev</button>
+<button id="debugReopen" lang="en" type="button" class="debug-reopen" data-debug-reopen aria-label="Open development controls">Dev</button>
 
 <div class="container">
     <div id="curtainPresentation" class="curtain-presentation">
@@ -156,69 +156,69 @@ Load artwork to begin measuring.</pre>
 </main>
 </section>
 
-<article class="exhibition-information" aria-label="Exhibition information">
-    <section class="editorial-section" aria-labelledby="presentation-heading" lang="en">
+<article class="exhibition-information" aria-label="Exhibition information" data-i18n-aria-label="editorial.label">
+    <section class="editorial-section" aria-labelledby="presentation-heading" lang="en" data-i18n-section>
         <div class="editorial-side">
             <h2 id="presentation-heading" class="editorial-title">
-                <span class="editorial-title-line">PRESENTATION</span>
+                <span class="editorial-title-line" data-i18n="presentation.heading">PRESENTATION</span>
             </h2>
         </div>
         <div class="editorial-body">
-            <p>This presentation traces Simone Decker's artistic journey from one of her earliest exhibitions in this very museum in 1994 to the present day. Thirty-two years later, she was awarded the <em>Lëtzebuerger Konschtpräis</em> by the Ministry of Culture, recognising her remarkable contribution to contemporary art, both in Luxembourg and internationally. To mark this occasion, the museum’s <em>Lëtzebuerger Konschtarchiv</em> presents an overview of her work across three decades.</p>
-            <p>Simone Decker (born 1968 in Luxembourg) invites us to see familiar places in unexpected ways. Like opening a curtain, her work encourages us to look beyond the obvious. Through her photography and interventions in public space, she uses humour, surprise and subtle shifts in perspective to question how we look at the world around us. Above all, architecture and urban spaces become starting points for exploration and (re)discovery.</p>
-            <p>Discovery lies at the heart of Decker's practice. Keep an eye out for models, prototypes and fragments of the artist’s works displayed throughout the museum’s five underground levels as part of the permanent archaeology exhibition.</p>
-            <p><strong>Level -1:</strong> <em>Chewing gum</em>; model for <em>Genus</em> (to be confirmed); prototype for <em>Ghosts</em></p>
-            <p><strong>Levels -2/-3:</strong> Screening of the video <em>Airbag</em> (1998)</p>
-            <p><strong>Level -4:</strong> Cellophane used for <em>Pavillons de Saint-Nazaire</em>; element from the installation <em>Le grand soufflé</em></p>
-            <p><strong>Level -5:</strong> Coat from <em>Whitening</em>; one element from the installation <em>Inlays</em>; model for the installation <em>500 pièces</em></p>
+            <p data-i18n-rich="presentation.intro">This presentation traces Simone Decker's artistic journey from one of her earliest exhibitions in this very museum in 1994 to the present day. Thirty-two years later, she was awarded the <em>Lëtzebuerger Konschtpräis</em> by the Ministry of Culture, recognising her remarkable contribution to contemporary art, both in Luxembourg and internationally. To mark this occasion, the museum’s <em>Lëtzebuerger Konschtarchiv</em> presents an overview of her work across three decades.</p>
+            <p data-i18n-rich="presentation.practice">Simone Decker (born 1968 in Luxembourg) invites us to see familiar places in unexpected ways. Like opening a curtain, her work encourages us to look beyond the obvious. Through her photography and interventions in public space, she uses humour, surprise and subtle shifts in perspective to question how we look at the world around us. Above all, architecture and urban spaces become starting points for exploration and (re)discovery.</p>
+            <p data-i18n-rich="presentation.discovery">Discovery lies at the heart of Decker's practice. Keep an eye out for models, prototypes and fragments of the artist’s works displayed throughout the museum’s five underground levels as part of the permanent archaeology exhibition.</p>
+            <p data-i18n-rich="presentation.level1"><strong>Level -1:</strong> <em>Chewing gum</em>; model for <em>Genus</em> (to be confirmed); prototype for <em>Ghosts</em></p>
+            <p data-i18n-rich="presentation.level23"><strong>Levels -2/-3:</strong> Screening of the video <em>Airbag</em> (1998)</p>
+            <p data-i18n-rich="presentation.level4"><strong>Level -4:</strong> Cellophane used for <em>Pavillons de Saint-Nazaire</em>; element from the installation <em>Le grand soufflé</em></p>
+            <p data-i18n-rich="presentation.level5"><strong>Level -5:</strong> Coat from <em>Whitening</em>; one element from the installation <em>Inlays</em>; model for the installation <em>500 pièces</em></p>
         </div>
     </section>
 
-    <section class="editorial-section" aria-labelledby="simone-decker-heading" lang="en">
+    <section class="editorial-section" aria-labelledby="simone-decker-heading" lang="en" data-i18n-section>
         <div class="editorial-side">
             <h2 id="simone-decker-heading" class="editorial-title">
                 <span class="editorial-title-line">SIMONE</span>
                 <span class="editorial-title-line">DECKER</span>
             </h2>
-            <div class="editorial-actions" aria-label="Related Simone Decker content">
-                <button class="information-pill" type="button">Video interview</button>
+            <div class="editorial-actions" aria-label="Related Simone Decker content" data-i18n-aria-label="artist.related">
+                <button class="information-pill" type="button" data-i18n="actions.videoInterview">Video interview</button>
             </div>
         </div>
         <div class="editorial-body">
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sagittis, mauris ac tristique dictum, orci sem volutpat erat, vel tincidunt urna velit eu libero. Sed sit amet ipsum et lorem elementum elementum at quis mauris. Phasellus ipsum tortor, fermentum nec vestibulum id, finibus a tortor. Donec nec sollicitudin justo. Integer facilisis fermentum dui quis ultrices. Nulla rutrum fringilla viverra. Suspendisse tempus viverra enim id ultricies. Cras risus tortor, dignissim eu elementum non, bibendum vel enim. Aliquam condimentum neque eu dolor ultricies faucibus. Nam id iaculis lorem. Sed consectetur odio ut nunc imperdiet cursus. Nam id bibendum nisi. Ut id condimentum purus. Suspendisse nec porta metus. Integer pellentesque vulputate leo sit amet faucibus. Vivamus iaculis feugiat magna iaculis sollicitudin. Cras velit libero, maximus non neque molestie, tristique tristique lacus. Curabitur nibh dolor, tincidunt eu sodales ut, lobortis quis lectus.</p>
+            <p data-i18n-rich="artist.biography">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sagittis, mauris ac tristique dictum, orci sem volutpat erat, vel tincidunt urna velit eu libero. Sed sit amet ipsum et lorem elementum elementum at quis mauris. Phasellus ipsum tortor, fermentum nec vestibulum id, finibus a tortor. Donec nec sollicitudin justo. Integer facilisis fermentum dui quis ultrices. Nulla rutrum fringilla viverra. Suspendisse tempus viverra enim id ultricies. Cras risus tortor, dignissim eu elementum non, bibendum vel enim. Aliquam condimentum neque eu dolor ultricies faucibus. Nam id iaculis lorem. Sed consectetur odio ut nunc imperdiet cursus. Nam id bibendum nisi. Ut id condimentum purus. Suspendisse nec porta metus. Integer pellentesque vulputate leo sit amet faucibus. Vivamus iaculis feugiat magna iaculis sollicitudin. Cras velit libero, maximus non neque molestie, tristique tristique lacus. Curabitur nibh dolor, tincidunt eu sodales ut, lobortis quis lectus.</p>
         </div>
     </section>
 
-    <section class="editorial-section" aria-labelledby="prize-heading" lang="en">
+    <section class="editorial-section" aria-labelledby="prize-heading" lang="en" data-i18n-section>
         <div class="editorial-side">
             <h2 id="prize-heading" class="editorial-title">
                 <span class="editorial-title-line">LËTZEBUERGER</span>
                 <span class="editorial-title-line">KONSCHTPRÄIS</span>
             </h2>
-            <div class="editorial-actions" aria-label="Related prize content">
+            <div class="editorial-actions" aria-label="Related prize content" data-i18n-aria-label="prize.related">
                 <a class="information-pill press-release-link"
                     href="https://mcult.gouvernement.lu/en/actualites.gouvernement2024+fr+actualites+toutes_actualites+communiques+2026+01-janvier+22-thill-konschtprais.html"
-                    target="_blank" rel="noopener noreferrer">Press release<span
+                    target="_blank" rel="noopener noreferrer"><span data-i18n="actions.pressRelease">Press release</span><span
                         class="press-release-arrow" aria-hidden="true">↗</span></a>
             </div>
         </div>
         <div class="editorial-body">
-            <p>The Lëtzebuerger Konschtpräis is the biennial art award, established in 2022 by Luxembourg’s Ministry for Culture. The prize includes €10,000 and honours an artist for their work and ongoing commitment to Luxembourg’s art scene. The artist must be Luxembourgish, live in Luxembourg or have a strong connection with the country. After Berthe Lutgen received the prize in 2022 and Marc-Henri Reckinger in 2024, a professional jury selected Simone Decker as the 2026 laureate.</p>
+            <p data-i18n-rich="prize.description">The Lëtzebuerger Konschtpräis is the biennial art award, established in 2022 by Luxembourg’s Ministry for Culture. The prize includes €10,000 and honours an artist for their work and ongoing commitment to Luxembourg’s art scene. The artist must be Luxembourgish, live in Luxembourg or have a strong connection with the country. After Berthe Lutgen received the prize in 2022 and Marc-Henri Reckinger in 2024, a professional jury selected Simone Decker as the 2026 laureate.</p>
         </div>
     </section>
 
-    <section class="visit-information" aria-label="Exhibition dates">
+    <section class="visit-information" aria-label="Exhibition dates" data-i18n-aria-label="visit.label">
         <section class="visit-information-block visit-information-block-exhibition"
             aria-labelledby="exhibition-heading">
-            <h2 id="exhibition-heading">EXHIBITION</h2>
-            <p>Temporary exhibition<br>
-                at the Nationalmusee um Feschmaart<br>
+            <h2 id="exhibition-heading" data-i18n="visit.exhibitionHeading">EXHIBITION</h2>
+            <p><span data-i18n="visit.description">Temporary exhibition</span><br>
+                <span data-i18n="visit.location">at the Nationalmusee um Feschmaart</span><br>
                 Kapellchen<br>
                 <time datetime="2026-11-13">13.11.2026</time> -
                 <time datetime="2027-03-21">21.03.2027</time></p>
         </section>
         <section class="visit-information-block" aria-labelledby="opening-heading">
-            <h2 id="opening-heading">OPENING</h2>
+            <h2 id="opening-heading" data-i18n="visit.openingHeading">OPENING</h2>
             <p><time datetime="2026-11-12T18:00">12.11.2026<br>18:00</time></p>
         </section>
     </section>
@@ -228,7 +228,7 @@ Load artwork to begin measuring.</pre>
             <img src="assets/logomusee.svg" width="290" height="135"
                 alt="Nationalmusée um Fëschmaart">
             <img src="assets/logos.svg" width="375" height="75"
-                alt="Ministry of Culture and Lëtzebuerger Konschtpräis">
+                alt="Ministry of Culture and Lëtzebuerger Konschtpräis" data-i18n-alt="footer.partnersAlt">
         </div>
         <address class="exhibition-contact">
             Nationalmusée um Fëschmaart<br>
@@ -238,7 +238,7 @@ Load artwork to begin measuring.</pre>
             <a href="tel:+3524793301">+352 47 93 30 - 1</a><br>
             <a href="mailto:nationalmusee@mnaha.etat.lu">nationalmusee@mnaha.etat.lu</a>
         </address>
-        <button class="information-pill exhibition-visit-action" type="button">
+        <button class="information-pill exhibition-visit-action" type="button" data-i18n="actions.planVisit">
             Plan my visit
         </button>
     </footer>

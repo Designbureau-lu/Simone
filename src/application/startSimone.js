@@ -1,3 +1,4 @@
+import { i18n } from "../i18n/i18n.js";
 import { loadArtwork } from "../artwork/loadArtwork.js";
 import { ImmutableArtwork } from "../artwork/ImmutableArtwork.js";
 import {
@@ -495,23 +496,45 @@ export function bindProjectNavigationControls(
         const available = navigation?.enabled && index !== null;
 
         if (!available) {
-            label.value = "Project — / —";
+            label.value = i18n.translate("navigation.empty");
             previous.disabled = true;
             next.disabled = true;
             select.disabled = true;
-            select.replaceChildren(new Option("Choose project…", ""));
+            select.replaceChildren(new Option(i18n.translate("navigation.choose"), ""));
             return;
         }
 
         synchronizeProjectOptions(select, navigation.projects);
         const project = navigation.projects[index];
-        label.value = `Project ${index + 1} / ${navigation.projects.length}`
-            + ` — ${project.title}`;
+        label.value = i18n.translate("navigation.position", undefined, {
+            current: index + 1,
+            total: navigation.projects.length,
+            title: project.title
+        });
         previous.disabled = index <= 0;
         next.disabled = index >= navigation.projects.length - 1;
         select.disabled = false;
         select.value = String(index);
     };
+
+    i18n.onChange(() => {
+        const navigation = application.projectNavigation;
+        const index = application.currentProjectIndex;
+        label.lang = i18n.languageFor("navigation.position");
+        if (navigation?.enabled && index !== null) {
+            label.value = i18n.translate("navigation.position", undefined, {
+                current: index + 1,
+                total: navigation.projects.length,
+                title: navigation.projects[index].title
+            });
+        } else {
+            label.value = i18n.translate("navigation.empty");
+            if (select.options[0]) {
+                select.options[0].textContent = i18n.translate("navigation.choose");
+                select.options[0].lang = i18n.languageFor("navigation.choose");
+            }
+        }
+    });
 
     previous.addEventListener("click", () => {
         application.navigateToPreviousProject(synchronizeViewportControl);
@@ -1323,7 +1346,9 @@ export function bindConversationInterface(
         element.classList.remove("is-menu-open");
         trigger.textContent = "☰";
         trigger.setAttribute("aria-expanded", "false");
-        trigger.setAttribute("aria-label", "Open project list");
+        trigger.dataset.i18nAriaLabel = "navigation.open";
+        trigger.setAttribute("aria-label", i18n.translate("navigation.open"));
+        trigger.lang = i18n.languageFor("navigation.open");
         if (restoreFocus) {
             trigger.focus();
         }
@@ -1336,7 +1361,9 @@ export function bindConversationInterface(
         element.classList.add("is-menu-open");
         trigger.textContent = "X";
         trigger.setAttribute("aria-expanded", "true");
-        trigger.setAttribute("aria-label", "Close project list");
+        trigger.dataset.i18nAriaLabel = "navigation.close";
+        trigger.setAttribute("aria-label", i18n.translate("navigation.close"));
+        trigger.lang = i18n.languageFor("navigation.close");
         const active = list.querySelector('[aria-current="true"]');
         (active ?? list.querySelector("button"))?.focus();
     };

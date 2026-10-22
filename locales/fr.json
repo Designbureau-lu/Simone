@@ -1,0 +1,95 @@
+{
+  "_meta": {
+    "locale": "fr",
+    "englishPlaceholders": [
+      "identity.label",
+      "language.label",
+      "navigation.projects",
+      "navigation.open",
+      "navigation.temporary",
+      "navigation.chooseLabel",
+      "navigation.previous",
+      "navigation.next",
+      "navigation.close",
+      "navigation.choose",
+      "navigation.empty",
+      "navigation.position",
+      "editorial.label",
+      "artist.related",
+      "artist.biography",
+      "prize.related",
+      "prize.description",
+      "visit.label",
+      "visit.exhibitionHeading",
+      "visit.openingHeading",
+      "visit.description",
+      "visit.location",
+      "presentation.heading",
+      "presentation.intro",
+      "presentation.practice",
+      "presentation.discovery",
+      "presentation.level1",
+      "presentation.level23",
+      "presentation.level4",
+      "presentation.level5",
+      "actions.videoInterview",
+      "actions.pressRelease",
+      "actions.planVisit",
+      "footer.partnersAlt"
+    ]
+  },
+  "identity": {
+    "label": "Exhibition identity"
+  },
+  "language": {
+    "label": "Languages"
+  },
+  "navigation": {
+    "projects": "Projects",
+    "open": "Open project list",
+    "temporary": "Temporary semantic navigation",
+    "chooseLabel": "Choose project",
+    "previous": "PREVIOUS",
+    "next": "NEXT",
+    "close": "Close project list",
+    "choose": "Choose project…",
+    "empty": "Project — / —",
+    "position": "Project {current} / {total} — {title}"
+  },
+  "editorial": {
+    "label": "Exhibition information"
+  },
+  "artist": {
+    "related": "Related Simone Decker content",
+    "biography": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sagittis, mauris ac tristique dictum, orci sem volutpat erat, vel tincidunt urna velit eu libero. Sed sit amet ipsum et lorem elementum elementum at quis mauris. Phasellus ipsum tortor, fermentum nec vestibulum id, finibus a tortor. Donec nec sollicitudin justo. Integer facilisis fermentum dui quis ultrices. Nulla rutrum fringilla viverra. Suspendisse tempus viverra enim id ultricies. Cras risus tortor, dignissim eu elementum non, bibendum vel enim. Aliquam condimentum neque eu dolor ultricies faucibus. Nam id iaculis lorem. Sed consectetur odio ut nunc imperdiet cursus. Nam id bibendum nisi. Ut id condimentum purus. Suspendisse nec porta metus. Integer pellentesque vulputate leo sit amet faucibus. Vivamus iaculis feugiat magna iaculis sollicitudin. Cras velit libero, maximus non neque molestie, tristique tristique lacus. Curabitur nibh dolor, tincidunt eu sodales ut, lobortis quis lectus."
+  },
+  "prize": {
+    "related": "Related prize content",
+    "description": "The Lëtzebuerger Konschtpräis is the biennial art award, established in 2022 by Luxembourg’s Ministry for Culture. The prize includes €10,000 and honours an artist for their work and ongoing commitment to Luxembourg’s art scene. The artist must be Luxembourgish, live in Luxembourg or have a strong connection with the country. After Berthe Lutgen received the prize in 2022 and Marc-Henri Reckinger in 2024, a professional jury selected Simone Decker as the 2026 laureate."
+  },
+  "visit": {
+    "label": "Exhibition dates",
+    "exhibitionHeading": "EXHIBITION",
+    "openingHeading": "OPENING",
+    "description": "Temporary exhibition",
+    "location": "at the Nationalmusee um Feschmaart"
+  },
+  "presentation": {
+    "heading": "PRESENTATION",
+    "intro": "This presentation traces Simone Decker's artistic journey from one of her earliest exhibitions in this very museum in 1994 to the present day. Thirty-two years later, she was awarded the <em>Lëtzebuerger Konschtpräis</em> by the Ministry of Culture, recognising her remarkable contribution to contemporary art, both in Luxembourg and internationally. To mark this occasion, the museum’s <em>Lëtzebuerger Konschtarchiv</em> presents an overview of her work across three decades.",
+    "practice": "Simone Decker (born 1968 in Luxembourg) invites us to see familiar places in unexpected ways. Like opening a curtain, her work encourages us to look beyond the obvious. Through her photography and interventions in public space, she uses humour, surprise and subtle shifts in perspective to question how we look at the world around us. Above all, architecture and urban spaces become starting points for exploration and (re)discovery.",
+    "discovery": "Discovery lies at the heart of Decker's practice. Keep an eye out for models, prototypes and fragments of the artist’s works displayed throughout the museum’s five underground levels as part of the permanent archaeology exhibition.",
+    "level1": "<strong>Level -1:</strong> <em>Chewing gum</em>; model for <em>Genus</em> (to be confirmed); prototype for <em>Ghosts</em>",
+    "level23": "<strong>Levels -2/-3:</strong> Screening of the video <em>Airbag</em> (1998)",
+    "level4": "<strong>Level -4:</strong> Cellophane used for <em>Pavillons de Saint-Nazaire</em>; element from the installation <em>Le grand soufflé</em>",
+    "level5": "<strong>Level -5:</strong> Coat from <em>Whitening</em>; one element from the installation <em>Inlays</em>; model for the installation <em>500 pièces</em>"
+  },
+  "actions": {
+    "videoInterview": "Video interview",
+    "pressRelease": "Press release",
+    "planVisit": "Plan my visit"
+  },
+  "footer": {
+    "partnersAlt": "Ministry of Culture and Lëtzebuerger Konschtpräis"
+  }
+}

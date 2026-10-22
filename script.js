@@ -1,3 +1,4 @@
+import { i18n } from "./src/i18n/i18n.js";
 import { startSimone } from "./src/application/startSimone.js";
 import {
     runModelCComparison
@@ -11,6 +12,7 @@ import {
 
 // Browser entry point only. Application coordination belongs in the application layer.
 const application = startSimone();
+void i18n.start();
 startIdentityBlobPresentation();
 startCurtainEntrance(application);
 
