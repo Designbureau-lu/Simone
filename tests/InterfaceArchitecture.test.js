@@ -109,10 +109,7 @@ test("mobile Screen 1 is 100dvh ordinary flow and the 100dvh curtain is the sole
     assert(/\.arrival-screen-identity\s*\{\s*scroll-snap-align:none;\s*\}/s.test(style));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.curtain-sticky-stage\s*\{[^}]*scroll-snap-align:start;[^}]*scroll-snap-stop:always;/s.test(style));
     assert(/animation:identity-blob-breathe 10s/.test(style));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*align-items:center;[^}]*column-gap:0\.8ch;/s.test(
-        style
-    ));
-    assert(/font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/.test(style));
+    assert(/width:calc\(100vw - 48px\);/.test(style));
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-blob\s*\{[^}]*left:var\(--blob-center-x,72vw\);[^}]*width:96vw;/s.test(
         style
     ));
@@ -177,15 +174,6 @@ test("mobile curtain header presents INDEX without the conversation title", asyn
 test("identity typography and surrounding information use shared authoritative rules", async () => {
     const style = await fetch("../style.css").then((response) => response.text());
 
-    assert(/\.arrival-identity-artist\s*\{[^}]*font-family:"Söhne Mono Buch",monospace;[^}]*font-weight:400;/s.test(
-        style
-    ));
-    assert(/\.arrival-identity-prize,\s*\.arrival-identity-prize-letters\s*\{[^}]*font-family:"Söhne Mono Extraleicht",monospace;[^}]*font-weight:200;/s.test(
-        style
-    ));
-    assert(/\.arrival-identity-prize-digits\s*\{[^}]*font-family:"Söhne Mono Buch",monospace;[^}]*font-weight:400;/s.test(
-        style
-    ));
     assert(/\.arrival-identity-content\s*\{[^}]*grid-template-rows:minmax\(0,1fr\) auto minmax\(0,1fr\);/s.test(
         style
     ));
@@ -200,38 +188,20 @@ test("identity typography and surrounding information use shared authoritative r
     ));
 });
 
-test("identity prize assigns Buch only to the 20 and 26 spans", async () => {
+test("identity title uses the supplied SVG with an accessible text equivalent", async () => {
     const source = await fetch("../index.html").then((response) => response.text());
     const page = new DOMParser().parseFromString(source, "text/html");
-    const prize = page.querySelector(".arrival-identity-prize");
-    const pieces = Array.from(prize.querySelectorAll(":scope > span"));
-
-    equal(pieces[0].querySelector(".arrival-identity-prize-letters")?.textContent, "LETZE");
-    equal(pieces[0].querySelector("strong")?.textContent, "20");
-    equal(pieces[1].textContent, "BUERGER");
-    equal(pieces[2].textContent, "KONSCHT");
-    equal(pieces[3].querySelector(".arrival-identity-prize-letters")?.textContent, "PRAIS");
-    equal(pieces[3].querySelector("strong")?.textContent, "26");
-
-    const livePrize = prize.cloneNode(true);
-    document.body.append(livePrize);
-    const letterSpans = Array.from(livePrize.querySelectorAll(
-        ".arrival-identity-prize-letters"
-    ));
-    const digitSpans = Array.from(livePrize.querySelectorAll(
-        ".arrival-identity-prize-digits"
-    ));
-    for (const letters of letterSpans) {
-        equal(getComputedStyle(letters).fontFamily,
-            '"Söhne Mono Extraleicht", monospace');
-        equal(getComputedStyle(letters).fontWeight, "200");
-    }
-    for (const digits of digitSpans) {
-        equal(getComputedStyle(digits).fontFamily,
-            '"Söhne Mono Buch", monospace');
-        equal(getComputedStyle(digits).fontWeight, "400");
-    }
-    livePrize.remove();
+    const title = page.querySelector("h1.arrival-identity-title");
+    const image = title.querySelector("img");
+    equal(image.getAttribute("src"), "assets/title.svg");
+    equal(image.getAttribute("width"), "830");
+    equal(image.getAttribute("height"), "380");
+    equal(image.getAttribute("alt"), "Simone Decker — Lëtzebuerger Konschtpräis 2026");
+    equal(title.children.length, 1);
+    const svg = await fetch("../assets/title.svg").then((response) => response.text());
+    assert(/viewBox="0 0 830 380"/.test(svg));
+    const style = await fetch("../style.css").then((response) => response.text());
+    assert(/\.arrival-identity-title img\s*\{[^}]*display:block;[^}]*width:100%;[^}]*height:auto;/s.test(style));
 });
 
 test("mobile title fits one intrinsic composition between symmetric margins", async () => {
@@ -243,7 +213,7 @@ test("mobile title fits one intrinsic composition between symmetric margins", as
     assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-language\s*\{[^}]*left:24px;/s.test(
         style
     ));
-    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*position:absolute;[^}]*top:50%;[^}]*left:50%;[^}]*display:grid;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;[^}]*width:max-content;[^}]*transform:translate\(-50%,-50%\);[^}]*font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/s.test(
+    assert(/@media \(max-width:767px\)\s*\{[\s\S]*?\.arrival-identity-title\s*\{[^}]*position:absolute;[^}]*top:50%;[^}]*left:50%;[^}]*display:flex;[^}]*align-items:center;[^}]*height:3\.84em;[^}]*width:calc\(100vw - 48px\);[^}]*transform:translate\(-50%,-50%\);[^}]*font-size:calc\(\(100vw - 48px\) \/ 8\.28\);/s.test(
         style
     ));
     assert(!/@media \(max-width:767px\)[\s\S]*?\.arrival-identity-title\s*\{[^}]*justify-content:space-between;/s.test(
@@ -556,7 +526,7 @@ test("lower information uses the shared type system and constrained body copy", 
     ));
 });
 
-test("desktop Screen 1 identity is live HTML rather than the reference SVG", async () => {
+test("Screen 1 keeps live information around the SVG title", async () => {
     const source = await fetch("../index.html").then((response) => (
         response.text()
     ));
@@ -569,15 +539,8 @@ test("desktop Screen 1 identity is live HTML rather than the reference SVG", asy
         "assets/blop.svg");
     equal(screen.querySelector(".arrival-identity-language").textContent
         .replace(/\s+/g, " ").trim(), "EN FR");
-    equal(screen.querySelector(".arrival-identity-artist").textContent
-        .replace(/\s+/g, " ").trim(), "SIMONE DECKER");
-    equal(screen.querySelector(".arrival-identity-prize").textContent
-        .replace(/\s+/g, " ").trim(), "LETZE20 BUERGER KONSCHT PRAIS26");
-    equal(
-        Array.from(screen.querySelectorAll(".arrival-identity-prize strong"))
-            .map((element) => element.textContent).join("|"),
-        "20|26"
-    );
+    equal(screen.querySelector(".arrival-identity-title img").getAttribute("src"),
+        "assets/title.svg");
     equal(screen.querySelector(".arrival-identity-dates").textContent,
         "13.11.2026 - 21.03.2027");
     equal(screen.querySelector(".arrival-identity-venue").textContent,
@@ -654,10 +617,7 @@ test("desktop identity preserves the authored axis and typographic scales", asyn
     assert(/font:400 var\(--type-information\)\/1\.2 "Söhne Mono Buch",monospace;/.test(
         source
     ));
-    assert(/\.arrival-identity-title\s*\{[^}]*grid-row:2;[^}]*justify-self:center;[^}]*grid-template-columns:max-content max-content;[^}]*column-gap:0\.8ch;/s.test(
-        source
-    ));
-    assert(/\.arrival-identity-artist\s*\{[^}]*align-self:center;[^}]*justify-self:end;[^}]*text-align:right;/s.test(
+    assert(/\.arrival-identity-title\s*\{[^}]*grid-row:2;[^}]*justify-self:center;[^}]*display:flex;[^}]*align-items:center;[^}]*height:3\.84em;[^}]*width:8\.28em;/s.test(
         source
     ));
     assert(/\.arrival-identity-language\s*\{[^}]*top:31\.2px;[^}]*left:40px;/s.test(

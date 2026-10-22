@@ -103,28 +103,13 @@ select{
 
 }
 
-.arrival-identity-artist{
+.arrival-identity-title img{
 
-    font-family:"Söhne Mono Buch",monospace;
+    display:block;
 
-    font-weight:400;
+    width:100%;
 
-}
-
-.arrival-identity-prize,
-.arrival-identity-prize-letters{
-
-    font-family:"Söhne Mono Extraleicht",monospace;
-
-    font-weight:200;
-
-}
-
-.arrival-identity-prize-digits{
-
-    font-family:"Söhne Mono Buch",monospace;
-
-    font-weight:400;
+    height:auto;
 
 }
 
@@ -339,48 +324,19 @@ select{
 
         justify-self:center;
 
-        display:grid;
+        display:flex;
 
-        grid-template-columns:max-content max-content;
+        align-items:center;
 
-        column-gap:0.8ch;
+        height:3.84em;
+
+        width:8.28em;
 
         margin:0;
 
         font-size:var(--type-display);
 
-        line-height:0.96;
-
-        letter-spacing:0;
-
-        white-space:nowrap;
-
         transform:translateY(clamp(36px,4.6vh,50px));
-
-    }
-
-    .arrival-identity-artist,
-    .arrival-identity-prize{
-
-        display:flex;
-
-        flex-direction:column;
-
-    }
-
-    .arrival-identity-artist{
-
-        align-self:center;
-
-        justify-self:end;
-
-        text-align:right;
-
-    }
-
-    .arrival-identity-prize{
-
-        justify-self:start;
 
     }
 
@@ -547,56 +503,21 @@ select{
 
         left:50%;
 
-        display:grid;
-
-        grid-template-columns:max-content max-content;
+        display:flex;
 
         align-items:center;
 
-        column-gap:0.8ch;
+        height:3.84em;
 
         margin:0;
 
-        width:max-content;
+        width:calc(100vw - 48px);
 
         transform:translate(-50%,-50%);
 
         color:var(--color-text);
 
         font-size:calc((100vw - 48px) / 8.28);
-
-        line-height:0.96;
-
-        white-space:nowrap;
-
-    }
-
-    .arrival-identity-artist,
-    .arrival-identity-prize{
-
-        display:flex;
-
-        flex-direction:column;
-
-        width:max-content;
-
-        max-width:100%;
-
-    }
-
-    .arrival-identity-artist{
-
-        align-items:flex-end;
-
-        text-align:right;
-
-    }
-
-    .arrival-identity-prize{
-
-        align-items:flex-start;
-
-        text-align:left;
 
     }
 

@@ -1,6 +1,26 @@
 # SIMONE Current State
 
-Updated: 2026-10-15
+Updated: 2026-10-22
+
+## Identity title SVG
+
+- The existing `h1.arrival-identity-title` now contains `assets/title.svg`, with
+  intrinsic 830 × 380 proportions and an accessible image text equivalent.
+  The wrapper retains the former 8.28em desktop width and 3.84em layout height;
+  the image scales proportionally and centers vertically inside that space.
+  Desktop display sizing and the downward `clamp(36px,4.6vh,50px)` offset remain.
+  Mobile retains symmetric 24 px edges, exact screen centering, the existing
+  font-size formula, and the 767/768 px breakpoint. Obsolete text-column rules
+  were removed; the blob, dates, venue, language selector, and curtain were not
+  edited.
+- Headless Chrome before/after screenshots and layout measurements at 320,
+  390, 768, 1440, and 1920 px confirm matching centers and widths within browser
+  rounding. Surrounding date/venue positions differ by at most 0.02 px.
+  The supplied SVG has diacritics absent from the former HTML text, subtle
+  glyph/spacing differences, and a roughly 1.27% shorter image box than the
+  former four-line title box. It is displayed without cropping or distortion.
+- Updated identity assertions for the SVG while retaining surrounding layout
+  checks. All seven browser test pages pass (219/219 checks). No commit or push.
 
 ## Landing page editorial content
 
