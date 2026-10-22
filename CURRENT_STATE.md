@@ -2,6 +2,21 @@
 
 Updated: 2026-10-22
 
+## Two-state editorial typography
+
+- The three editorial sections stack below 1120 px with 40 px headings and
+  19.2 px body text. At 1120 px they switch together to two columns with
+  46.08 px headings and 24 px body text. Above 1440 px the existing 3.2vw
+  heading scaling continues toward 64 px. Narrow-mobile heading fit remains.
+- Typography variables are scoped to `.editorial-section`; existing fonts,
+  weights, line-height ratios, padding, margins, and gap rules are retained.
+  Identity, curtain, exhibition/opening information, and footer are unchanged.
+- EN/FR checked at 390, 768, 1024, 1119, 1120, 1200, 1440, and 1920 px:
+  no heading/body overlap or horizontal overflow. Existing 390/1440/1920 px
+  typography matches the previous CSS. All 233 browser tests pass.
+  Screenshots capture both languages at the 1119/1120 px transition and 1440 px.
+  Changes are uncommitted; no push.
+
 ## Supplied French editorial copy
 
 - `locales/fr.json` now uses the supplied Presentation paragraphs, four artwork

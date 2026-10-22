@@ -918,6 +918,10 @@ select{
 
 .editorial-section{
 
+    --type-section:2.5rem;
+
+    --type-body:1.2rem;
+
     display:flex;
 
     flex-direction:column;
@@ -1274,7 +1278,7 @@ select{
 
 }
 
-@media (min-width:768px) and (max-width:1023px){
+@media (min-width:768px) and (max-width:1119px){
 
     .editorial-section{
 
@@ -1298,6 +1302,18 @@ select{
     .editorial-actions{
 
         order:1;
+
+    }
+
+}
+
+@media (min-width:1120px){
+
+    .editorial-section{
+
+        --type-section:clamp(2.88rem,3.2vw,4rem);
+
+        --type-body:1.5rem;
 
     }
 
