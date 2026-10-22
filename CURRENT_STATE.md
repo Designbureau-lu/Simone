@@ -2,6 +2,18 @@
 
 Updated: 2026-10-22
 
+## Current 48-project curtain export
+
+- The updated `public/SIMONE-export/` contains 48 projects, Pages 1–48,
+  with 48 matching JPEGs in each source tier. Its 136 columns define
+  68,000 × 2,500 intrinsic units. Historical export entries below describe
+  earlier snapshots and are retained unchanged.
+- Both SOURCE A and SOURCE B load through the existing production scheduler:
+  all 96 images decode and match their expected dimensions. The live page
+  exposes all 48 projects in navigation. No curtain implementation, rendering,
+  animation, layout, or other website feature changed.
+- `ARCHITECTURE.md` now records the current project count and intrinsic width.
+
 ## Two-state editorial typography
 
 - The three editorial sections stack below 1120 px with 40 px headings and

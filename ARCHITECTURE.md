@@ -139,8 +139,8 @@ Canvas
 
 SIMONE keeps two horizontal coordinate systems explicit:
 
-- **Intrinsic artwork/project space:** 38 ProjectCatalog records concatenate
-  directly into 56,500 immutable intrinsic columns. Each project's width is
+- **Intrinsic artwork/project space:** 48 ProjectCatalog records concatenate
+  directly into 68,000 immutable intrinsic columns. Each project's width is
   `Columns × 500`, and its image boundary is its project boundary.
 - **Curtain geometry:** geometry maps those same source columns into projected
   fold positions. SOURCE A/B raster resolution never changes this space.
