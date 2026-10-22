@@ -2,6 +2,18 @@
 
 Updated: 2026-10-22
 
+## Desktop footer contact alignment
+
+- Desktop-only rules inside the existing `min-width:768px` media query place
+  the contact details and visit button in successive full-width grid rows,
+  left-aligned with the museum logo. Logo dimensions/positions, typography,
+  line spacing, 48 px row gaps, footer height, and background remain unchanged.
+  No markup, SVG assets, JavaScript, or mobile styles changed.
+- Headless Chrome checked 320, 390, 768, 1440, and 1920 px widths: no horizontal
+  overflow; desktop museum/contact/button left edges all measure 150 px.
+  Mobile before/after screenshots are byte-identical at both 320 and 390 px.
+  All seven existing browser test pages pass (219/219). No commit or push.
+
 ## Footer logo layout
 
 - The footer now uses the supplied `assets/logomusee.svg` (290 × 135) and

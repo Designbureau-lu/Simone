@@ -1156,6 +1156,22 @@ select{
 
     }
 
+    .exhibition-footer > .exhibition-contact{
+
+        grid-column:1 / -1;
+
+        text-align:left;
+
+    }
+
+    .exhibition-visit-action{
+
+        grid-column:1 / -1;
+
+        justify-self:start;
+
+    }
+
     .editorial-section{
 
         display:grid;
