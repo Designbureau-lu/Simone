@@ -5,14 +5,33 @@ The site remains one HTML page. `en.json` and `fr.json` contain public text;
 
 ## Current French status
 
-**No approved French copy has been supplied. Every value in `fr.json` is an
-exact copy of the existing English source, not a French translation.**
+Presentation (three paragraphs and four artwork-location entries) and the
+Lëtzebuerger Konschtpräis description now use the supplied French copy verbatim.
+Artwork titles retain italic emphasis; floor labels retain bold emphasis.
+The supplied punctuation, capitalization, apostrophes, numbers, and the final
+italicized `500 pièces.` are intentional and have not been editorially corrected.
+Copy is stored as Unicode text with supported inline tags, without copied HTML
+character entities or editorial prefixes.
 
-`_meta.englishPlaceholders` explicitly lists every pending French key. The
-biography remains the existing Lorem Ipsum placeholder in both files.
-Selecting FR selects and remembers the French locale, but currently displays
-English. Pending text is marked `lang="en"` for screen readers; the selected
-document locale is `fr`. Developer diagnostics and Dev controls stay English.
+Public interface/accessibility labels now have straightforward French
+equivalents, including `Communiqué de presse`, `Entretien vidéo`,
+`Planifier ma visite`, `EXPOSITION`, and `OUVERTURE`. INDEX, institution and
+artwork names, dates, links, and logo lettering remain unchanged.
+
+**Biography is still pending.** The supplied “À venir” is an editorial status,
+not website copy. `artist.biography` retains the original Lorem Ipsum and is the
+only key in `_meta.englishPlaceholders`. It continues to be marked `lang="en"`;
+approved French content is marked `lang="fr"`. Developer controls stay English.
+
+Editorial follow-up:
+
+- Supply the approved French biography before replacing the existing placeholder.
+- Confirm whether the event heading should eventually read `VERNISSAGE`; the
+  current `OUVERTURE` is a literal translation of the existing `OPENING` label,
+  without inventing an event classification.
+- Confirm the official museum-name orthography in the exhibition-location line.
+  The existing `Nationalmusee um Feschmaart` proper-name spelling is preserved;
+  the approved identity and footer wording have not been altered.
 
 ## Editing copy
 
@@ -72,6 +91,5 @@ dictionary before it changes the page.
 
 Review EN and FR at 320, 390, 768, 1440, and 1920 px, including keyboard focus,
 open project menus, switching at a nonzero scroll position, and text overflow.
-Current French placeholders have the same layout as English. Approved French
-copy may wrap differently and change editorial height; check it again rather
-than changing typography or shrinking text automatically.
+French copy wraps differently and changes editorial height. Recheck future
+copy updates rather than changing typography or shrinking text automatically.

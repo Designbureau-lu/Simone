@@ -2,94 +2,61 @@
   "_meta": {
     "locale": "fr",
     "englishPlaceholders": [
-      "identity.label",
-      "language.label",
-      "navigation.projects",
-      "navigation.open",
-      "navigation.temporary",
-      "navigation.chooseLabel",
-      "navigation.previous",
-      "navigation.next",
-      "navigation.close",
-      "navigation.choose",
-      "navigation.empty",
-      "navigation.position",
-      "editorial.label",
-      "artist.related",
-      "artist.biography",
-      "prize.related",
-      "prize.description",
-      "visit.label",
-      "visit.exhibitionHeading",
-      "visit.openingHeading",
-      "visit.description",
-      "visit.location",
-      "presentation.heading",
-      "presentation.intro",
-      "presentation.practice",
-      "presentation.discovery",
-      "presentation.level1",
-      "presentation.level23",
-      "presentation.level4",
-      "presentation.level5",
-      "actions.videoInterview",
-      "actions.pressRelease",
-      "actions.planVisit",
-      "footer.partnersAlt"
+      "artist.biography"
     ]
   },
   "identity": {
-    "label": "Exhibition identity"
+    "label": "Identité de l’exposition"
   },
   "language": {
-    "label": "Languages"
+    "label": "Langues"
   },
   "navigation": {
-    "projects": "Projects",
-    "open": "Open project list",
-    "temporary": "Temporary semantic navigation",
-    "chooseLabel": "Choose project",
-    "previous": "PREVIOUS",
-    "next": "NEXT",
-    "close": "Close project list",
-    "choose": "Choose project…",
-    "empty": "Project — / —",
-    "position": "Project {current} / {total} — {title}"
+    "projects": "Projets",
+    "open": "Ouvrir la liste des projets",
+    "temporary": "Navigation sémantique temporaire",
+    "chooseLabel": "Choisir un projet",
+    "previous": "PRÉCÉDENT",
+    "next": "SUIVANT",
+    "close": "Fermer la liste des projets",
+    "choose": "Choisir un projet…",
+    "empty": "Projet — / —",
+    "position": "Projet {current} / {total} — {title}"
   },
   "editorial": {
-    "label": "Exhibition information"
+    "label": "Informations sur l’exposition"
   },
   "artist": {
-    "related": "Related Simone Decker content",
+    "related": "Contenus associés à Simone Decker",
     "biography": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sagittis, mauris ac tristique dictum, orci sem volutpat erat, vel tincidunt urna velit eu libero. Sed sit amet ipsum et lorem elementum elementum at quis mauris. Phasellus ipsum tortor, fermentum nec vestibulum id, finibus a tortor. Donec nec sollicitudin justo. Integer facilisis fermentum dui quis ultrices. Nulla rutrum fringilla viverra. Suspendisse tempus viverra enim id ultricies. Cras risus tortor, dignissim eu elementum non, bibendum vel enim. Aliquam condimentum neque eu dolor ultricies faucibus. Nam id iaculis lorem. Sed consectetur odio ut nunc imperdiet cursus. Nam id bibendum nisi. Ut id condimentum purus. Suspendisse nec porta metus. Integer pellentesque vulputate leo sit amet faucibus. Vivamus iaculis feugiat magna iaculis sollicitudin. Cras velit libero, maximus non neque molestie, tristique tristique lacus. Curabitur nibh dolor, tincidunt eu sodales ut, lobortis quis lectus."
   },
   "prize": {
-    "related": "Related prize content",
-    "description": "The Lëtzebuerger Konschtpräis is the biennial art award, established in 2022 by Luxembourg’s Ministry for Culture. The prize includes €10,000 and honours an artist for their work and ongoing commitment to Luxembourg’s art scene. The artist must be Luxembourgish, live in Luxembourg or have a strong connection with the country. After Berthe Lutgen received the prize in 2022 and Marc-Henri Reckinger in 2024, a professional jury selected Simone Decker as the 2026 laureate."
+    "related": "Contenus associés au prix",
+    "description": "Le Lëtzebuerger Konschtpräis est le prix d’art biennal créé en 2022 par le ministère de la Culture du Luxembourg. Doté de 10 000 €, il récompense un artiste pour son œuvre et son engagement continu en faveur de la scène artistique luxembourgeoise. L’artiste doit être de nationalité luxembourgeoise, résider au Luxembourg ou entretenir un lien étroit avec le pays. Après l’attribution du prix à Berthe Lutgen en 2022 et à Marc-Henri Reckinger en 2024, un jury professionnel a désigné Simone Decker comme lauréate de l’édition 2026."
   },
   "visit": {
-    "label": "Exhibition dates",
-    "exhibitionHeading": "EXHIBITION",
-    "openingHeading": "OPENING",
-    "description": "Temporary exhibition",
-    "location": "at the Nationalmusee um Feschmaart"
+    "label": "Dates de l’exposition",
+    "exhibitionHeading": "EXPOSITION",
+    "openingHeading": "OUVERTURE",
+    "description": "Exposition temporaire",
+    "location": "au Nationalmusee um Feschmaart"
   },
   "presentation": {
-    "heading": "PRESENTATION",
-    "intro": "This presentation traces Simone Decker's artistic journey from one of her earliest exhibitions in this very museum in 1994 to the present day. Thirty-two years later, she was awarded the <em>Lëtzebuerger Konschtpräis</em> by the Ministry of Culture, recognising her remarkable contribution to contemporary art, both in Luxembourg and internationally. To mark this occasion, the museum’s <em>Lëtzebuerger Konschtarchiv</em> presents an overview of her work across three decades.",
-    "practice": "Simone Decker (born 1968 in Luxembourg) invites us to see familiar places in unexpected ways. Like opening a curtain, her work encourages us to look beyond the obvious. Through her photography and interventions in public space, she uses humour, surprise and subtle shifts in perspective to question how we look at the world around us. Above all, architecture and urban spaces become starting points for exploration and (re)discovery.",
-    "discovery": "Discovery lies at the heart of Decker's practice. Keep an eye out for models, prototypes and fragments of the artist’s works displayed throughout the museum’s five underground levels as part of the permanent archaeology exhibition.",
-    "level1": "<strong>Level -1:</strong> <em>Chewing gum</em>; model for <em>Genus</em> (to be confirmed); prototype for <em>Ghosts</em>",
-    "level23": "<strong>Levels -2/-3:</strong> Screening of the video <em>Airbag</em> (1998)",
-    "level4": "<strong>Level -4:</strong> Cellophane used for <em>Pavillons de Saint-Nazaire</em>; element from the installation <em>Le grand soufflé</em>",
-    "level5": "<strong>Level -5:</strong> Coat from <em>Whitening</em>; one element from the installation <em>Inlays</em>; model for the installation <em>500 pièces</em>"
+    "heading": "PRÉSENTATION",
+    "intro": "Cette présentation retrace le parcours artistique de Simone Decker, depuis l'une de ses premières expositions dans ce musée en 1994 jusqu'à aujourd'hui. Trente-deux ans plus tard, elle s'est vu décerner le <em>Lëtzebuerger Konschtpräis</em> du ministère de la Culture, qui récompense sa contribution remarquable à l'art contemporain, tant au Luxembourg comme à l'international. À cette occasion, le <em>Lëtzebuerger Konschtarchiv</em> du musée présente un aperçu de son œuvre sur plus de trois décennies.",
+    "practice": "Simone Decker (née en 1968 au Luxembourg) nous invite à porter un regard nouveau sur des lieux qui nous sont familiers. À la manière d’un rideau qui s’ouvre, son œuvre nous encourage à aller au-delà de l'évidence. À travers la photographie et des interventions dans l'espace public, elle fait appel à l'humour, à la surprise et à de subtils déplacements du regard pour questionner notre manière de percevoir le monde qui nous entoure. L'architecture et les espaces urbains deviennent ainsi les points de départ d'expériences de surprise et de (re)découverte.",
+    "discovery": "La découverte est au cœur de la démarche de Simone Decker. En parcourant le musée, laissez-vous guider par votre curiosité : des modèles, prototypes et fragments d’œuvres de l’artiste se cachent au fil des cinq niveaux souterrains du musée, au sein de l’exposition permanente d’archéologie.",
+    "level1": "<strong>Etage -1</strong> : <em>Chewing gum</em> ; modèle de <em>Genus</em> (à confirmer) ; prototype pour <em>Ghosts</em>",
+    "level23": "<strong>Etage -2/-3</strong> : Projection de la vidéo <em>Airbag</em> (1998)",
+    "level4": "<strong>Etage -4</strong> : Cellophane utilisé pour <em>Pavillons de Saint-Nazaire</em> ; élément de l’installation <em>Le grand soufflé</em>",
+    "level5": "<strong>Etage -5</strong> : manteau de l’œuvre <em>Whitening</em> ; 1 élément de l’installation <em>Inlays</em> ; Modèle de l‘installation <em>500 pièces.</em>"
   },
   "actions": {
-    "videoInterview": "Video interview",
-    "pressRelease": "Press release",
-    "planVisit": "Plan my visit"
+    "videoInterview": "Entretien vidéo",
+    "pressRelease": "Communiqué de presse",
+    "planVisit": "Planifier ma visite"
   },
   "footer": {
-    "partnersAlt": "Ministry of Culture and Lëtzebuerger Konschtpräis"
+    "partnersAlt": "Ministère de la Culture et Lëtzebuerger Konschtpräis"
   }
 }

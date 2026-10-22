@@ -49,9 +49,31 @@ test("production JSON covers every binding and dynamic key; French placeholders 
     assert(f.errors.length === 0);
     assert(f.page.documentElement.lang === "fr");
     const data = JSON.parse(fr);
-    assert(data._meta.englishPlaceholders.length > 30);
-    assert(f.page.querySelector('[data-i18n="actions.planVisit"]').lang === "en");
-    assert(f.page.querySelector(".editorial-section").lang === "en");
+    assert(data._meta.englishPlaceholders.join("|") === "artist.biography");
+    assert(f.page.querySelector('[data-i18n="actions.planVisit"]').lang === "fr");
+    assert(f.page.querySelector(".editorial-section").lang === "fr");
+    assert(f.page.querySelector('[data-i18n-rich="artist.biography"]').lang === "en");
+});
+
+test("French editorial copy preserves emphasis, pending biography, and the existing press-release link", async () => {
+    const f = fixture();
+    await f.controller.start();
+    const href = f.page.querySelector(".press-release-link").getAttribute("href");
+    const biography = f.page.querySelector('[data-i18n-rich="artist.biography"]').textContent;
+    await f.controller.setLanguage("fr");
+    assert(f.page.querySelector('[data-i18n-rich="presentation.intro"] em').textContent === "Lëtzebuerger Konschtpräis");
+    const floors = ["level1", "level23", "level4", "level5"].map((key) => (
+        f.page.querySelector(`[data-i18n-rich="presentation.${key}"] strong`).textContent
+    ));
+    assert(floors.join("|") === "Etage -1|Etage -2/-3|Etage -4|Etage -5");
+    assert(f.page.querySelector('[data-i18n-rich="presentation.level1"] em').textContent === "Chewing gum");
+    assert(f.page.querySelector('[data-i18n-rich="presentation.level5"]').lastElementChild.textContent === "500 pièces.");
+    assert(f.page.querySelector('[data-i18n="actions.pressRelease"]').textContent === "Communiqué de presse");
+    assert(f.page.querySelector(".press-release-link").getAttribute("href") === href);
+    assert(f.page.querySelector('[data-i18n-rich="artist.biography"]').textContent === biography);
+    assert(!/À venir|Press release link:|FR:|&#(?:x[0-9a-f]+|[0-9]+);/i.test(f.page.body.textContent));
+    await f.controller.setLanguage("en");
+    assert(f.page.querySelector('[data-i18n="actions.pressRelease"]').textContent === "Press release");
 });
 
 test("English JSON agrees with the original HTML fallback, including inline emphasis", async () => {

@@ -2,12 +2,40 @@
 
 Updated: 2026-10-22
 
+## Supplied French editorial copy
+
+- `locales/fr.json` now uses the supplied Presentation paragraphs, four artwork
+  locations, and Lëtzebuerger Konschtpräis description verbatim. Floor labels
+  use `strong`, artwork titles use `em`, and Unicode accents/apostrophes are
+  retained without copied HTML entities. No editorial prefixes are displayed.
+  `artist.biography` alone remains the existing English/Lorem Ipsum placeholder;
+  the supplied pending notice is not displayed. Translation documentation records
+  that pending biography and wording follow-ups for the opening-event label
+  and existing museum-name orthography.
+- Remaining public interface/accessibility labels have direct French equivalents.
+  English JSON, HTML structure, press-release URL, links, inactive actions,
+  project data, animation logic, and i18n code are unchanged. Included the
+  previously approved selector-only styling: active Buch 400, inactive
+  Extraleicht 200, `font-synthesis:none`, driven by existing `aria-pressed`.
+- EN/FR checked in Chrome at 320, 390, 768, 1440, and 1920 px. No horizontal
+  overflow; English section boxes remain unchanged. French text increases
+  editorial height through natural wrapping. The existing 768 px desktop
+  heading/body overlap is visible in both English and French; layout rules
+  were preserved as requested. All new Unicode characters exist in the three
+  existing production fonts. Curtain/navigation state and artwork identities
+  survive language switching, including open-menu focus, nonzero scroll, and
+  an actual selected third project in READ mode at all five widths.
+- All seven existing browser test pages pass (219/219), plus 14 translation
+  tests (233 total), including French emphasis, pending biography, restored
+  English, entity/prefix exclusion, and press-release URL preservation.
+
 ## EN/FR translation infrastructure
 
 - Added 34 public text keys in `locales/en.json` and `locales/fr.json` and a
   dependency-free `src/i18n/i18n.js` module. English is copied from the existing
-  site. Every French value is currently an explicit English placeholder,
-  listed in `_meta.englishPlaceholders`; no French editorial copy was invented.
+  site. Initially every French value was an explicit English placeholder,
+  listed in `_meta.englishPlaceholders`; supplied French copy now replaces
+  those entries except the pending biography, as recorded above.
   `locales/README.md` documents copy editing, placeholder approval, fallback
   synchronization, and validation.
 - EN/FR are native accessible buttons with `aria-pressed`, language autonyms,

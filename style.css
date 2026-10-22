@@ -155,7 +155,21 @@ select{
 
     font:inherit;
 
+    font-family:"Söhne Mono Extraleicht",monospace;
+
+    font-weight:200;
+
+    font-synthesis:none;
+
     cursor:pointer;
+
+}
+
+.arrival-identity-language button[aria-pressed="true"]{
+
+    font-family:"Söhne Mono Buch",monospace;
+
+    font-weight:400;
 
 }
 
