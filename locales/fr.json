@@ -37,9 +37,9 @@
   "visit": {
     "label": "Dates de l’exposition",
     "exhibitionHeading": "PRÉSENTATION",
-    "openingHeading": "OUVERTURE",
-    "description": "Exposition temporaire",
-    "location": "au Nationalmusee um Feschmaart"
+    "openingHeading": "VERNISSAGE",
+    "description": "Présentation",
+    "location": "au Nationalmusée um Fëschmaart"
   },
   "presentation": {
     "heading": "PRÉSENTATION",

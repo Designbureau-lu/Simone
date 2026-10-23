@@ -2,6 +2,15 @@
 
 Updated: 2026-10-23
 
+## Approved visitor information copy
+
+- Visitor information now reads Presentation / Présentation followed by
+  at the / au Nationalmusée um Fëschmaart. Removed the Kapellchen line.
+  The French opening heading is VERNISSAGE; English remains OPENING.
+- Updated the two locale files and English HTML fallback, retaining existing
+  line-break structure, dates, times, styles, and functionality. The coming-soon
+  page is unchanged. Translation documentation records the approved wording.
+
 ## Standalone coming-soon page
 
 - `coming-soon.html` isolates the existing opening identity screen without the

@@ -15,7 +15,7 @@ character entities or editorial prefixes.
 
 Public interface/accessibility labels now have straightforward French
 equivalents, including `Communiqué de presse`, `Entretien vidéo`,
-`Planifier ma visite`, `EXPOSITION`, and `OUVERTURE`. INDEX, institution and
+`Planifier ma visite`, `PRÉSENTATION`, and `VERNISSAGE`. INDEX, institution and
 artwork names, dates, links, and logo lettering remain unchanged.
 
 **Biography is still pending.** The supplied “À venir” is an editorial status,
@@ -26,12 +26,10 @@ approved French content is marked `lang="fr"`. Developer controls stay English.
 Editorial follow-up:
 
 - Supply the approved French biography before replacing the existing placeholder.
-- Confirm whether the event heading should eventually read `VERNISSAGE`; the
-  current `OUVERTURE` is a literal translation of the existing `OPENING` label,
-  without inventing an event classification.
-- Confirm the official museum-name orthography in the exhibition-location line.
-  The existing `Nationalmusee um Feschmaart` proper-name spelling is preserved;
-  the approved identity and footer wording have not been altered.
+
+Client-approved visitor copy uses `Presentation at the Nationalmusée um
+Fëschmaart` / `Présentation au Nationalmusée um Fëschmaart`, without Kapellchen.
+The French event heading is `VERNISSAGE`; the English heading remains `OPENING`.
 
 ## Editing copy
 
@@ -40,8 +38,8 @@ Editorial follow-up:
    from `fr.json`'s `_meta.englishPlaceholders` array. Entries still listed there
    must remain identical to English. Mixed approved/pending copy is supported.
 3. Preserve artwork titles, proper names, dates, addresses, phone/email,
-   asset paths, project catalog data, and link destinations. The current
-   unaccented museum wording in `visit.location` is intentionally preserved.
+   asset paths, project catalog data, and link destinations. Preserve the exact
+   accented museum name `Nationalmusée um Fëschmaart` in `visit.location`.
 4. Plain labels accept text only. Paragraphs bound with `data-i18n-rich` accept
    only properly nested `<em>` and `<strong>` tags, without attributes.
    Links, headings, lists, scripts, styles, and arbitrary HTML are rejected.
