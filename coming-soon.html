@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coming soon — KONSCHTPRÄIS 2026</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="assets/favicon.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .coming-soon-label {
+            position: absolute;
+            top: calc(100% + 1em);
+            left: 0;
+            width: 100%;
+            font: inherit;
+        }
+    </style>
+</head>
+
+<body>
+
+<main class="arrival-screen arrival-screen-identity" aria-label="Exhibition identity">
+    <div class="arrival-identity-blob" data-identity-blob aria-hidden="true">
+        <div class="arrival-identity-blob-pose">
+            <img src="assets/blop.svg" alt="">
+        </div>
+    </div>
+    <div class="arrival-identity-content">
+        <h1 class="arrival-identity-title">
+            <img src="assets/title.svg" width="830" height="380"
+                 alt="Simone Decker — Lëtzebuerger Konschtpräis 2026">
+        </h1>
+        <p class="arrival-identity-dates">13.11.2026 - 21.03.2027</p>
+        <p class="arrival-identity-venue">NATIONALMUSÉE UM FËSCHMAART <span class="coming-soon-label" lang="en">COMING SOON</span></p>
+    </div>
+</main>
+
+<script type="module">
+    import { startIdentityBlobPresentation } from "./src/prototypes/identity/startIdentityBlobPresentation.js";
+
+    startIdentityBlobPresentation();
+</script>
+</body>
+</html>

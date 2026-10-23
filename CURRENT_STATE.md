@@ -1,6 +1,17 @@
 # SIMONE Current State
 
-Updated: 2026-10-22
+Updated: 2026-10-23
+
+## Standalone coming-soon page
+
+- `coming-soon.html` isolates the existing opening identity screen without the
+  language selector, curtain, editorial content, navigation, or redirects.
+  It reuses the shared stylesheet, fonts, SVGs, and identity blob presentation.
+  COMING SOON sits below the museum name without shifting existing content.
+- Checked 320, 390, 768, 1440, and 1920 px widths, plus a 390 × 667 px screen:
+  title/date/venue geometry matches the main page, with no overflow or curtain
+  artwork requests. All 233 existing browser tests pass. Main website files
+  remain unchanged. Awaiting visual approval; no commit or push.
 
 ## Current 48-project curtain export
 
