@@ -1,6 +1,34 @@
 # SIMONE Current State
 
-Updated: 2026-10-23
+Updated: 2026-11-02
+
+## Final bilingual Presentation and biography copy
+
+- Presentation EN/FR copy and English HTML fallback use the final supplied
+  text, three paragraphs, two bold museum-section labels, and eight separate
+  floor entries with supplied emphasis and Unicode punctuation.
+- Review found the biography still contained Lorem ipsum. Replaced both
+  locales and English HTML fallback with the approved biography; removed its
+  French English-placeholder flag. Existing rich-text bindings and language
+  switching are reused; styles, geometry and animations remain unchanged.
+- Validation: 14/15 translation tests passed under a DOM emulator, including
+  approved biography and PDF label switching, key coverage, fallback parity and
+  museum-floor emphasis. The native-button test is blocked by the emulator's
+  default tabIndex (-1 rather than browser-native 0). Two relevant interface
+  architecture assertions and PDF signature/EOF/path checks passed; diff checks
+  passed. No browser was available; native interaction and visual QA pending.
+
+## Presentation PDF download
+
+- Added the existing pill-style download action directly below the Presentation
+  heading in EN and FR, using the existing translation system and original
+  filename `SIMONE-presentation-download.pdf` in `public/`. Shared hover, focus,
+  and reduced-motion styles apply; scoped ordering keeps it below the heading
+  at stacked widths. Other section styles and behavior remain unchanged.
+- Static checks passed for PDF signature/path, filename, exact translated labels,
+  dictionary key parity, and HTML translation bindings. Updated existing action
+  counts in interface assertions. Browser tests and visual desktop/mobile QA
+  could not run because this session has no available browser.
 
 ## Approved visitor information copy
 

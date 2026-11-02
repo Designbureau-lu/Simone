@@ -1019,6 +1019,21 @@ select{
 
 }
 
+/* Keep the presentation download immediately below its heading when stacked. */
+.presentation-section > .editorial-body{
+
+    order:2;
+
+}
+
+.editorial-actions.presentation-actions{
+
+    order:1;
+
+    align-self:flex-end;
+
+}
+
 .information-pill{
 
     min-height:48px;
@@ -1041,7 +1056,8 @@ select{
 
 }
 
-.press-release-link{
+.press-release-link,
+.presentation-download-link{
 
     display:inline-flex;
 
@@ -1062,13 +1078,16 @@ select{
 }
 
 .press-release-link:hover .press-release-arrow,
-.press-release-link:focus-visible .press-release-arrow{
+.press-release-link:focus-visible .press-release-arrow,
+.presentation-download-link:hover .press-release-arrow,
+.presentation-download-link:focus-visible .press-release-arrow{
 
     transform:translate(2px,-2px);
 
 }
 
-.press-release-link:focus-visible{
+.press-release-link:focus-visible,
+.presentation-download-link:focus-visible{
 
     outline:2px solid currentColor;
 
@@ -1078,7 +1097,8 @@ select{
 
 @media (prefers-reduced-motion:reduce){
 
-    .press-release-link .press-release-arrow{
+    .press-release-link .press-release-arrow,
+    .presentation-download-link .press-release-arrow{
 
         transition:none;
 

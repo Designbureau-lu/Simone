@@ -5,27 +5,21 @@ The site remains one HTML page. `en.json` and `fr.json` contain public text;
 
 ## Current French status
 
-Presentation (three paragraphs and four artwork-location entries) and the
-Lëtzebuerger Konschtpräis description now use the supplied French copy verbatim.
-Artwork titles retain italic emphasis; floor labels retain bold emphasis.
-The supplied punctuation, capitalization, apostrophes, numbers, and the final
-italicized `500 pièces.` are intentional and have not been editorially corrected.
-Copy is stored as Unicode text with supported inline tags, without copied HTML
-character entities or editorial prefixes.
+Presentation now contains the final supplied EN/FR copy: three paragraphs,
+two bold museum-section labels, and eight separate floor entries. Artwork
+italics and floor-label emphasis follow the supplied copy exactly, including
+the unitalicized French Pavillons de Saint-Nazaire and punctuation outside
+500 pièces. Copy uses Unicode text and supported inline tags, without copied
+HTML character entities.
 
 Public interface/accessibility labels now have straightforward French
 equivalents, including `Communiqué de presse`, `Entretien vidéo`,
 `Planifier ma visite`, `PRÉSENTATION`, and `VERNISSAGE`. INDEX, institution and
 artwork names, dates, links, and logo lettering remain unchanged.
 
-**Biography is still pending.** The supplied “À venir” is an editorial status,
-not website copy. `artist.biography` retains the original Lorem Ipsum and is the
-only key in `_meta.englishPlaceholders`. It continues to be marked `lang="en"`;
-approved French content is marked `lang="fr"`. Developer controls stay English.
-
-Editorial follow-up:
-
-- Supply the approved French biography before replacing the existing placeholder.
+Biography now uses the final supplied English and French texts. Neither
+locale has English placeholders; approved French biography is marked `lang="fr"`.
+Developer controls stay English.
 
 Client-approved visitor copy uses `Presentation at the Nationalmusée um
 Fëschmaart` / `Présentation au Nationalmusée um Fëschmaart`, without Kapellchen.
