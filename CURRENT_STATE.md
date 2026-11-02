@@ -2,6 +2,27 @@
 
 Updated: 2026-11-02
 
+## Updated curtain export validation
+
+- Replacement remains 48 projects / 136 columns / 68,000 × 2,500 units.
+  Removed leading U+FEFF from ten catalog titles and twenty matching JPEG
+  filenames, preserving all JPEG bytes and intentional new title/year changes.
+- All four catalog snapshots in available Git history contain no U+FEFF.
+  Original file-leading BOM handling from `107234c` and lowercase/NFC filename
+  generation from `0018858` remain intact. No committed JSX or earlier explicit
+  per-title U+FEFF cleanup was found; the latest export replaced clean data.
+- Installed `Export SIMONE Projects.jsx` and its external backup are identical:
+  Title paragraph contents flow through generic whitespace trimming into both
+  TSV text and filenames, without explicit U+FEFF removal. This supports source
+  title contamination passing through the exporter; live InDesign document
+  contents and which exporter produced this package were not directly verified.
+  No exporter or runtime/parser workaround was introduced.
+- Production parser, source adapters, exact directory membership, and all 96
+  generated JPEG URL references pass. All 96 JPEGs fully decode with expected
+  dimensions. Catalog tests pass 20/20; navigation tests pass 9/9 in Node with
+  filesystem fetch and minimal result/window shims. `git diff --check` passes.
+  No obsolete production curtain references found. Browser visual QA not run.
+
 ## Final bilingual Presentation and biography copy
 
 - Presentation EN/FR copy and English HTML fallback use the final supplied
