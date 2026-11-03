@@ -638,14 +638,24 @@ test("desktop identity preserves the authored axis and typographic scales", asyn
     ));
 });
 
-test("normal page starts with Dev visible and its panel hidden", async () => {
+test("normal page starts with Dev and its panel hidden", async () => {
     const source = await fetch("../index.html").then((response) => (
         response.text()
     ));
     const page = new DOMParser().parseFromString(source, "text/html");
 
     assert(page.getElementById("debugPanel").hidden);
-    assert(!page.getElementById("debugReopen").hidden);
+    assert(page.getElementById("debugReopen").hidden);
+});
+
+test("production debug controls stay hidden and cannot be opened", () => {
+    const panel = document.createElement("aside");
+    panel.innerHTML = '<button type="button" data-debug-close>×</button>';
+    const reopen = document.createElement("button");
+    bindDebugPanel(panel, reopen);
+    assert(panel.hidden && reopen.hidden);
+    reopen.click();
+    assert(panel.hidden && reopen.hidden);
 });
 
 test("debug controls expose the canonical renderer defaults", async () => {
@@ -777,7 +787,7 @@ test("debug panel closes to a small reopen control and restores focus", () => {
     const reopen = document.createElement("button");
     reopen.className = "debug-reopen";
     document.body.append(panel, reopen);
-    bindDebugPanel(panel, reopen);
+    bindDebugPanel(panel, reopen, true);
 
     assert(getComputedStyle(reopen).display !== "none");
     reopen.click();

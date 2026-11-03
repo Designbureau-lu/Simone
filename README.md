@@ -31,3 +31,17 @@ one scene:
 See [SIMONE.md](SIMONE.md) for the design philosophy, architecture, geometry and
 rendering pipelines, intentional approximations, limitations, and research
 directions.
+
+## Public release configuration
+
+`src/config.js` sets `DEVELOPMENT_ENABLED = false`. The DEV button and panel
+stay hidden, including before JavaScript loads; the existing hidden-button CSS
+removes the button from layout. Set the flag to `true` to restore the DEV panel,
+startup console summaries, and `window.runModelCComparison` shortcut. The panel
+and its controls remain in the source. Errors are still reported to the console.
+
+The site is static and needs no build step. Serve the repository root over HTTP
+with JavaScript modules, fonts, locales, `assets/`, and `public/` intact. Relative
+URLs support hosting at a domain root or project subdirectory. GitHub Pages
+automatically deploys pushes to `main`; see `.github/workflows/pages.yml`.
+See [LAUNCH_AUDIT.md](LAUNCH_AUDIT.md) for outstanding launch checks.

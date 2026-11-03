@@ -1,4 +1,5 @@
 import { i18n } from "../i18n/i18n.js";
+import { DEVELOPMENT_ENABLED } from "../config.js";
 import { loadArtwork } from "../artwork/loadArtwork.js";
 import { ImmutableArtwork } from "../artwork/ImmutableArtwork.js";
 import {
@@ -333,13 +334,15 @@ export async function loadManifestArtwork(
             catalog,
             representationId
         );
-        console.info([
-            "Loaded SIMONE-projects.txt artwork catalog",
-            `Loaded at: ${manifestLoadTime()}`,
-            `Projects / images: ${segments.length}`,
-            `Intrinsic width: ${catalog.logicalWidth}`,
-            `Representation: ${representationLabel(representationId)}`
-        ].join("\n"));
+        if (DEVELOPMENT_ENABLED) {
+            console.info([
+                "Loaded SIMONE-projects.txt artwork catalog",
+                `Loaded at: ${manifestLoadTime()}`,
+                `Projects / images: ${segments.length}`,
+                `Intrinsic width: ${catalog.logicalWidth}`,
+                `Representation: ${representationLabel(representationId)}`
+            ].join("\n"));
+        }
         const artwork = ImmutableArtwork.fromMetadata(segments);
         application.initializeArtwork(artwork);
         const initialSegments = application
@@ -432,14 +435,18 @@ export function configureProjectNavigation(
 ) {
     try {
         const navigation = createProjectNavigation(catalog);
-        console.info([
-            "Configured ProjectCatalog navigation",
-            `Projects: ${navigation.projects.length}`,
-            `Intrinsic width: ${navigation.logicalWidth}`
-        ].join("\n"));
+        if (DEVELOPMENT_ENABLED) {
+            console.info([
+                "Configured ProjectCatalog navigation",
+                `Projects: ${navigation.projects.length}`,
+                `Intrinsic width: ${navigation.logicalWidth}`
+            ].join("\n"));
+        }
         application.setProjectNavigation(navigation);
         onUpdate?.();
-        console.info("SIMONE intrinsic project navigation", navigation);
+        if (DEVELOPMENT_ENABLED) {
+            console.info("SIMONE intrinsic project navigation", navigation);
+        }
     } catch (error) {
         application.setProjectNavigation(null);
         onUpdate?.();
@@ -657,11 +664,17 @@ function bindSurfaceControls(controls, application) {
     return updateApplication;
 }
 
-export function bindDebugPanel(panel, reopen) {
+export function bindDebugPanel(panel, reopen, enabled = DEVELOPMENT_ENABLED) {
     const close = panel.querySelector("[data-debug-close]");
     if (!(close instanceof HTMLButtonElement)
         || !(reopen instanceof HTMLButtonElement)) {
         throw new Error("Development panel controls are incomplete.");
+    }
+
+    panel.hidden = true;
+    reopen.hidden = !enabled;
+    if (!enabled) {
+        return;
     }
 
     close.addEventListener("click", () => {

@@ -1,4 +1,5 @@
 import { i18n } from "./src/i18n/i18n.js";
+import { DEVELOPMENT_ENABLED } from "./src/config.js";
 import { startSimone } from "./src/application/startSimone.js";
 import {
     runModelCComparison
@@ -17,4 +18,6 @@ startIdentityBlobPresentation();
 startCurtainEntrance(application);
 
 // Developer measurement entry point for SIMONE's viewport-canvas renderer.
-window.runModelCComparison = () => runModelCComparison(application);
+if (DEVELOPMENT_ENABLED) {
+    window.runModelCComparison = () => runModelCComparison(application);
+}

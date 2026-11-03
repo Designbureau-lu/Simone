@@ -1,6 +1,27 @@
 # SIMONE Current State
 
-Updated: 2026-11-02
+Updated: 2026-11-03
+
+## Pre-launch preparation — finalized locally
+
+- Public DEV UI now defaults off through `src/config.js`:
+  `DEVELOPMENT_ENABLED = false`. HTML starts with the DEV button hidden;
+  binding keeps both button and panel hidden. Existing controls/code remain,
+  and enabling the flag restores DEV, startup summaries and comparison shortcut.
+  No layout, typography, geometry, or artwork changes.
+- Catalog/source validation, all 96 full JPEG decodes/dimensions, static asset
+  and JS checks, PDF parsing, and 104 local HTTP resource requests pass.
+  Node/DOM checks: catalog 20/20, navigation 9/9, interactions 66/66,
+  targeted interface 5/5 (including explicit DEV reactivation), editorial 2/2,
+  translations 14/15 (native tabIndex assertion blocked by emulator). Native
+  browser/canvas/visual QA remains open.
+- `LAUNCH_AUDIT.md` records outstanding checks. Video interview and Plan my visit
+  are intentionally unchanged at the user’s request; the client may supply or
+  replace destinations later. Real browser/mobile and deployed hosting checks
+  remain open; no browser is connected.
+- Reviewed all eight launch-preparation files together. Validation rerun on
+  2026-11-03 confirms the DEV-off default and preserved opt-in functionality.
+  This preparation includes no push or deployment.
 
 ## Updated curtain export validation
 
