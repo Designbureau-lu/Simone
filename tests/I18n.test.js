@@ -235,6 +235,41 @@ test("last request wins and locale dictionaries are cached", async () => {
     assert(counts.en === 1 && counts.fr === 1);
 });
 
+test("visit destination follows the applied language and preserves external-link security", async () => {
+    const destinations = {
+        en: "https://www.nationalmusee.lu/en/visit/practical-infos/opening-times-and-admission",
+        fr: "https://www.nationalmusee.lu/fr/visite/infos-pratiques/horaires-et-tarifs"
+    };
+    for (const initial of ["en", "fr"]) {
+        const f = fixture({ saved: initial });
+        const link = f.page.querySelector(".exhibition-visit-action");
+        const video = f.page.querySelector('[data-i18n="actions.videoInterview"]');
+        assert(link.tagName === "A");
+        assert(link.getAttribute("href") === destinations.en);
+        assert(await f.controller.start());
+        for (const language of [initial, "fr", "en"]) {
+            assert(await f.controller.setLanguage(language));
+            assert(link.getAttribute("href") === destinations[language]);
+            assert(link.getAttribute("target") === "_blank");
+            assert(link.getAttribute("rel") === "noopener noreferrer");
+            assert(f.page.querySelector(".exhibition-visit-action") === link);
+            assert(video.tagName === "BUTTON" && !video.hasAttribute("href"));
+        }
+    }
+});
+
+test("failed language changes retain the current visit destination", async () => {
+    const f = fixture({ load: async (language) => {
+        if (language === "fr") { throw new Error("Unavailable"); }
+        return en;
+    } });
+    assert(await f.controller.start());
+    const link = f.page.querySelector(".exhibition-visit-action");
+    const destination = link.getAttribute("href");
+    assert(!await f.controller.setLanguage("fr"));
+    assert(link.getAttribute("href") === destination);
+});
+
 const failures = [];
 for (const { name, body } of tests) {
     try { await body(); } catch (error) { failures.push(`${name}: ${error.message}`); }

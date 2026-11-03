@@ -46,11 +46,12 @@ Date: 2026-11-03. Local preparation reviewed and validated; no push or deploymen
 
 ## Launch decisions and outstanding verification
 
-1. **Inactive public actions:** Video interview / Entretien vidéo and
-   Plan my visit / Planifier ma visite are visible buttons with no assigned
-   behavior. The user explicitly requested leaving both unchanged for now;
-   the client will probably supply or replace destinations later. This local
-   preparation does not change their visibility, content, or behaviour.
+1. **Video interview remains inactive:** its destination is pending. The visit
+   action was connected on 2026-11-03 to the supplied official EN/FR museum
+   practical-information URLs. It follows the applied language, opens a new tab
+   with `noopener noreferrer`, and retains its existing label and pill styling.
+   Both exact destinations, initial language choices, switching, and failed-load
+   preservation pass translation tests. Native browser QA remains outstanding.
 2. **Browser QA remains required:** no browser is connected to this session.
    Live console errors, responsive rendering/overflow in both languages,
    keyboard focus, Index selection, READ/EXPLORE transitions, desktop drag/wheel,

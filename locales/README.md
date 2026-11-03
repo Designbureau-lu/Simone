@@ -52,7 +52,11 @@ artwork titles/years, date/time values, logos, and their original-language
 lettering are deliberately outside translation. Descriptive accessibility
 labels and logo alternative text are included where wording needs translation.
 
-The existing Video interview and Plan my visit buttons remain inactive.
+Video interview remains inactive. The visit action opens the official museum
+practical-information page in a new tab with `noopener noreferrer`. Its EN/FR
+destinations live in `data-language-href-en` / `data-language-href-fr` on the
+existing anchor; the translation controller updates `href` when it successfully
+applies a language. English HTML provides the no-JavaScript fallback.
 The existing press-release URL is unchanged in both languages.
 
 ## Selection and failure behavior

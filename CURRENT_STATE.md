@@ -2,6 +2,22 @@
 
 Updated: 2026-11-03
 
+## Language-specific museum visit links
+
+- Connected the existing visit pill to the supplied official EN/FR practical
+  information pages. A native anchor retains its classes and label, opens a
+  new tab with `rel="noopener noreferrer"`, and uses an English HTML fallback.
+  The existing i18n application updates the destination with the active language;
+  a failed language request keeps the current destination. Video interview is
+  unchanged. Shared link styles retain the pill presentation and focus outline.
+- Translation checks: 16/17 pass in the DOM emulator, including both initial
+  languages, EN/FR switching, exact URLs, external security attributes, element
+  identity, unchanged video action, and failed-language preservation. The
+  existing native tabIndex test remains blocked by the emulator (not a browser).
+  Targeted interface checks 4/4 and editorial checks 2/2 pass; syntax and diff
+  checks pass. Native browser visual/download QA remains outstanding.
+- Separate update follows pre-launch commit `970aabe`; no push or deployment.
+
 ## Pre-launch preparation — finalized locally
 
 - Public DEV UI now defaults off through `src/config.js`:

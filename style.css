@@ -1057,7 +1057,8 @@ select{
 }
 
 .press-release-link,
-.presentation-download-link{
+.presentation-download-link,
+.exhibition-visit-action{
 
     display:inline-flex;
 
@@ -1087,7 +1088,8 @@ select{
 }
 
 .press-release-link:focus-visible,
-.presentation-download-link:focus-visible{
+.presentation-download-link:focus-visible,
+.exhibition-visit-action:focus-visible{
 
     outline:2px solid currentColor;
 

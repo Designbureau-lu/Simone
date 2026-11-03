@@ -186,6 +186,9 @@ export function createI18n({
     };
     const apply = () => {
         document.documentElement.lang = language;
+        for (const link of document.querySelectorAll("[data-language-href-en][data-language-href-fr]")) {
+            link.setAttribute("href", link.getAttribute(`data-language-href-${language}`));
+        }
         for (const [binding, attribute] of BINDINGS) {
             for (const element of document.querySelectorAll(`[${binding}]`)) {
                 const key = element.getAttribute(binding);
