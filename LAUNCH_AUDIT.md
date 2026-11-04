@@ -44,6 +44,22 @@ Date: 2026-11-03. Local preparation reviewed and validated; no push or deploymen
 - `git diff --check` passes. No curtain pixels, geometry, typography, or layout
   rules were edited. No obsolete production curtain asset references found.
 
+## Museum content review update — 2026-11-04
+
+The requested EN/FR copy, stone location, Étage accents, Konschtlexikon link,
+and presentation-label capitalization are implemented locally. Official visit
+links remain correctly assigned and resolve. The supplied Konschtlexikon URL
+returns HTTP 403 to automated fetching; verify it in a normal browser before
+launch. The exact requested address is retained.
+
+The leaflet wording is deliberately visible for review as a disabled link with
+no href or download. Set `LEAFLET_PREVIEW_ENABLED = false` in `src/config.js`
+before launch if the museum has not supplied the PDF. Video interview remains
+unchanged and inactive. Translation checks pass 17/18 in the emulator; the
+existing native tabIndex check and visual/native browser QA remain outstanding.
+The content update was reviewed and validated for a local commit with the
+leaflet preview kept visible. No push or deployment performed.
+
 ## Launch decisions and outstanding verification
 
 1. **Video interview remains inactive:** its destination is pending. The visit

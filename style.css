@@ -1058,7 +1058,8 @@ select{
 
 .press-release-link,
 .presentation-download-link,
-.exhibition-visit-action{
+.exhibition-visit-action,
+.konschtlexikon-link{
 
     display:inline-flex;
 
@@ -1089,7 +1090,8 @@ select{
 
 .press-release-link:focus-visible,
 .presentation-download-link:focus-visible,
-.exhibition-visit-action:focus-visible{
+.exhibition-visit-action:focus-visible,
+.konschtlexikon-link:focus-visible{
 
     outline:2px solid currentColor;
 
@@ -1213,6 +1215,24 @@ select{
     grid-column:2;
 
     justify-self:end;
+
+}
+
+.editorial-actions.artist-actions{
+
+    flex-direction:column;
+
+    align-items:flex-end;
+
+}
+
+.leaflet-preview-link{
+
+    font:400 0.85rem/1.45 "Söhne Mono Buch",monospace;
+
+    text-decoration:underline;
+
+    cursor:default;
 
 }
 

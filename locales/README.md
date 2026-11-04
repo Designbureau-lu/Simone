@@ -89,3 +89,15 @@ Review EN and FR at 320, 390, 768, 1440, and 1920 px, including keyboard focus,
 open project menus, switching at a nonzero scroll position, and text overflow.
 French copy wraps differently and changes editorial height. Recheck future
 copy updates rather than changing typography or shrinking text automatically.
+
+## Museum communications update (2026-11-04)
+
+Both introductions explicitly name Nationalmusée um Fëschmaart. The coins and
+medals section adds the Étage/Level +2 stone entry with the exact italic title
+Le Va-et-Vient du Mont Saint-Watou. All French floor labels use Étage.
+`actions.downloadPresentation` uses “Download presentation” in EN. The leaflet
+review label uses `actions.downloadLeaflet`; no PDF destination is assigned.
+Its visibility flag is documented in the project README. Konschtlexikon is a
+shared proper-name link above Video interview, with the same URL in both
+languages. The visit destinations continue to follow the successfully applied
+language using the existing localized-link binding.

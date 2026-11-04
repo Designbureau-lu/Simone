@@ -483,7 +483,7 @@ test("lower information is semantic live HTML with section-owned actions", async
             section.querySelectorAll(":scope > .editorial-side > .editorial-actions .information-pill")
                 .length
         )).join("|"),
-        "1|1|1"
+        "1|2|1"
     );
     equal(information.querySelectorAll(":scope > .editorial-section > .editorial-side").length, 3);
     equal(information.querySelectorAll(".visit-information-block").length, 2);
@@ -492,7 +492,7 @@ test("lower information is semantic live HTML with section-owned actions", async
     equal(logos.children[0].getAttribute("src"), "assets/logomusee.svg");
     equal(logos.children[1].getAttribute("src"), "assets/logos.svg");
     assert(Array.from(logos.children).every((image) => image.getAttribute("alt")));
-    equal(information.querySelectorAll(".information-pill").length, 4);
+    equal(information.querySelectorAll(".information-pill").length, 5);
     equal(information.querySelectorAll("h2 img,h2 svg").length, 0);
     equal(
         Array.from(editorialSections).map((section) => (

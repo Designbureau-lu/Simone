@@ -45,3 +45,11 @@ with JavaScript modules, fonts, locales, `assets/`, and `public/` intact. Relati
 URLs support hosting at a domain root or project subdirectory. GitHub Pages
 automatically deploys pushes to `main`; see `.github/workflows/pages.yml`.
 See [LAUNCH_AUDIT.md](LAUNCH_AUDIT.md) for outstanding launch checks.
+
+For the museum's leaflet wording review, `LEAFLET_PREVIEW_ENABLED = true` shows
+an adjacent disabled “Download leaflet” / “Télécharger le dépliant” link beside
+the new stone location. It has no destination while the PDF is pending. Set
+this flag to `false` before launch if the file is not ready. Once supplied, add
+its real `href` and `download` filename to `.leaflet-preview-link`, remove
+`aria-disabled` and the redundant `role`, and use the existing download-link
+styling. Keep the translation labels and source pixels unchanged.

@@ -41,7 +41,7 @@
   },
   "presentation": {
     "heading": "PRESENTATION",
-    "intro": "This presentation traces Simone Decker's artistic journey from one of her earliest exhibitions in this very museum in 1994 to the present day. Thirty-two years later, she was awarded the <em>Lëtzebuerger Konschtpräis</em> by the Ministry of Culture, recognising her remarkable contribution to contemporary art, both in Luxembourg and internationally. To mark this occasion, the museum’s <em>Lëtzebuerger Konschtarchiv</em> presents an overview of her work across three decades.",
+    "intro": "This presentation traces Simone Decker's artistic journey from one of her earliest exhibitions at the Nationalmusée um Fëschmaart in 1994 to the present day. Thirty-two years later, she was awarded the <em>Lëtzebuerger Konschtpräis</em> by the Ministry of Culture, recognising her remarkable contribution to contemporary art, both in Luxembourg and internationally. To mark this occasion, the museum’s <em>Lëtzebuerger Konschtarchiv</em> presents an overview of her work across three decades.",
     "practice": "Simone Decker (born 1968 in Luxembourg) invites us to see familiar places in unexpected ways. Like opening a curtain, her work encourages us to look beyond the obvious. Through her photography and interventions in public space, she uses humour, surprise and subtle shifts in perspective to question how we look at the world around us. Above all, architecture and urban spaces become starting points for exploration and (re)discovery.",
     "discovery": "Discovery lies at the heart of Decker's practice. Keep an eye out for models, prototypes and fragments of the artist’s works displayed throughout the museum’s permanent exhibition.",
     "archaeology": "<strong>Archaeology section (Welcome Building)</strong>",
@@ -49,6 +49,8 @@
     "level23": "<strong>Levels -2/-3:</strong> Screening of the video <em>Airbag</em> (1998)",
     "level4": "<strong>Level -4:</strong> Cellophane used for <em>Pavillons de Saint-Nazaire</em>; element from the installation <em>Le grand soufflé</em>",
     "level5": "<strong>Level -5:</strong> Coat from <em>Whitening</em>; one element from the installation <em>Inlays</em>; model for the installation <em>500 pièces</em>",
+    "coins": "<strong>Coins and medals section (Welcome Building)</strong>",
+    "coinsLevel2": "<strong>Level +2:</strong> Stone used in <em>Le Va-et-Vient du Mont Saint-Watou</em>",
     "crafts": "<strong>Arts and crafts section (Explore Building)</strong>",
     "craftsLevel3": "<strong>Level +3:</strong> <em>Langeweilekern</em>",
     "craftsLevel1": "<strong>Level +1:</strong> Model for <em>Prototype d’espaces infinis</em>",
@@ -56,7 +58,8 @@
     "craftsLevelMinus1": "<strong>Level -1:</strong> Prototype <em>Implantate</em>; Model for <em>Genus</em>"
   },
   "actions": {
-    "downloadPresentation": "Download Presentation",
+    "downloadLeaflet": "Download leaflet",
+    "downloadPresentation": "Download presentation",
     "videoInterview": "Video interview",
     "pressRelease": "Press release",
     "planVisit": "Plan my visit"

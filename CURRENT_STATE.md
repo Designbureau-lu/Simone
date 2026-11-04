@@ -1,6 +1,32 @@
 # SIMONE Current State
 
-Updated: 2026-11-03
+Updated: 2026-11-04
+
+## Museum communications content updates — finalized locally
+
+- EN/FR introduction now names Nationalmusée um Fëschmaart, preserving the
+  remaining copy. Added the Coins and medals / Section monnaies et médailles
+  location and Level/Étage +2 stone entry, retaining the exact italic artwork
+  title `Le Va-et-Vient du Mont Saint-Watou`. All French floor labels use Étage.
+- Added the shared Konschtlexikon link above the unchanged Video interview
+  control, using existing pill typography, external-link focus styles, and
+  `target="_blank" rel="noopener noreferrer"`. Artist actions stack in order
+  at all widths. Presentation download EN label now reads Download presentation;
+  file path and filename remain unchanged. Existing official EN/FR visit URLs
+  and language switching are preserved and tested.
+- Following the latest review instruction, the pending leaflet label is shown
+  adjacent to the new stone entry as a disabled link without href/download.
+  `LEAFLET_PREVIEW_ENABLED = true` in `src/config.js` controls this preview;
+  set false before launch if the PDF is unavailable. HTML defaults hidden;
+  the entry script reveals it only when enabled. No file/destination invented.
+- Translation checks: 17/18 pass in the DOM emulator; only the existing native
+  tabIndex assertion is unsupported. Targeted interface 4/4 and editorial 2/2
+  checks pass, plus leaflet flag on/off, PDF preservation, JS syntax, and diff
+  checks. Both official visit pages resolve. The supplied Konschtlexikon URL
+  returns HTTP 403 to automated fetching; its exact destination is retained.
+  Native browser visual QA remains open because no browser is connected.
+- Reviewed and validated for the museum content commit. The provisional leaflet
+  remains visible as requested; no push or deployment performed.
 
 ## Language-specific museum visit links
 

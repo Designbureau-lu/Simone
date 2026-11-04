@@ -64,7 +64,7 @@ test("French editorial copy preserves emphasis, approved biography, and the exis
     const floors = ["level1", "level23", "level4", "level5", "craftsLevel3", "craftsLevel1", "craftsLevel0", "craftsLevelMinus1"].map((key) => (
         f.page.querySelector(`[data-i18n-rich="presentation.${key}"] strong`).textContent
     ));
-    assert(floors.join("|") === "Etage -1|Etage -2/-3|Etage -4|Etage -5|Étage +3|Étage +1|Étage 0|Étage -1");
+    assert(floors.join("|") === "Étage -1|Étage -2/-3|Étage -4|Étage -5|Étage +3|Étage +1|Étage 0|Étage -1");
     assert(f.page.querySelector('[data-i18n-rich="presentation.archaeology"] strong').textContent === "Section archéologie (Welcome Building)");
     assert(f.page.querySelector('[data-i18n-rich="presentation.crafts"] strong').textContent === "Section arts décoratifs et populaires (Explore Building)");
     assert(f.page.querySelector('[data-i18n-rich="presentation.level1"] em').textContent === "Chewing gum");
@@ -268,6 +268,39 @@ test("failed language changes retain the current visit destination", async () =>
     const destination = link.getAttribute("href");
     assert(!await f.controller.setLanguage("fr"));
     assert(link.getAttribute("href") === destination);
+});
+
+test("museum updates preserve bilingual work details, pending leaflet, and biography link", async () => {
+    const f = fixture();
+    const lexicon = f.page.querySelector(".konschtlexikon-link");
+    const leaflet = f.page.querySelector(".leaflet-preview-link");
+    const expected = {
+        en: ["Coins and medals section (Welcome Building)", "Level +2: Stone used in", "Download leaflet"],
+        fr: ["Section monnaies et médailles (Welcome Building)", "Étage +2 : Pierre utilisée dans", "Télécharger le dépliant"]
+    };
+    for (const language of ["en", "fr", "en"]) {
+        assert(await f.controller.setLanguage(language));
+        const [section, stone, label] = expected[language];
+        assert(f.page.querySelector('[data-i18n-rich="presentation.coins"]').textContent === section);
+        const entry = f.page.querySelector('[data-i18n-rich="presentation.coinsLevel2"]');
+        assert(entry.textContent.startsWith(stone));
+        assert(entry.querySelector("em").textContent === "Le Va-et-Vient du Mont Saint-Watou");
+        assert(leaflet.textContent === label);
+        assert(leaflet.getAttribute("aria-disabled") === "true");
+        assert(!leaflet.hasAttribute("href") && !leaflet.hasAttribute("download"));
+        const intro = f.page.querySelector('[data-i18n-rich="presentation.intro"]').textContent;
+        assert(intro.includes("Nationalmusée um Fëschmaart"));
+        assert(!/in this very museum|dans ce musée/.test(intro));
+        if (language === "fr") { assert(!/\bEtage\b/.test(f.page.body.textContent)); }
+        const download = f.page.querySelector('[data-i18n="actions.downloadPresentation"]');
+        assert(download.textContent === (language === "en" ? "Download presentation" : "Télécharger la présentation"));
+        assert(lexicon.textContent === "Konschtlexikon");
+        assert(lexicon.getAttribute("href") === "https://www.konschtlexikon.mnaha.lu/entry/lkl000302/");
+        assert(lexicon.getAttribute("target") === "_blank");
+        assert(lexicon.getAttribute("rel") === "noopener noreferrer");
+        assert(lexicon.nextElementSibling.getAttribute("data-i18n") === "actions.videoInterview");
+        assert(lexicon.nextElementSibling.tagName === "BUTTON");
+    }
 });
 
 const failures = [];
