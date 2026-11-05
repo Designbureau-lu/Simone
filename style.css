@@ -1065,26 +1065,7 @@ select{
 
     align-items:center;
 
-    gap:8px;
-
     text-decoration:none;
-
-}
-
-.press-release-arrow{
-
-    display:inline-block;
-
-    transition:transform 160ms ease;
-
-}
-
-.press-release-link:hover .press-release-arrow,
-.press-release-link:focus-visible .press-release-arrow,
-.presentation-download-link:hover .press-release-arrow,
-.presentation-download-link:focus-visible .press-release-arrow{
-
-    transform:translate(2px,-2px);
 
 }
 
@@ -1096,19 +1077,6 @@ select{
     outline:2px solid currentColor;
 
     outline-offset:4px;
-
-}
-
-@media (prefers-reduced-motion:reduce){
-
-    .press-release-link .press-release-arrow,
-    .presentation-download-link .press-release-arrow{
-
-        transition:none;
-
-        transform:none;
-
-    }
 
 }
 

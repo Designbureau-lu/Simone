@@ -2,6 +2,21 @@
 
 Updated: 2026-11-05
 
+## Button arrow removal — finalized locally
+
+- Removed all three ↗ spans from presentation, leaflet, and press-release pills,
+  along with their internal gap and arrow-only hover/reduced-motion styles.
+  Shared pill shapes, typography, padding, alignment, focus styling, and all
+  destinations/download attributes remain unchanged. Buttons already without
+  arrows retain their presentation. Responsive rules are unchanged.
+- EN/FR/EN DOM checks confirm unchanged button labels and no arrows. Markup
+  comparison confirms only arrow spans were removed. Relevant interface checks
+  pass 5/5; editorial checks pass 2/2; PDF/fallback and diff checks pass.
+  Translation tests remain 17/18 due to the known emulator tabIndex limitation.
+  Hover/responsive rules reviewed statically; browser visual QA not run because
+  no browser is connected. Leaflet preview stays enabled without a destination.
+- Reviewed for the button-arrow removal commit. No push or deployment.
+
 ## Provisional exhibition leaflet placement — finalized locally
 
 - Leaflet preview now sits alongside the presentation download under PRESENTATION,
