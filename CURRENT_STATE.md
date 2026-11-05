@@ -1,6 +1,19 @@
 # SIMONE Current State
 
-Updated: 2026-11-04
+Updated: 2026-11-05
+
+## Final exhibition corrections — finalized locally
+
+- Corrected only the stone entry floor from +2 to +1 in EN/FR and the English
+  HTML fallback; artwork title emphasis and existing layout are preserved.
+- Existing Konschtlexikon action now reads Biography / Biographie through the
+  translation binding. Its destination, classes, position, and external-link
+  attributes are unchanged. The provisional leaflet preview remains enabled.
+- Translation checks pass 17/18 in the DOM emulator, including EN/FR/EN
+  switching and corrected copy/link identity. The existing native tabIndex
+  assertion remains unsupported by the emulator. Relevant interface checks
+  pass 5/5; editorial checks pass 2/2; PDF/fallback and diff checks pass.
+  Native browser visual QA was not run. No push or deployment.
 
 ## Museum communications content updates — finalized locally
 

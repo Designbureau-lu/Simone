@@ -93,11 +93,12 @@ copy updates rather than changing typography or shrinking text automatically.
 ## Museum communications update (2026-11-04)
 
 Both introductions explicitly name Nationalmusée um Fëschmaart. The coins and
-medals section adds the Étage/Level +2 stone entry with the exact italic title
+medals section adds the Étage/Level +1 stone entry with the exact italic title
 Le Va-et-Vient du Mont Saint-Watou. All French floor labels use Étage.
 `actions.downloadPresentation` uses “Download presentation” in EN. The leaflet
 review label uses `actions.downloadLeaflet`; no PDF destination is assigned.
-Its visibility flag is documented in the project README. Konschtlexikon is a
-shared proper-name link above Video interview, with the same URL in both
+Its visibility flag is documented in the project README. The Konschtlexikon
+link above Video interview uses
+`actions.biography` (Biography / Biographie), with the same URL in both
 languages. The visit destinations continue to follow the successfully applied
 language using the existing localized-link binding.

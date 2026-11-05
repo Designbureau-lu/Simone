@@ -50,7 +50,7 @@
     "level4": "<strong>Étage -4</strong> : Cellophane utilisé pour Pavillons de Saint-Nazaire ; élément de l’installation <em>Le grand soufflé</em>",
     "level5": "<strong>Étage -5</strong> : manteau de l’œuvre <em>Whitening</em> ; un élément de l’installation <em>Inlays</em> ; Modèle de l‘installation <em>500 pièces</em>.",
     "coins": "<strong>Section monnaies et médailles (Welcome Building)</strong>",
-    "coinsLevel2": "<strong>Étage +2</strong> : Pierre utilisée dans <em>Le Va-et-Vient du Mont Saint-Watou</em>",
+    "coinsLevel2": "<strong>Étage +1</strong> : Pierre utilisée dans <em>Le Va-et-Vient du Mont Saint-Watou</em>",
     "crafts": "<strong>Section arts décoratifs et populaires (Explore Building)</strong>",
     "craftsLevel3": "<strong>Étage +3</strong> : <em>Langeweilekern</em>",
     "craftsLevel1": "<strong>Étage +1</strong> : Modèle de <em>Prototype d’espaces infinis</em>",
@@ -58,6 +58,7 @@
     "craftsLevelMinus1": "<strong>Étage -1</strong> : Prototype <em>Implantate</em> ; Modèle de <em>Genus</em>"
   },
   "actions": {
+    "biography": "Biographie",
     "downloadLeaflet": "Télécharger le dépliant",
     "downloadPresentation": "Télécharger la présentation",
     "videoInterview": "Entretien vidéo",

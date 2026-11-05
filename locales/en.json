@@ -50,7 +50,7 @@
     "level4": "<strong>Level -4:</strong> Cellophane used for <em>Pavillons de Saint-Nazaire</em>; element from the installation <em>Le grand soufflé</em>",
     "level5": "<strong>Level -5:</strong> Coat from <em>Whitening</em>; one element from the installation <em>Inlays</em>; model for the installation <em>500 pièces</em>",
     "coins": "<strong>Coins and medals section (Welcome Building)</strong>",
-    "coinsLevel2": "<strong>Level +2:</strong> Stone used in <em>Le Va-et-Vient du Mont Saint-Watou</em>",
+    "coinsLevel2": "<strong>Level +1:</strong> Stone used in <em>Le Va-et-Vient du Mont Saint-Watou</em>",
     "crafts": "<strong>Arts and crafts section (Explore Building)</strong>",
     "craftsLevel3": "<strong>Level +3:</strong> <em>Langeweilekern</em>",
     "craftsLevel1": "<strong>Level +1:</strong> Model for <em>Prototype d’espaces infinis</em>",
@@ -58,6 +58,7 @@
     "craftsLevelMinus1": "<strong>Level -1:</strong> Prototype <em>Implantate</em>; Model for <em>Genus</em>"
   },
   "actions": {
+    "biography": "Biography",
     "downloadLeaflet": "Download leaflet",
     "downloadPresentation": "Download presentation",
     "videoInterview": "Video interview",

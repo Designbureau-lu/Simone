@@ -275,8 +275,8 @@ test("museum updates preserve bilingual work details, pending leaflet, and biogr
     const lexicon = f.page.querySelector(".konschtlexikon-link");
     const leaflet = f.page.querySelector(".leaflet-preview-link");
     const expected = {
-        en: ["Coins and medals section (Welcome Building)", "Level +2: Stone used in", "Download leaflet"],
-        fr: ["Section monnaies et médailles (Welcome Building)", "Étage +2 : Pierre utilisée dans", "Télécharger le dépliant"]
+        en: ["Coins and medals section (Welcome Building)", "Level +1: Stone used in", "Download leaflet"],
+        fr: ["Section monnaies et médailles (Welcome Building)", "Étage +1 : Pierre utilisée dans", "Télécharger le dépliant"]
     };
     for (const language of ["en", "fr", "en"]) {
         assert(await f.controller.setLanguage(language));
@@ -294,7 +294,8 @@ test("museum updates preserve bilingual work details, pending leaflet, and biogr
         if (language === "fr") { assert(!/\bEtage\b/.test(f.page.body.textContent)); }
         const download = f.page.querySelector('[data-i18n="actions.downloadPresentation"]');
         assert(download.textContent === (language === "en" ? "Download presentation" : "Télécharger la présentation"));
-        assert(lexicon.textContent === "Konschtlexikon");
+        assert(lexicon.textContent === (language === "en" ? "Biography" : "Biographie"));
+        assert(f.page.querySelector(".konschtlexikon-link") === lexicon);
         assert(lexicon.getAttribute("href") === "https://www.konschtlexikon.mnaha.lu/entry/lkl000302/");
         assert(lexicon.getAttribute("target") === "_blank");
         assert(lexicon.getAttribute("rel") === "noopener noreferrer");
