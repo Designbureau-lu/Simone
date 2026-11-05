@@ -2,6 +2,16 @@
 
 Updated: 2026-11-05
 
+## Saint-Nazaire artwork title correction — finalized locally
+
+- EN/FR level −4 entries and the English fallback now use the supplied title
+  `20 Pavillons de Saint-Nazaire`, italicized alongside `Le grand soufflé`.
+  Supplied minus sign preserved; existing styling/layout and other copy unchanged.
+- EN/FR/EN assertions cover the exact entry and both italic titles. Translation
+  suite passes 17/18 in the DOM emulator (existing native tabIndex limitation).
+  Editorial checks pass 2/2, relevant interface checks 5/5, plus PDF/fallback
+  and diff checks. No push or deployment.
+
 ## Button arrow removal — finalized locally
 
 - Removed all three ↗ spans from presentation, leaflet, and press-release pills,

@@ -64,7 +64,7 @@ test("French editorial copy preserves emphasis, approved biography, and the exis
     const floors = ["level1", "level23", "level4", "level5", "craftsLevel3", "craftsLevel1", "craftsLevel0", "craftsLevelMinus1"].map((key) => (
         f.page.querySelector(`[data-i18n-rich="presentation.${key}"] strong`).textContent
     ));
-    assert(floors.join("|") === "Étage -1|Étage -2/-3|Étage -4|Étage -5|Étage +3|Étage +1|Étage 0|Étage -1");
+    assert(floors.join("|") === "Étage -1|Étage -2/-3|Étage −4|Étage -5|Étage +3|Étage +1|Étage 0|Étage -1");
     assert(f.page.querySelector('[data-i18n-rich="presentation.archaeology"] strong').textContent === "Section archéologie (Welcome Building)");
     assert(f.page.querySelector('[data-i18n-rich="presentation.crafts"] strong').textContent === "Section arts décoratifs et populaires (Explore Building)");
     assert(f.page.querySelector('[data-i18n-rich="presentation.level1"] em').textContent === "Chewing gum");
@@ -281,6 +281,12 @@ test("museum updates preserve bilingual work details, pending leaflet, and biogr
     for (const language of ["en", "fr", "en"]) {
         assert(await f.controller.setLanguage(language));
         const [section, stone, label] = expected[language];
+        const saintNazaire = f.page.querySelector('[data-i18n-rich="presentation.level4"]');
+        assert(saintNazaire.textContent === (language === "en"
+            ? "Level −4: Cellophane used for 20 Pavillons de Saint-Nazaire; element from the installation Le grand soufflé"
+            : "Étage −4 : Cellophane utilisé pour 20 Pavillons de Saint-Nazaire ; élément de l’installation Le grand soufflé"));
+        assert(Array.from(saintNazaire.querySelectorAll("em"), (title) => title.textContent).join("|")
+            === "20 Pavillons de Saint-Nazaire|Le grand soufflé");
         assert(f.page.querySelector('[data-i18n-rich="presentation.coins"]').textContent === section);
         const entry = f.page.querySelector('[data-i18n-rich="presentation.coinsLevel2"]');
         assert(entry.textContent.startsWith(stone));
