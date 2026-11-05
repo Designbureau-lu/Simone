@@ -285,7 +285,10 @@ test("museum updates preserve bilingual work details, pending leaflet, and biogr
         const entry = f.page.querySelector('[data-i18n-rich="presentation.coinsLevel2"]');
         assert(entry.textContent.startsWith(stone));
         assert(entry.querySelector("em").textContent === "Le Va-et-Vient du Mont Saint-Watou");
-        assert(leaflet.textContent === label);
+        assert(leaflet.querySelector('[data-i18n="actions.downloadLeaflet"]').textContent === label);
+        assert(leaflet.parentElement.classList.contains("presentation-actions"));
+        assert(leaflet.previousElementSibling.classList.contains("presentation-download-link"));
+        assert(!f.page.querySelector(".editorial-body [data-leaflet-preview]"));
         assert(leaflet.getAttribute("aria-disabled") === "true");
         assert(!leaflet.hasAttribute("href") && !leaflet.hasAttribute("download"));
         const intro = f.page.querySelector('[data-i18n-rich="presentation.intro"]').textContent;

@@ -2,6 +2,19 @@
 
 Updated: 2026-11-05
 
+## Provisional exhibition leaflet placement — finalized locally
+
+- Leaflet preview now sits alongside the presentation download under PRESENTATION,
+  using the same information-pill/download styling and arrow. Removed it from
+  the exhibition locations entirely; exhibition text and emphasis are unchanged.
+- EN/FR/EN switching checks confirm Download leaflet / Télécharger le dépliant
+  and action placement. Preview remains enabled with no href/download; production
+  preview on/off behavior and hidden styling are verified.
+- Relevant interface checks pass 5/5; editorial checks pass 2/2; PDF/fallback
+  and diff checks pass. Translation suite remains 17/18 in the DOM emulator due
+  to the existing native-button tabIndex limitation. Browser visual QA not run.
+- Reviewed for the leaflet-placement commit. No push or deployment.
+
 ## Final exhibition corrections — finalized locally
 
 - Corrected only the stone entry floor from +2 to +1 in EN/FR and the English

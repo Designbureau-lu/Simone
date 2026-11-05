@@ -1226,11 +1226,13 @@ select{
 
 }
 
+.leaflet-preview-link[hidden]{
+
+    display:none;
+
+}
+
 .leaflet-preview-link{
-
-    font:400 0.85rem/1.45 "Söhne Mono Buch",monospace;
-
-    text-decoration:underline;
 
     cursor:default;
 
