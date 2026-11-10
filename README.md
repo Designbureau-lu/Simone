@@ -46,10 +46,7 @@ URLs support hosting at a domain root or project subdirectory. GitHub Pages
 automatically deploys pushes to `main`; see `.github/workflows/pages.yml`.
 See [LAUNCH_AUDIT.md](LAUNCH_AUDIT.md) for outstanding launch checks.
 
-For the museum's leaflet wording review, `LEAFLET_PREVIEW_ENABLED = true` shows
-a disabled “Download leaflet” / “Télécharger le dépliant” pill beside the
-presentation download in the PRESENTATION section. It has no destination while the PDF is pending. Set
-this flag to `false` before launch if the file is not ready. Once supplied, add
-its real `href` and `download` filename to `.leaflet-preview-link`, remove
-`aria-disabled` and the redundant `role`, and use the existing download-link
-styling. Keep the translation labels and source pixels unchanged.
+The Presentation section includes the supplied leaflet PDF as a native download
+link under `public/SIMONE-export/`. Keep the original filename and this directory
+in the published artifact. The Video interview action opens the supplied YouTube
+URL in a new tab. Both actions retain their EN/FR translation bindings.

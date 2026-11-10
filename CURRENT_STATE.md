@@ -1,6 +1,25 @@
 # SIMONE Current State
 
-Updated: 2026-11-05
+Updated: 2026-11-10
+
+## Final launch links — finalized locally
+
+- Connected the existing leaflet pill to the supplied PDF with its original
+  download filename and an encoded relative URL. Included the PDF in Git.
+  Removed preview gating; the action is available before JavaScript starts.
+- Connected Video interview to `https://youtu.be/BH88cf4mVGA` with a new tab
+  and `noopener noreferrer`, reusing existing pill/link and focus styles.
+  Copy, translations, layout, typography, artwork and animations are preserved.
+- The site has no compilation/build command: production is the repository-root
+  static artifact used by the Pages workflow. A temporary production copy passed
+  local HTML/CSS/module path checks, JavaScript syntax, and 158 HTTP resource
+  checks, including PDF MIME, exact bytes and signature/EOF. Root/subdirectory
+  download URLs pass. YouTube resolves over HTTP; playback is unverified.
+- Catalog 20/20, navigation 9/9, translations 17/18 pass in Node/DOM emulation;
+  the remaining native-button tabIndex check is the existing emulator limitation.
+  No browser is available: live console, actual download/new-tab behavior,
+  visual/mobile QA and deployed hosting verification remain open.
+- Reviewed for a local commit only. No push or deployment.
 
 ## Saint-Nazaire artwork title correction — finalized locally
 

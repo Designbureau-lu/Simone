@@ -253,7 +253,8 @@ test("visit destination follows the applied language and preserves external-link
             assert(link.getAttribute("target") === "_blank");
             assert(link.getAttribute("rel") === "noopener noreferrer");
             assert(f.page.querySelector(".exhibition-visit-action") === link);
-            assert(video.tagName === "BUTTON" && !video.hasAttribute("href"));
+            assert(video.tagName === "A" && video.getAttribute("href") === "https://youtu.be/BH88cf4mVGA");
+            assert(video.getAttribute("target") === "_blank" && video.getAttribute("rel") === "noopener noreferrer");
         }
     }
 });
@@ -270,7 +271,7 @@ test("failed language changes retain the current visit destination", async () =>
     assert(link.getAttribute("href") === destination);
 });
 
-test("museum updates preserve bilingual work details, pending leaflet, and biography link", async () => {
+test("museum updates preserve bilingual work details, leaflet download, and biography link", async () => {
     const f = fixture();
     const lexicon = f.page.querySelector(".konschtlexikon-link");
     const leaflet = f.page.querySelector(".leaflet-preview-link");
@@ -295,8 +296,10 @@ test("museum updates preserve bilingual work details, pending leaflet, and biogr
         assert(leaflet.parentElement.classList.contains("presentation-actions"));
         assert(leaflet.previousElementSibling.classList.contains("presentation-download-link"));
         assert(!f.page.querySelector(".editorial-body [data-leaflet-preview]"));
-        assert(leaflet.getAttribute("aria-disabled") === "true");
-        assert(!leaflet.hasAttribute("href") && !leaflet.hasAttribute("download"));
+        assert(!leaflet.hasAttribute("aria-disabled") && !leaflet.hasAttribute("hidden"));
+        const filename = "Simone Decker - Konschtpräis 2026 - Dépliant - download.pdf";
+        assert(decodeURIComponent(leaflet.getAttribute("href")) === `public/SIMONE-export/${filename}`);
+        assert(leaflet.getAttribute("download") === filename);
         const intro = f.page.querySelector('[data-i18n-rich="presentation.intro"]').textContent;
         assert(intro.includes("Nationalmusée um Fëschmaart"));
         assert(!/in this very museum|dans ce musée/.test(intro));
@@ -309,7 +312,7 @@ test("museum updates preserve bilingual work details, pending leaflet, and biogr
         assert(lexicon.getAttribute("target") === "_blank");
         assert(lexicon.getAttribute("rel") === "noopener noreferrer");
         assert(lexicon.nextElementSibling.getAttribute("data-i18n") === "actions.videoInterview");
-        assert(lexicon.nextElementSibling.tagName === "BUTTON");
+        assert(lexicon.nextElementSibling.tagName === "A");
     }
 });
 

@@ -1059,7 +1059,8 @@ select{
 .press-release-link,
 .presentation-download-link,
 .exhibition-visit-action,
-.konschtlexikon-link{
+.konschtlexikon-link,
+.video-interview-link{
 
     display:inline-flex;
 
@@ -1072,7 +1073,8 @@ select{
 .press-release-link:focus-visible,
 .presentation-download-link:focus-visible,
 .exhibition-visit-action:focus-visible,
-.konschtlexikon-link:focus-visible{
+.konschtlexikon-link:focus-visible,
+.video-interview-link:focus-visible{
 
     outline:2px solid currentColor;
 
@@ -1191,18 +1193,6 @@ select{
     flex-direction:column;
 
     align-items:flex-end;
-
-}
-
-.leaflet-preview-link[hidden]{
-
-    display:none;
-
-}
-
-.leaflet-preview-link{
-
-    cursor:default;
 
 }
 

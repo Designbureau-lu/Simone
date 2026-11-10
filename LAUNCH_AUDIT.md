@@ -52,22 +52,28 @@ links remain correctly assigned and resolve. The supplied Konschtlexikon URL
 returns HTTP 403 to automated fetching; verify it in a normal browser before
 launch. The exact requested address is retained.
 
-The leaflet wording is deliberately visible for review as a disabled link with
-no href or download. Set `LEAFLET_PREVIEW_ENABLED = false` in `src/config.js`
-before launch if the museum has not supplied the PDF. Video interview remains
-unchanged and inactive. Translation checks pass 17/18 in the emulator; the
-existing native tabIndex check and visual/native browser QA remain outstanding.
-The content update was reviewed and validated for a local commit with the
-leaflet preview kept visible. No push or deployment performed.
+## Final launch links update — 2026-11-10
+
+The supplied leaflet is now a native download, included in Git at its original
+path and filename. Preview gating is removed. Video interview now links to
+`https://youtu.be/BH88cf4mVGA`, opening a new tab with `noopener noreferrer`.
+Existing labels, translation bindings and pill presentation are retained.
+
+Production is buildless; the Pages workflow uploads the repository root.
+A temporary static production copy passed all local HTML/CSS/module references,
+JavaScript syntax, and 158 HTTP resource checks. PDF responses preserve exact
+bytes and `application/pdf`, including the accented leaflet path. Download URL
+resolution also passes for domain-root and subdirectory hosting. YouTube resolves
+via HTTP redirects; video playback remains unverified. Catalog 20/20, navigation
+9/9 and translations 17/18 pass; the existing emulator tabIndex limitation remains.
+No browser is available, so native downloads, new-tab behavior, live console and
+visual/mobile checks remain open. No push or deployment was performed.
 
 ## Launch decisions and outstanding verification
 
-1. **Video interview remains inactive:** its destination is pending. The visit
-   action was connected on 2026-11-03 to the supplied official EN/FR museum
-   practical-information URLs. It follows the applied language, opens a new tab
-   with `noopener noreferrer`, and retains its existing label and pill styling.
-   Both exact destinations, initial language choices, switching, and failed-load
-   preservation pass translation tests. Native browser QA remains outstanding.
+1. **Supplied launch destinations are connected:** leaflet production packaging
+   and the exact YouTube destination pass the checks above. Native browser
+   download/new-tab behavior and video playback still require verification.
 2. **Browser QA remains required:** no browser is connected to this session.
    Live console errors, responsive rendering/overflow in both languages,
    keyboard focus, Index selection, READ/EXPLORE transitions, desktop drag/wheel,
