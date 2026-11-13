@@ -30,9 +30,16 @@
         <p class="arrival-identity-dates">13.11.2026 - 21.03.2027</p>
         <p class="arrival-identity-venue">NATIONALMUSÉE UM FËSCHMAART</p>
     </div>
+    <a class="arrival-scroll-indicator" href="#curtain-stage"
+       aria-label="Scroll down / Défiler vers le bas">
+        <svg width="50" height="16" viewBox="0 0 50 16" aria-hidden="true" focusable="false">
+            <path d="M1 2 L25 14 L49 2" fill="none" stroke="currentColor"
+                  stroke-width="1.2" stroke-linecap="butt" stroke-linejoin="miter" />
+        </svg>
+    </a>
 </section>
 
-<section class="curtain-sticky-stage">
+<section id="curtain-stage" class="curtain-sticky-stage">
 <main class="hero">
 <header id="conversationBar" class="conversation-bar">
     <span class="curtain-index-label">INDEX</span>
@@ -266,6 +273,7 @@ Load artwork to begin measuring.</pre>
 </article>
 
 <script type="module" src="script.js"></script>
+<script type="module" src="src/application/startArrivalScrollIndicator.js"></script>
 
 </body>
 </html>

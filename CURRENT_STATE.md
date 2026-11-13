@@ -1,6 +1,27 @@
 # SIMONE Current State
 
-Updated: 2026-11-10
+Updated: 2026-11-13
+
+## Opening-screen scroll indicator — ready for visual testing
+
+- Added a bottom-centred inline SVG chevron (48 px span, 1.2 px stroke,
+  typography grey), with a 64 × 44 px link target and mobile safe-area spacing.
+  Its 6 px, 2.4 second ease-in-out drift stops under reduced motion.
+- A separate entry module scrolls to the existing curtain section smoothly,
+  or instantly under reduced motion. The native anchor remains a no-JS fallback.
+  The indicator belongs to the opening section and naturally scrolls out of
+  view; no scroll listener, fixed overlay, or application state is introduced.
+  Its bilingual accessible label needs no museum content/locale file changes.
+  Coming-soon, existing animations, navigation and translation files are unchanged.
+- 13 focused interaction checks pass (motion preferences, modified clicks,
+  middle click and absent markup), plus syntax, target/fallback, reduced-motion
+  CSS, mobile safe-area, coming-soon isolation and diff checks. Responsive CSS
+  reviewed; actual desktop/mobile layout and native scrolling remain unverified
+  because browser discovery returned no available browsers.
+- Production files: `index.html`, `style.css`, and
+  `src/application/startArrivalScrollIndicator.js`. This state file is internal
+  documentation. Reviewed for a local commit; final focused checks pass.
+  Visual testing remains pending. No push or deployment.
 
 ## Final launch links — finalized locally
 
