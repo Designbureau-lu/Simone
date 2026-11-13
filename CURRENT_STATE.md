@@ -4,39 +4,25 @@ Updated: 2026-11-13
 
 ## Opening-screen scroll indicator — ready for visual testing
 
-- Refinement: stroke increased to 1.6 px; bottom spacing increased from 18 to
-  23 px, moving the chevron 5 px higher. Geometry, colour, animation and click
-  handler are preserved. The indicator now uses fixed positioning and binary
-  `hidden` visibility at the next section's top boundary (no opacity fade).
-  Visibility reuses the identity blob's existing scroll-frame update; there is
-  no additional scroll listener/controller. Returning to the opening restores
-  the indicator, and initial restored scroll positions are handled. The curtain
-  entrance's one-shot snap state is unsuitable for this reversible behaviour.
-- Refinement checks: 30 focused checks cover desktop/mobile branches, visibility
-  before/at/after the boundary, return and restored position, unchanged click
-  motion preferences and modified clicks. Geometry/stroke/position, hidden CSS,
-  animation/reduced-motion CSS, module syntax and diff checks pass. Actual browser
-  visual testing remains pending. Reviewed for the local refinement commit;
-  all 30 focused checks rerun successfully. No push/deployment.
-- Added a bottom-centred inline SVG chevron (48 px span, originally 1.2 px stroke,
-  typography grey), with a 64 × 44 px link target and mobile safe-area spacing.
-  Its 6 px, 2.4 second ease-in-out drift stops under reduced motion.
-- A separate entry module scrolls to the existing curtain section smoothly,
-  or instantly under reduced motion. The native anchor remains a no-JS fallback.
-  The initial version belonged to the opening section and naturally scrolled out
-  of view; the refinement above replaces that disappearance behaviour.
-  Its bilingual accessible label needs no museum content/locale file changes.
-  Coming-soon, existing animations, navigation and translation files are unchanged.
-- 13 focused interaction checks pass (motion preferences, modified clicks,
-  middle click and absent markup), plus syntax, target/fallback, reduced-motion
-  CSS, mobile safe-area, coming-soon isolation and diff checks. Responsive CSS
-  reviewed; actual desktop/mobile layout and native scrolling remain unverified
-  because browser discovery returned no available browsers.
-- Production files: `index.html`, `style.css`, and
-  `src/application/startArrivalScrollIndicator.js`; the refinement also updates
-  `src/prototypes/identity/startIdentityBlobPresentation.js`. This state file is internal
-  documentation. Reviewed for a local commit; final focused checks pass.
-  Visual testing remains pending. No push or deployment.
+- Latest adjustment: inline SVG stroke is 2 px; the 48 px chevron span, flattened
+  V shape, typography grey, 6 px / 2.4 second animation and 64 × 44 px hit target
+  are preserved. Bottom spacing remains 23 px plus the mobile safe-area inset.
+- The indicator uses absolute positioning within the existing relative opening
+  section. It moves upward with the section and leaves the viewport naturally,
+  without opacity fading or a separate disappearance animation. Removed the
+  previous fixed positioning, hidden CSS rule and identity-scroll visibility
+  logic; the identity blob module returns to its original implementation.
+- The separate click-to-scroll module is unchanged: smooth scrolling normally,
+  instant under reduced motion, with a native anchor fallback and modified-click
+  navigation preserved. Reduced motion also disables the chevron animation.
+  Museum content, translations, navigation and other animations are unchanged.
+- Latest focused checks: 13 interaction checks pass, plus assertions for section
+  positioning, removed visibility logic, geometry, stroke, colour, animation and
+  reduced-motion CSS. Both relevant modules pass syntax checks; diff check passes.
+  Native browser visual testing remains pending; no browser is connected.
+- Current changed production files: `index.html`, `style.css`, and
+  `src/prototypes/identity/startIdentityBlobPresentation.js`. This state file is
+  internal documentation. Reviewed for a local commit; no push/deployment.
 
 ## Final launch links — finalized locally
 
