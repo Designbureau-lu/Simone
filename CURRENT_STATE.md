@@ -4,13 +4,27 @@ Updated: 2026-11-13
 
 ## Opening-screen scroll indicator — ready for visual testing
 
-- Added a bottom-centred inline SVG chevron (48 px span, 1.2 px stroke,
+- Refinement: stroke increased to 1.6 px; bottom spacing increased from 18 to
+  23 px, moving the chevron 5 px higher. Geometry, colour, animation and click
+  handler are preserved. The indicator now uses fixed positioning and binary
+  `hidden` visibility at the next section's top boundary (no opacity fade).
+  Visibility reuses the identity blob's existing scroll-frame update; there is
+  no additional scroll listener/controller. Returning to the opening restores
+  the indicator, and initial restored scroll positions are handled. The curtain
+  entrance's one-shot snap state is unsuitable for this reversible behaviour.
+- Refinement checks: 30 focused checks cover desktop/mobile branches, visibility
+  before/at/after the boundary, return and restored position, unchanged click
+  motion preferences and modified clicks. Geometry/stroke/position, hidden CSS,
+  animation/reduced-motion CSS, module syntax and diff checks pass. Actual browser
+  visual testing remains pending. Reviewed for the local refinement commit;
+  all 30 focused checks rerun successfully. No push/deployment.
+- Added a bottom-centred inline SVG chevron (48 px span, originally 1.2 px stroke,
   typography grey), with a 64 × 44 px link target and mobile safe-area spacing.
   Its 6 px, 2.4 second ease-in-out drift stops under reduced motion.
 - A separate entry module scrolls to the existing curtain section smoothly,
   or instantly under reduced motion. The native anchor remains a no-JS fallback.
-  The indicator belongs to the opening section and naturally scrolls out of
-  view; no scroll listener, fixed overlay, or application state is introduced.
+  The initial version belonged to the opening section and naturally scrolled out
+  of view; the refinement above replaces that disappearance behaviour.
   Its bilingual accessible label needs no museum content/locale file changes.
   Coming-soon, existing animations, navigation and translation files are unchanged.
 - 13 focused interaction checks pass (motion preferences, modified clicks,
@@ -19,7 +33,8 @@ Updated: 2026-11-13
   reviewed; actual desktop/mobile layout and native scrolling remain unverified
   because browser discovery returned no available browsers.
 - Production files: `index.html`, `style.css`, and
-  `src/application/startArrivalScrollIndicator.js`. This state file is internal
+  `src/application/startArrivalScrollIndicator.js`; the refinement also updates
+  `src/prototypes/identity/startIdentityBlobPresentation.js`. This state file is internal
   documentation. Reviewed for a local commit; final focused checks pass.
   Visual testing remains pending. No push or deployment.
 

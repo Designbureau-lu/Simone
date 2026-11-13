@@ -36,11 +36,18 @@ export function startIdentityBlobPresentation() {
         layout
     );
     applyPresentation(blob, presentation);
+    const scrollIndicator = document.querySelector(".arrival-scroll-indicator");
+    const nextSection = document.querySelector(".curtain-sticky-stage");
     let frameId = null;
     let previousScrollY = window.scrollY;
     let upwardStart = null;
     const updateScrollSeparation = () => {
         frameId = null;
+        // Reuse this screen's scroll frame: switch at the native snap boundary,
+        // without fading or adding another scroll observer/controller.
+        if (scrollIndicator && nextSection) {
+            scrollIndicator.hidden = nextSection.getBoundingClientRect().top <= 0;
+        }
         const scrollY = window.scrollY;
         if (layout === "mobile" && scrollY < previousScrollY) {
             upwardStart ??= Object.freeze({

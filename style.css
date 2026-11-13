@@ -105,16 +105,22 @@ select{
 
 .arrival-scroll-indicator{
 
-    position:absolute;
+    position:fixed;
     z-index:3;
     left:50%;
-    bottom:calc(18px + env(safe-area-inset-bottom,0px));
+    bottom:calc(23px + env(safe-area-inset-bottom,0px));
     transform:translateX(-50%);
     display:grid;
     place-items:center;
     width:64px;
     height:44px;
     color:var(--color-text);
+
+}
+
+.arrival-scroll-indicator[hidden]{
+
+    display:none;
 
 }
 
